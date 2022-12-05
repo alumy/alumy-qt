@@ -5,8 +5,13 @@
 //#undef __BIG_ENDIAN
 
 #ifdef __GNUC__
-	#define __LITTLE_ENDIAN		__ORDER_LITTLE_ENDIAN__
-	#define __BIG_ENDIAN		__ORDER_BIG_ENDIAN__
+#ifndef __LITTLE_ENDIAN
+    #define __LITTLE_ENDIAN		__ORDER_LITTLE_ENDIAN__
+#endif
+
+#ifndef __BIG_ENDIAN
+    #define __BIG_ENDIAN		__ORDER_BIG_ENDIAN__
+#endif
 #endif /* __GNUC__ */
 
 #ifndef __LITTLE_ENDIAN

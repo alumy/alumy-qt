@@ -1,12 +1,7 @@
 #ifndef __AL_BASE__
 #define __AL_BASE__ 1
 
-#if AL_HAVE_SYS_CDEFS
 #include <sys/cdefs.h>
-#else
-#include "alumy/cdefs.h"
-#endif
-
 
 #if  defined ( __GNUC__ ) || defined ( __clang__ )
 

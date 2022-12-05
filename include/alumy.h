@@ -33,6 +33,10 @@
 #include "alumy/check.h"
 #include "alumy/xyzmodem.h"
 #include "alumy/initialized.h"
+#include "alumy/protobuf-c.h"
+#include "alumy/csv.h"
+#include "alumy/net.h"
+#include "alumy/singleton.h"
 
 __BEGIN_DECLS
 

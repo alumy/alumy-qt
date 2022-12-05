@@ -49,6 +49,10 @@ __weak const char *al_log_timestamp(void)
 void al_log(int32_t pri, const char *file, int32_t line, const char *func,
 			const char *fmt, ...)
 {
+    UNUSED(file);
+    UNUSED(line);
+    UNUSED(func);
+
 	if (pri & ~(AL_LOG_PRIMASK)) {
 		/* unknown prio mask */
 		pri &= AL_LOG_PRIMASK;

@@ -215,6 +215,8 @@ uint32_t al_crc32(uint32_t crc, const void *p, uint32_t len)
 uint32_t al_crc32_wd(uint32_t crc, const uint8_t *buf, uint32_t len,
 					 uint32_t chunk_sz)
 {
+    UNUSED(chunk_sz);
+
 #if (AL_CONFIG_HW_WATCHDOG) || (AL_CONFIG_WATCHDOG)
 	const unsigned char *end, *curr;
 	int chunk;

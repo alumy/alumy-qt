@@ -16,6 +16,10 @@ enum {
     CAN = 0x18,
 };
 
+#ifndef EOF
+#define EOF     (-1)
+#endif
+
 __END_DECLS
 
 #endif

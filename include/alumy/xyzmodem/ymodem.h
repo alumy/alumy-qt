@@ -48,10 +48,10 @@ typedef struct al_ymodem_callback {
 } al_ymodem_callback_t;
 
 typedef struct al_ymodem_opt {
-    int32_t (*putc)(int32_t c);
-    int32_t (*getc)(void);
-    ssize_t (*recv)(void *buf, size_t size);
-    int32_t (*recv_clear)(void);
+    int32_t (*ym_putc)(int32_t c);
+    int32_t (*ym_getc)(void);
+    ssize_t (*ym_recv)(void *buf, size_t size);
+    int32_t (*ym_recv_clear)(void);
     time_t (*uptime)(void);
     void (*delay_ms)(int32_t ms);
 } al_ymodem_opt_t;
