@@ -1,3 +1,4 @@
+#include <QDebug>
 #include "alumy/net/slip.h"
 
 #define SLIP_END     0xC0 /* 0300: start and end of every packet */
@@ -9,7 +10,8 @@ AL_BEGIN_NAMESPACE
 
 slip::slip(QString name, int32_t baud, QSerialPort::DataBits dataBits,
            QSerialPort::StopBits stopBits, QSerialPort::Parity parity,
-           size_t recvSize) :
+           size_t recvSize, QObject *parent) :
+    QObject(parent),
     m_name(name),
     m_baud(baud),
     m_dataBits(dataBits),
@@ -17,13 +19,17 @@ slip::slip(QString name, int32_t baud, QSerialPort::DataBits dataBits,
     m_parity(parity),
     m_recvSize(recvSize)
 {
+    m_recvState = SLIP_RECV_NORMAL;
+    m_recvLen = 0;
+    m_recvData.clear();
+
     m_thread = new QThread();
     m_serialPort = new QSerialPort();
 
-    connect(m_serialPort, &QSerialPort::readyRead, this, &slip::recvData);
+    initSerialPort();
 
-    m_serialPort->moveToThread(m_thread);
     this->moveToThread(m_thread);
+    m_thread->start();
 }
 
 slip::~slip()
@@ -40,7 +46,7 @@ slip::~slip()
     delete m_serialPort;
 }
 
-int32_t slip::openSerialPort()
+int32_t slip::initSerialPort()
 {
     m_serialPort->setPortName(m_name);
     m_serialPort->setBaudRate(m_baud);
@@ -49,20 +55,15 @@ int32_t slip::openSerialPort()
     m_serialPort->setStopBits(m_stopBits);
     m_serialPort->setFlowControl(QSerialPort::NoFlowControl);
 
-    if(m_serialPort->open(QIODevice::ReadWrite)) {
+    if(!m_serialPort->open(QIODevice::ReadWrite)) {
+        qDebug() << m_name << m_baud << m_parity << m_dataBits << m_stopBits << endl;
+        qDebug() << m_serialPort->error() << m_serialPort->errorString() << endl;
         return -1;
     }
 
-    return 0;
-}
-
-int32_t slip::start()
-{
-    if(openSerialPort() != 0) {
-        return -1;
-    }
-
-    m_thread->start();
+    connect(m_serialPort, &QSerialPort::readyRead, this, &slip::recvData);
+    connect(this, SIGNAL(send(QByteArray)), this, SLOT(sendData(QByteArray)));
+    connect(this, SIGNAL(send(const void *, size_t)), this, SLOT(sendData(const void *, size_t)));
 
     return 0;
 }
@@ -74,6 +75,7 @@ void slip::recvData()
     for(int32_t i = 0; i < data.length(); ++i) {
         if (recvByte(data[i]) > 0) {
             emit received(m_recvData);
+            m_recvData.clear();
         }
     }
 }
@@ -133,7 +135,7 @@ size_t slip::recvByte(int c)
 	return 0;
 }
 
-int64_t slip::send(const void *data, size_t len)
+int64_t slip::sendData(const void *data, size_t len)
 {
     size_t i;
     int32_t c;
@@ -168,14 +170,22 @@ int64_t slip::send(const void *data, size_t len)
     /* End with packet delimiter. */
     m_serialPort->putChar(SLIP_END);
 
-    m_serialPort->flush();
-
     return len;
 }
 
-int64_t slip::send(QByteArray data)
+int64_t slip::sendData(QByteArray data)
 {
-    return send(data.data(), data.length());
+    return sendData(data.data(), data.length());
+}
+
+void slip::flush()
+{
+    m_serialPort->flush();
+}
+
+void slip::setReadBufferSize(int64_t size)
+{
+    m_serialPort->setReadBufferSize(size);
 }
 
 AL_END_NAMESPACE

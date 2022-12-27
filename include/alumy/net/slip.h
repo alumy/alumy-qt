@@ -22,24 +22,27 @@ public:
 public:
     slip(QString name, int32_t baud, QSerialPort::DataBits dataBits,
          QSerialPort::StopBits stopBits, QSerialPort::Parity parity,
-         size_t recvSize);
+         size_t recvSize, QObject *parent = nullptr);
     ~slip();
 
-    int32_t start();
+    void setReadBufferSize(int64_t size);
+    void flush();
 
 private:
     size_t recvByte(int c);
-    int32_t openSerialPort();
+    int32_t initSerialPort();
 
 public slots:
-    int64_t send(QByteArray data);
-    int64_t send(const void *data, size_t len);
+    int64_t sendData(const void *data, size_t len);
+    int64_t sendData(QByteArray data);
 
 protected slots:
     void recvData(void);
 
 signals:
     void received(QByteArray data);
+    int64_t send(QByteArray data);
+    int64_t send(const void *data, size_t len);
 
 private:
     QSerialPort *m_serialPort;
