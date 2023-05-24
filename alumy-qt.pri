@@ -6,7 +6,9 @@ HEADERS += \
     $$PWD/include/alumy/errno.h \
     $$PWD/include/alumy/singleton.h \
     $$PWD/include/alumy/net.h \
-    $$PWD/include/alumy/net/slip.h
+    $$PWD/include/alumy/net/slip.h \
+    $$PWD/include/alumy/usb.h \
+    $$PWD/include/alumy/usb/probe.h
 
 SOURCES += \
     $$PWD/mem/mem.c \
@@ -19,4 +21,5 @@ SOURCES += \
     $$PWD/crc/mb_crc16.c \
     $$PWD/log.c \
     $$PWD/protobuf-c/protobuf-c.c \
-    $$PWD/libcsv/libcsv.c
+    $$PWD/libcsv/libcsv.c \
+    $$PWD/usb/probe.cpp

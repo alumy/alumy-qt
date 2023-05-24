@@ -36,6 +36,7 @@
 #include "alumy/protobuf-c.h"
 #include "alumy/csv.h"
 #include "alumy/net.h"
+#include "alumy/usb.h"
 #include "alumy/singleton.h"
 
 __BEGIN_DECLS

@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
+#define _POSIX_C_SOURCE 200112L
 #include <time.h>
 #include "alumy/config.h"
 #include "alumy/types.h"
