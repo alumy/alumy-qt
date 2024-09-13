@@ -5,7 +5,9 @@
 #include <QThread>
 #include <QSerialPort>
 #include <QSerialPortInfo>
+#include <QTimer>
 #include <QByteArray>
+#include <QMutex>
 #include "alumy/defs.h"
 
 AL_BEGIN_NAMESPACE
@@ -22,7 +24,7 @@ public:
 public:
     slip(QString name, int32_t baud, QSerialPort::DataBits dataBits,
          QSerialPort::StopBits stopBits, QSerialPort::Parity parity,
-         size_t recvSize, QObject *parent = nullptr);
+         size_t recvSize = 4096);
     ~slip();
 
     void setReadBufferSize(int64_t size);
@@ -32,21 +34,20 @@ private:
     size_t recvByte(int c);
     int32_t initSerialPort();
 
-public slots:
+protected slots:
     int64_t sendData(const void *data, size_t len);
     int64_t sendData(QByteArray data);
-
-protected slots:
     void recvData(void);
 
 signals:
     void received(QByteArray data);
-    int64_t send(QByteArray data);
-    int64_t send(const void *data, size_t len);
+    int64_t write(QByteArray data);
+    int64_t write(const void *data, size_t len);
 
 private:
     QSerialPort *m_serialPort;
     QThread *m_thread;
+    QMutex m_sendMutex;
     QString m_name;
     int32_t m_baud;
     QSerialPort::DataBits m_dataBits;

@@ -22,9 +22,12 @@
 #include "alumy/byteorder.h"
 #include "alumy/types.h"
 #include "alumy/base.h"
+#include "alumy/bit.h"
 #include "alumy/version.h"
+#include "alumy/ascii.h"
 #include "alumy/errno.h"
 #include "alumy/log.h"
+#include "alumy/mod_log.h"
 #include "alumy/mem.h"
 #include "alumy/string.h"
 #include "alumy/byteswap.h"
@@ -36,8 +39,10 @@
 #include "alumy/protobuf-c.h"
 #include "alumy/csv.h"
 #include "alumy/net.h"
-#include "alumy/usb.h"
+#include "alumy/check.h"
 #include "alumy/singleton.h"
+#include "alumy/sleep.h"
+#include "alumy/audio/wav_file.h"
 
 __BEGIN_DECLS
 

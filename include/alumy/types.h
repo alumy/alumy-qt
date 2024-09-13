@@ -89,6 +89,16 @@ typedef long int off_t;
 	#endif
 #endif
 
+#ifndef __int_t_defined
+typedef signed int int_t;
+#define __int_t_defined
+#endif
+
+#ifndef __uint_t_defined
+typedef unsigned int uint_t;
+#define __uint_t_defined
+#endif
+
 #ifdef __cplusplus
 }
 #endif

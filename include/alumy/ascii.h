@@ -6,21 +6,44 @@
 
 __BEGIN_DECLS
 
-enum {
-    SOH = 0x01,
-    STX = 0x02,
-    ETX = 0x03,
-    EOT = 0x04,
-    ACK = 0x06,
-    NAK = 0x15,
-    CAN = 0x18,
-};
-
-#ifndef EOF
-#define EOF     (-1)
+#ifndef AL_SOH
+#define AL_SOH		0x01
 #endif
+
+#ifndef AL_STX
+#define AL_STX		0x02
+#endif
+
+#ifndef AL_ETX
+#define AL_ETX		0x03
+#endif
+
+#ifndef AL_EOT
+#define AL_EOT		0x04
+#endif
+
+#ifndef AL_ACK
+#define AL_ACK		0x06
+#endif
+
+#ifndef AL_BEL
+#define AL_BEL      0x07
+#endif
+
+#ifndef AL_NAK
+#define AL_NAK		0x15
+#endif
+
+#ifndef AL_CAN
+#define AL_CAN		0x18
+#endif
+
+#ifndef AL_EOF
+#define AL_EOF		(-1)
+#endif
+
+extern uint8_t al_hex2asc(uint8_t value);
 
 __END_DECLS
 
 #endif
-

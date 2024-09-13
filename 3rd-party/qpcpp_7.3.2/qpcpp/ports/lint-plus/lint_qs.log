@@ -1,0 +1,341 @@
+
+--- Module:   C:\qp-dev\qpcpp\src\qs\qs.cpp (C++)
+C:\qp-dev\qpcpp\src\qs\qs.cpp  183  note 9125: cast of integer cvalue expression changes signedness 
+    [AUTOSAR Rule M5-0-9]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  391  note 9125: cast of integer cvalue expression changes signedness 
+    [AUTOSAR Rule M5-0-9]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  481  info 8524: combining signed and unsigned types with operator '=' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\include\qs_pkg.hpp  184  supplemental 893: expanded from macro 'QS_INSERT_BYTE_'
+C:\qp-dev\qpcpp\src\qs\qs.cpp  571  note 9091: casting from pointer type 'const void *const' to integer type 
+    'std::uint32_t' (aka 'unsigned long') [AUTOSAR Rule M5-2-9]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  709  info 8524: combining signed and unsigned types with operator '+' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  970  note 9018: union '(unnamed)' declared [AUTOSAR Rule M9-5-1]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  998  note 9126: the result of the << operator applied to an object with an underlying 
+    type of 'unsigned char' must be cast to 'unsigned char' in this context [AUTOSAR Rule M5-0-10]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1003  note 9126: the result of the << operator applied to an object with an underlying 
+    type of 'unsigned char' must be cast to 'unsigned char' in this context [AUTOSAR Rule M5-0-10]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1006  info 734: loss of precision (call) from 12 bits to 8 bits
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1006  info 8524: combining signed and unsigned types with operator '+' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1006  info 737: loss of sign in promotion from 'int' to 'unsigned int'
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1006  info 8524: combining signed and unsigned types with operator '*' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1006  info 737: loss of sign in promotion from 'int' to 'unsigned int'
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1007  info 734: loss of precision (call) from 12 bits to 8 bits
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1007  info 8524: combining signed and unsigned types with operator '+' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1007  info 737: loss of sign in promotion from 'int' to 'unsigned int'
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1007  info 8524: combining signed and unsigned types with operator '*' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1007  info 737: loss of sign in promotion from 'int' to 'unsigned int'
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1008  info 8524: combining signed and unsigned types with operator '==' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1008  note 9128: plain character data mixed with non-plain-character data 
+    [AUTOSAR Rule M5-0-11]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1008  note 9117: implicit conversion from 'unsigned char' to 'char' changes signedness of 
+    underlying type [AUTOSAR Rule M5-0-4]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1009  info 732: loss of sign (call) ('int' to 'const std::uint8_t' 
+    (aka 'const unsigned char'))
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1012  info 734: loss of precision (call) from 12 bits to 8 bits
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1012  info 8524: combining signed and unsigned types with operator '+' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1012  info 737: loss of sign in promotion from 'int' to 'unsigned int'
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1012  info 8524: combining signed and unsigned types with operator '*' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1012  info 737: loss of sign in promotion from 'int' to 'unsigned int'
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1016  info 8524: combining signed and unsigned types with operator '==' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1016  note 9128: plain character data mixed with non-plain-character data 
+    [AUTOSAR Rule M5-0-11]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1016  note 9117: implicit conversion from 'unsigned char' to 'char' changes signedness of 
+    underlying type [AUTOSAR Rule M5-0-4]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1017  info 732: loss of sign (call) ('int' to 'const std::uint8_t' 
+    (aka 'const unsigned char'))
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1020  info 734: loss of precision (call) from 12 bits to 8 bits
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1020  info 8524: combining signed and unsigned types with operator '+' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1020  info 737: loss of sign in promotion from 'int' to 'unsigned int'
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1020  info 8524: combining signed and unsigned types with operator '*' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1020  info 737: loss of sign in promotion from 'int' to 'unsigned int'
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1024  info 8524: combining signed and unsigned types with operator '+' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1025  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1025  note 9128: plain character data mixed with non-plain-character data 
+    [AUTOSAR Rule M5-0-11]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1025  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1025  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1028  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1028  note 9128: plain character data mixed with non-plain-character data 
+    [AUTOSAR Rule M5-0-11]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1028  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1028  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1031  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1031  note 9128: plain character data mixed with non-plain-character data 
+    [AUTOSAR Rule M5-0-11]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1031  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1031  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1034  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1034  note 9128: plain character data mixed with non-plain-character data 
+    [AUTOSAR Rule M5-0-11]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1034  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1034  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1037  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1037  note 9128: plain character data mixed with non-plain-character data 
+    [AUTOSAR Rule M5-0-11]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1037  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1037  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1040  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1040  note 9128: plain character data mixed with non-plain-character data 
+    [AUTOSAR Rule M5-0-11]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1040  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1040  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1043  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1043  note 9128: plain character data mixed with non-plain-character data 
+    [AUTOSAR Rule M5-0-11]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1043  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1043  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1046  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1046  note 9128: plain character data mixed with non-plain-character data 
+    [AUTOSAR Rule M5-0-11]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1046  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1046  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1049  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1049  note 9128: plain character data mixed with non-plain-character data 
+    [AUTOSAR Rule M5-0-11]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1049  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1049  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1052  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1052  note 9128: plain character data mixed with non-plain-character data 
+    [AUTOSAR Rule M5-0-11]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1052  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1052  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1055  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1055  note 9128: plain character data mixed with non-plain-character data 
+    [AUTOSAR Rule M5-0-11]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1055  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1055  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1058  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1058  note 9128: plain character data mixed with non-plain-character data 
+    [AUTOSAR Rule M5-0-11]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1058  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1058  note 9112: plain character expression used with non-permitted operator '+' 
+    [AUTOSAR Rule M4-5-3]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1066  info 734: loss of precision (call) from 12 bits to 8 bits
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1066  info 8524: combining signed and unsigned types with operator '+' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1066  info 737: loss of sign in promotion from 'int' to 'unsigned int'
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1066  info 8524: combining signed and unsigned types with operator '*' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs.cpp  1066  info 737: loss of sign in promotion from 'int' to 'unsigned int'
+--- Module Wrap-up
+C:\qp-dev\qpcpp\src\qs\qs.cpp  837  note 952: parameter 'fun' of function 'QP::QS::fun_dict_pre_(QP::QSpyFunPtr, const 
+    char *const)' could be const [AUTOSAR Rule A7-1-1]
+
+--- Module:   C:\qp-dev\qpcpp\src\qs\qstamp.cpp (C++)
+--- Module Wrap-up
+
+--- Module:   C:\qp-dev\qpcpp\src\qs\qs_64bit.cpp (C++)
+C:\qp-dev\qpcpp\src\qs\qs_64bit.cpp  61  info 713: implicit conversion (initialization) from 'unsigned int' to 
+    'std::int_fast8_t' (aka 'int') [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs_64bit.cpp  61  note 9117: implicit conversion from 'unsigned char' to 'std::int_fast8_t' 
+    (aka 'int') changes signedness of underlying type [AUTOSAR Rule M5-0-4]
+C:\qp-dev\qpcpp\src\qs\qs_64bit.cpp  61  info 8524: combining signed and unsigned types with operator '!=' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs_64bit.cpp  61  info 737: loss of sign in promotion from 'std::int_fast8_t' (aka 'int') to 
+    'unsigned int'
+C:\qp-dev\qpcpp\src\qs\qs_64bit.cpp  61  note 9117: implicit conversion from 'unsigned char' to 'int' changes signedness 
+    of underlying type [AUTOSAR Rule M5-0-4]
+C:\qp-dev\qpcpp\src\qs\qs_64bit.cpp  84  info 713: implicit conversion (initialization) from 'unsigned int' to 
+    'std::int_fast8_t' (aka 'int') [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs_64bit.cpp  84  note 9117: implicit conversion from 'unsigned char' to 'std::int_fast8_t' 
+    (aka 'int') changes signedness of underlying type [AUTOSAR Rule M5-0-4]
+C:\qp-dev\qpcpp\src\qs\qs_64bit.cpp  84  info 8524: combining signed and unsigned types with operator '!=' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs_64bit.cpp  84  info 737: loss of sign in promotion from 'std::int_fast8_t' (aka 'int') to 
+    'unsigned int'
+C:\qp-dev\qpcpp\src\qs\qs_64bit.cpp  84  note 9117: implicit conversion from 'unsigned char' to 'int' changes signedness 
+    of underlying type [AUTOSAR Rule M5-0-4]
+--- Module Wrap-up
+
+--- Module:   C:\qp-dev\qpcpp\src\qs\qs_fp.cpp (C++)
+C:\qp-dev\qpcpp\src\qs\qs_fp.cpp  100  info 708: union initialization [BARR-C:2018 Rule 7.2a]
+--- Module Wrap-up
+C:\qp-dev\qpcpp\src\qs\qs_fp.cpp  98  info 754: local union member 'QP::QS::f64_fmt_(std::uint8_t, 
+    float64_t)::U32Rep::u32' not referenced
+C:\qp-dev\qpcpp\src\qs\qs_fp.cpp  56  note 952: parameter 'f' of function 'QP::QS::f32_fmt_(std::uint8_t, float32_t)' 
+    could be const [AUTOSAR Rule A7-1-1]
+C:\qp-dev\qpcpp\src\qs\qs_fp.cpp  84  note 952: parameter 'format' of function 'QP::QS::f64_fmt_(std::uint8_t, 
+    float64_t)' could be const [AUTOSAR Rule A7-1-1]
+C:\qp-dev\qpcpp\src\qs\qs_fp.cpp  85  note 952: parameter 'd' of function 'QP::QS::f64_fmt_(std::uint8_t, float64_t)' 
+    could be const [AUTOSAR Rule A7-1-1]
+
+--- Module:   C:\qp-dev\qpcpp\src\qs\qs_rx.cpp (C++)
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  803  info 839: storage class of symbol 'rxHandleGoodFrame_' assumed static 
+    [AUTOSAR Rule M3-3-2]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  186  supplemental 891: previous declaration is here
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  117  note 9018: union '(anonymous namespace)::ExtState::Variant' declared 
+    [AUTOSAR Rule M9-5-1]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  314  info 8524: combining signed and unsigned types with operator '-' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  314  info 737: loss of sign in promotion from 'int' to 'unsigned int'
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  314  info 834: operator '-' followed by operator '-' could be confusing without 
+    parentheses [BARR-C:2018 Rule 1.4a]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  318  info 8524: combining signed and unsigned types with operator '-' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  317  info 737: loss of sign in promotion from 'int' to 'unsigned int'
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  318  info 834: operator '-' followed by operator '-' could be confusing without 
+    parentheses [BARR-C:2018 Rule 1.4a]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  318  info 8524: combining signed and unsigned types with operator '-' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  318  note 9113: dependence placed on C++ operator precedence [AUTOSAR Rule M5-0-2]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  580  info 8524: combining signed and unsigned types with operator '==' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  589  info 8524: combining signed and unsigned types with operator '==' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  854  note 9079: conversion from pointer to void to other pointer type 
+    ('std::uint8_t *' (aka 'unsigned char *')) [AUTOSAR Rule M5-2-8]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  868  info 826: suspicious pointer-to-pointer conversion (area too small)
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  872  info 826: suspicious pointer-to-pointer conversion (area too small)
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  896  note 9079: conversion from pointer to void to other pointer type 
+    ('std::uint8_t *' (aka 'unsigned char *')) [AUTOSAR Rule M5-2-8]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  906  info 826: suspicious pointer-to-pointer conversion (area too small)
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  910  info 826: suspicious pointer-to-pointer conversion (area too small)
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  974  note 9010: conversion from integer type '(anonymous namespace)::QSObj' 
+    (aka 'unsigned long') to pointer type 'QP::QActive *' [AUTOSAR Rule M5-2-8]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  976  info 8524: combining signed and unsigned types with operator '==' 
+    [BARR-C:2018 Rule 5.3c]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  976  note 9117: implicit conversion from 'signed char' to 'unsigned char' changes 
+    signedness of underlying type [AUTOSAR Rule M5-0-4]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  982  note 9117: implicit conversion from 'int' to 'const std::uint8_t' 
+    (aka 'const unsigned char') changes signedness of underlying type [AUTOSAR Rule M5-0-4]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  982  note 9119: implicit conversion of integer to smaller underlying type ('int' to 
+    'std::uint8_t' (aka 'unsigned char')) [AUTOSAR Rule M5-0-6]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  1041  note 9079: conversion from pointer to void to other pointer type ('QP::QAsm *') 
+    [AUTOSAR Rule M5-2-8]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  1058  note 9079: conversion from pointer to void to other pointer type ('QP::QAsm *') 
+    [AUTOSAR Rule M5-2-8]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  1070  note 9079: conversion from pointer to void to other pointer type 
+    ('QP::QActive *') [AUTOSAR Rule M5-2-8]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  1158  note 9181: switch contains fewer than two non-default switch cases 
+    [AUTOSAR Rule A6-4-1]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  1210  note 9079: conversion from pointer to void to other pointer type ('QP::QHsm *') 
+    [AUTOSAR Rule M5-2-8]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  1214  note 9079: conversion from pointer to void to other pointer type 
+    ('QP::QMPool *') [AUTOSAR Rule M5-2-8]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  1216  note 9079: conversion from pointer to void to other pointer type 
+    ('QP::QMPool *') [AUTOSAR Rule M5-2-8]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  1220  note 9079: conversion from pointer to void to other pointer type 
+    ('QP::QEQueue *') [AUTOSAR Rule M5-2-8]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  1222  note 9079: conversion from pointer to void to other pointer type 
+    ('QP::QEQueue *') [AUTOSAR Rule M5-2-8]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  1226  note 9079: conversion from pointer to void to other pointer type 
+    ('QP::QTimeEvt *') [AUTOSAR Rule M5-2-8]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  1228  note 9079: conversion from pointer to void to other pointer type 
+    ('QP::QTimeEvt *') [AUTOSAR Rule M5-2-8]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  1230  note 9079: conversion from pointer to void to other pointer type 
+    ('QP::QTimeEvt *') [AUTOSAR Rule M5-2-8]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  1232  note 9079: conversion from pointer to void to other pointer type 
+    ('QP::QTimeEvt *') [AUTOSAR Rule M5-2-8]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  1234  note 9079: conversion from pointer to void to other pointer type 
+    ('QP::QTimeEvt *') [AUTOSAR Rule M5-2-8]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  1266  warning 527: statement is unreachable due to unconditional transfer of control 
+    by 'non-returning call expression' statement [AUTOSAR Rule M0-1-1]
+C:\qp-dev\qpcpp\include\qsafe.h  92  supplemental 893: expanded from macro 'Q_ERROR_ID'
+C:\qp-dev\qpcpp\ports\lint-plus\qv\qp_port.hpp  63  supplemental 893: expanded from macro 'QF_CRIT_EXIT'
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  1252  note 9079: conversion from pointer to void to other pointer type 
+    ('std::uint8_t *' (aka 'unsigned char *')) [AUTOSAR Rule M5-2-8]
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  1259  info 826: suspicious pointer-to-pointer conversion (area too small)
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  1263  info 826: suspicious pointer-to-pointer conversion (area too small)
+--- Module Wrap-up
+C:\qp-dev\qpcpp\src\qs\qs_rx.cpp  1199  note 952: parameter 'obj_kind' of function '(anonymous 
+    namespace)::queryCurrObj_(std::uint8_t)' could be const [AUTOSAR Rule A7-1-1]
+
+--- Module:   C:\qp-dev\qpcpp\src\qs\qutest.cpp (C++)
+C:\qp-dev\qpcpp\src\qs\qutest.cpp  87  note 9091: casting from pointer type 'const QP::QSpyFunPtr' 
+    (aka 'void (*const)()') to integer type 'QP::QSFun' (aka 'unsigned long') [AUTOSAR Rule M5-2-9]
+C:\qp-dev\qpcpp\src\qs\qutest.cpp  167  note 904: return statement before end of function 'QP::QS::processTestEvts_' 
+    [BARR-C:2018 Rule 6.2c]
+C:\qp-dev\qpcpp\src\qs\qutest.cpp  291  note 9079: conversion from pointer to void to other pointer type 
+    ('QP::QTimeEvt *') [AUTOSAR Rule M5-2-8]
+C:\qp-dev\qpcpp\src\qs\qutest.cpp  297  note 9079: conversion from pointer to void to other pointer type 
+    ('QP::QActive *') [AUTOSAR Rule M5-2-8]
+C:\qp-dev\qpcpp\src\qs\qutest.cpp  388  info 1731: public virtual function 'QP::QHsmDummy::init(const void *const, const 
+    std::uint_fast8_t)'
+C:\qp-dev\qpcpp\src\qs\qutest.cpp  416  info 1731: public virtual function 'QP::QHsmDummy::dispatch(const QP::QEvt 
+    *const, const std::uint_fast8_t)'
+C:\qp-dev\qpcpp\src\qs\qutest.cpp  441  info 1731: public virtual function 'QP::QActiveDummy::init(const void *const, 
+    const std::uint_fast8_t)'
+C:\qp-dev\qpcpp\src\qs\qutest.cpp  468  info 1731: public virtual function 'QP::QActiveDummy::dispatch(const QP::QEvt 
+    *const, const std::uint_fast8_t)'
+C:\qp-dev\qpcpp\src\qs\qutest.cpp  512  note 9114: implicit conversion of underlying type of integer cvalue expression 
+    from 'unsigned char' to 'const std::uint_fast8_t' (aka 'const unsigned int') [AUTOSAR Rule M5-0-3]
+--- Module Wrap-up
+Count   Type    Number  Text
+
+1       warning 527     statement is unreachable due to unconditional transfer of control by '__string__' statement
+1       info    708     union initialization
+2       info    713     implicit conversion (__context__) from __type__ to __type__
+2       info    732     loss of sign (__context__) (__type__ to __type__)
+5       info    734     loss of precision (__context__) from __number__ bits to __number__ bits
+14      info    737     loss of sign in promotion from __type__ to __type__
+1       info    754     local __string__ member __symbol__ not referenced
+6       info    826     suspicious pointer-to-pointer conversion (area too small)
+2       info    834     operator '__operator__' followed by operator '__operator__' could be confusing without parentheses
+1       info    839     storage class of symbol __symbol__ assumed static
+1       supplemental    891     previous declaration is here
+3       supplemental    893     expanded from macro
+1       note    904     return statement before end of function __symbol__
+5       note    952     parameter __symbol__ of function __symbol__ could be const
+4       info    1731    public virtual function __symbol__
+23      info    8524    __string__
+1       note    9010    conversion from integer type __type__ to pointer type __type__
+2       note    9018    union __symbol__ declared
+18      note    9079    conversion from pointer to void to other pointer type (__type__)
+2       note    9091    casting from pointer type __type__ to integer type __type__
+36      note    9112    plain character expression used with non-permitted operator '__string__'
+1       note    9113    dependence placed on C++ operator precedence
+1       note    9114    implicit conversion of underlying type of integer cvalue expression from __underlying-type__ to __underlying type__
+8       note    9117    implicit conversion from __underlying-type__ to __underlying-type__ changes signedness of underlying type
+1       note    9119    implicit conversion of integer to smaller underlying type (__type__ to __type__)
+2       note    9125    cast of integer cvalue expression changes signedness
+2       note    9126    the result of the __operator__ operator applied to an object with an underlying type of __underlying-type__ must be cast to __type__ in this context
+14      note    9128    plain character data mixed with non-plain-character data
+1       note    9181    switch contains fewer than two non-default switch cases

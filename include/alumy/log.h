@@ -10,6 +10,8 @@
 
 __BEGIN_DECLS
 
+#define AL_LOG_BIN_LINE_SIZE	16
+
 #define AL_LOG_EMERG   0   /* system is unusable */
 #define AL_LOG_ALERT   1   /* action must be taken immediately */
 #define AL_LOG_CRIT    2   /* critical conditions */
@@ -151,6 +153,11 @@ void al_log_bin(int32_t pri,
 				const void *data, size_t len);
 
 int32_t al_log_set_mask(int32_t mask);
+
+size_t hex_addr_fmt(char buf[8], intptr_t addr);
+
+ssize_t hex_raw_fmt_line(char *buf, size_t bufsz, intptr_t addr,
+                         const void *data, size_t len);
 
 __END_DECLS
 

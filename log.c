@@ -6,7 +6,6 @@
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
-#define _POSIX_C_SOURCE 200112L
 #include <time.h>
 #include "alumy/config.h"
 #include "alumy/types.h"
@@ -14,8 +13,6 @@
 #include "alumy/log.h"
 
 __BEGIN_DECLS
-
-#define BIN_LINE_SIZE	16
 
 static const char hex[] = "0123456789ABCDEF";
 
@@ -82,7 +79,7 @@ void al_log(int32_t pri, const char *file, int32_t line, const char *func,
  *
  * @return String length
  */
-static size_t hex_addr_fmt(char buf[8], intptr_t addr)
+size_t hex_addr_fmt(char buf[8], intptr_t addr)
 {
 	char *wp = buf;
 
@@ -112,13 +109,13 @@ static size_t hex_addr_fmt(char buf[8], intptr_t addr)
  *
  * @return size_t
  */
-static ssize_t hex_raw_fmt_line(char *buf, size_t bufsz, intptr_t addr,
-								const void *data, size_t len)
+ssize_t hex_raw_fmt_line(char *buf, size_t bufsz, intptr_t addr,
+                         const void *data, size_t len)
 {
 	size_t line_size = 8 + 2 + 16 * 3 + 2 + 16 + 1 + 1;
 	int32_t i;
 
-	if ((len > BIN_LINE_SIZE) || (bufsz < line_size)) {
+    if ((len > AL_LOG_BIN_LINE_SIZE) || (bufsz < line_size)) {
 		return -1;
 	}
 
@@ -156,7 +153,7 @@ static ssize_t hex_raw_fmt_line(char *buf, size_t bufsz, intptr_t addr,
 		++rp;
     }
 
-	for (i = len; i < BIN_LINE_SIZE; ++i) {
+    for (i = len; i < AL_LOG_BIN_LINE_SIZE; ++i) {
 		*h_wp++ = ' ';
 		*h_wp++ = ' ';
 		*h_wp++ = ' ';
@@ -180,8 +177,9 @@ void al_log_bin(int32_t pri,
 
 	while (nline--) {
         char buf[128];
-        hex_raw_fmt_line(buf, sizeof(buf), addr, rp + addr, BIN_LINE_SIZE);
-        addr += BIN_LINE_SIZE;
+        hex_raw_fmt_line(buf, sizeof(buf), addr, rp + addr,
+                         AL_LOG_BIN_LINE_SIZE);
+        addr += AL_LOG_BIN_LINE_SIZE;
 
         al_log(pri, file, line, func, "%s\n", buf);
 	}
@@ -192,7 +190,6 @@ void al_log_bin(int32_t pri,
 
         al_log(pri, file, line, func, "%s\n", buf);
 	}
-
 }
 
 int32_t al_log_set_mask(int32_t mask)
