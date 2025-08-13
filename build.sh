@@ -26,8 +26,7 @@ cd "$BUILD_DIR"
 echo -e "${YELLOW}Configuring with CMake...${NC}"
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
-    -DBUILD_SHARED_LIBS=OFF \
-    -DBUILD_EXAMPLES=ON
+    -DBUILD_SHARED_LIBS=OFF
 
 # Build
 echo -e "${YELLOW}Building...${NC}"

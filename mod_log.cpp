@@ -1,9 +1,9 @@
-#include <consoleappender.h>
-#include <rollingfileappender.h>
-#include <logger.h>
-#include <ttcclayout.h>
-#include <logmanager.h>
-#include <varia/levelrangefilter.h>
+#include "log4qt/consoleappender.h"
+#include "log4qt/rollingfileappender.h"
+#include "log4qt/logger.h"
+#include "log4qt/ttcclayout.h"
+#include "log4qt/logmanager.h"
+#include "log4qt/varia/levelrangefilter.h"
 #include <QJsonDocument>
 #include <QMutex>
 #include <QDir>

@@ -93,8 +93,6 @@ add_custom_target(get_git_hash
 add_definitions(-D__STDC_FORMAT_MACROS)
 add_definitions(-DAL_USE_DEFAULT_CONFIG)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
     link_libraries(rt)
 endif()
@@ -115,7 +113,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 14) 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(QT_COMPONENTS Widgets Network Core SerialPort Multimedia)
+set(QT_COMPONENTS Widgets Network Core SerialPort Multimedia Concurrent)
 
 find_package(QT NAMES Qt6 Qt5 COMPONENTS ${QT_COMPONENTS} REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS ${QT_COMPONENTS} REQUIRED)
@@ -133,15 +131,9 @@ else()
     add_compile_options(-O3 -DNDEBUG)
 endif()
 
-# Output directories
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-
 # Include directories
 include_directories(
     ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/3rd-party
 )
 
 add_compile_definitions(AL_USE_DEFAULT_CONFIG)
@@ -152,6 +144,7 @@ link_libraries(
     Qt${QT_VERSION_MAJOR}::Network
     Qt${QT_VERSION_MAJOR}::SerialPort
     Qt${QT_VERSION_MAJOR}::Multimedia
+    Qt${QT_VERSION_MAJOR}::Concurrent
 )
 
 include_directories(
@@ -160,8 +153,10 @@ include_directories(
     ${Qt${QT_VERSION_MAJOR}Network_INCLUDE_DIRS}
     ${Qt${QT_VERSION_MAJOR}SerialPort_INCLUDE_DIRS}
     ${Qt${QT_VERSION_MAJOR}Multimedia_INCLUDE_DIRS}
+    ${Qt${QT_VERSION_MAJOR}Concurrent_INCLUDE_DIRS}
 )
 
+add_subdirectory(3rd-party)
 add_subdirectory(crc)
 add_subdirectory(libcsv)  
 add_subdirectory(mem)
@@ -171,13 +166,7 @@ add_subdirectory(xyzmodem)
 add_subdirectory(net)
 add_subdirectory(audio)
 
-set(PROJECT_SOURCES
-        version.c
-        log.c
-        ascii.c
-)
-
-set(PROJECT_OBJS
+set(objs
     $<TARGET_OBJECTS:crc>
     $<TARGET_OBJECTS:libcsv>
     $<TARGET_OBJECTS:mem>
@@ -188,116 +177,72 @@ set(PROJECT_OBJS
     $<TARGET_OBJECTS:audio>
 )
 
-# Create main library from object libraries
-add_library(${PROJECT_NAME} STATIC
-    ${PROJECT_SOURCES}
-    ${PROJECT_OBJS}
-)
+aux_source_directory(${PROJECT_SOURCE_DIR} ${PROJECT_NAME}_src)
 
-# Set library properties
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_VERSION_MAJOR}
-    OUTPUT_NAME alumy-qt
-)
+include(${PROJECT_SOURCE_DIR}/cmake/check_type_size.cmake)
 
-# Create shared library option
-option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
-if(BUILD_SHARED_LIBS)
-    add_library(${PROJECT_NAME}-shared SHARED
-        ${PROJECT_SOURCES}
-        ${PROJECT_OBJS}
-    )
+if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
+    if(BUILD_SHARED_LIBS)
+    	message(STATUS "Building shared library for Linux")
 
-    set_target_properties(${PROJECT_NAME}-shared PROPERTIES
-        VERSION ${PROJECT_VERSION}
-        SOVERSION ${PROJECT_VERSION_MAJOR}
-        OUTPUT_NAME alumy-qt
-    )
+    	add_library(${PROJECT_NAME} SHARED ${${PROJECT_NAME}_src} ${objs})
+    	target_link_libraries(${PROJECT_NAME} 3rd-party)
+
+    	add_dependencies(${PROJECT_NAME} get_git_hash)
+    	add_dependencies(${PROJECT_NAME} get_svn_revision)
+
+    	set_target_properties(${PROJECT_NAME} PROPERTIES
+           	VERSION "${PROJECT_VERSION}"
+           	SOVERSION "${PROJECT_VERSION_MAJOR}")
+
+    	install(TARGETS "${PROJECT_NAME}"
+            	DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+            	EXPORT "${PROJECT_NAME}")
+    endif()
 endif()
 
-# Testing support
-option(BUILD_TESTING "Build test programs" OFF)
-if(BUILD_TESTING)
-    enable_testing()
-    add_subdirectory(test)
+if(BUILD_STATIC_LIBS)
+    add_library("${PROJECT_NAME}-static" STATIC ${${PROJECT_NAME}_src} ${objs})
+    target_link_libraries("${PROJECT_NAME}-static" 3rd-party)
+    
+    add_dependencies("${PROJECT_NAME}-static" get_git_hash)
+    add_dependencies("${PROJECT_NAME}-static" get_svn_revision)
+    add_dependencies("${PROJECT_NAME}-static" 3rd-party)
+    
+    # target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR})
+    # target_compile_options(<target> [BEFORE] <INTERFACE|PUBLIC|PRIVATE> [items1...] [<INTERFACE|PUBLIC|PRIVATE> [items2...] ...])
+    
+    set_target_properties("${PROJECT_NAME}-static" PROPERTIES OUTPUT_NAME "${PROJECT_NAME}")
+    set_target_properties("${PROJECT_NAME}-static" PROPERTIES PREFIX "lib")
+    
+    install(TARGETS "${PROJECT_NAME}-static"
+	    DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 endif()
 
-# Example programs
-option(BUILD_EXAMPLES "Build example programs" ON)
-if(BUILD_EXAMPLES)
-    # Simple test program
-    add_executable(test-alumy
-        version.c
-        log.c
-        ascii.c
-    )
-    target_link_libraries(test-alumy ${PROJECT_NAME})
-    target_include_directories(test-alumy PRIVATE ${CMAKE_SOURCE_DIR}/include)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
+	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+	FILES_MATCHING PATTERN "*.h")
+
+include(InstallRequiredSystemLibraries)
+set(CPACK_PACKAGE_VENDOR alumy)
+set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
+set(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
+set(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
+set(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
+set(CPACK_PACKAGE_CHECKSUM "SHA256")
+set(CPACK_GENERATOR "STGZ;TGZ;TZ")
+
+set(CPACK_SOURCE_IGNORE_FILES
+    ${PROJECT_SOURCE_DIR}/build
+    ${PROJECT_SOURCE_DIR}/pack
+    ${PROJECT_SOURCE_DIR}/.svn)
+set(CPACK_SOURCE_GENERATOR "TGZ")
+
+include(CPack)
+
+if(UNIT_TEST EQUAL 1)
+	if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
+		enable_testing()
+		add_subdirectory(${PROJECT_SOURCE_DIR}/test)
+	endif()
 endif()
-
-# Install rules
-install(TARGETS ${PROJECT_NAME}
-    EXPORT ${PROJECT_NAME}-targets
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin
-)
-
-if(BUILD_SHARED_LIBS)
-    install(TARGETS ${PROJECT_NAME}-shared
-        EXPORT ${PROJECT_NAME}-targets
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        RUNTIME DESTINATION bin
-    )
-endif()
-
-# Install headers
-install(DIRECTORY include/ DESTINATION include
-    FILES_MATCHING PATTERN "*.h"
-)
-
-# Package configuration
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
-    VERSION ${PROJECT_VERSION}
-    COMPATIBILITY AnyNewerVersion
-)
-
-# Export targets
-export(TARGETS ${PROJECT_NAME} 
-    FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-targets.cmake"
-    NAMESPACE ${PROJECT_NAME}::
-)
-
-# Create config file  
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/${PROJECT_NAME}-config.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
-    @ONLY
-)
-
-# Install config files
-install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
-    DESTINATION lib/cmake/${PROJECT_NAME}
-)
-
-install(EXPORT ${PROJECT_NAME}-targets
-    FILE ${PROJECT_NAME}-targets.cmake
-    NAMESPACE ${PROJECT_NAME}::
-    DESTINATION lib/cmake/${PROJECT_NAME}
-)
-
-# Print configuration summary
-message(STATUS "Configuration Summary:")
-message(STATUS "  Project: ${PROJECT_NAME} ${PROJECT_VERSION}")
-message(STATUS "  Build type: ${CMAKE_BUILD_TYPE}")
-message(STATUS "  C compiler: ${CMAKE_C_COMPILER}")
-message(STATUS "  C++ compiler: ${CMAKE_CXX_COMPILER}")
-message(STATUS "  Build shared libs: ${BUILD_SHARED_LIBS}")
-message(STATUS "  Build examples: ${BUILD_EXAMPLES}")
-message(STATUS "  Build testing: ${BUILD_TESTING}")

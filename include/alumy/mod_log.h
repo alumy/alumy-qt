@@ -3,11 +3,11 @@
 
 #include <QObject>
 #include <QJsonObject>
-#include "log4qt.h"
-#include "logger.h"
-#include "ttcclayout.h"
-#include "varia/levelrangefilter.h"
-#include "rollingfileappender.h"
+#include "log4qt/log4qt.h"
+#include "log4qt/logger.h"
+#include "log4qt/ttcclayout.h"
+#include "log4qt/varia/levelrangefilter.h"
+#include "log4qt/rollingfileappender.h"
 #include "alumy/cdefs.h"
 #include "alumy/defs.h"
 #include "alumy/singleton.h"
