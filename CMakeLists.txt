@@ -8,7 +8,7 @@ else()
 endif()
 
 cmake_minimum_required(VERSION 3.10)
-project(alumy-qt C CXX)
+project(alumy C CXX)
 
 set(PROJECT_VERSION_MAJOR 0)
 set(PROJECT_VERSION_MINOR 0)
@@ -206,6 +206,8 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
            	VERSION "${PROJECT_VERSION}"
            	SOVERSION "${PROJECT_VERSION_MAJOR}")
 
+    	set_target_properties(${PROJECT_NAME} PROPERTIES DEBUG_POSTFIX d)
+
     	install(TARGETS "${PROJECT_NAME}"
             	DESTINATION "${CMAKE_INSTALL_LIBDIR}"
             	EXPORT "${PROJECT_NAME}")
@@ -225,6 +227,7 @@ if(BUILD_STATIC_LIBS)
     
     set_target_properties("${PROJECT_NAME}-static" PROPERTIES OUTPUT_NAME "${PROJECT_NAME}")
     set_target_properties("${PROJECT_NAME}-static" PROPERTIES PREFIX "lib")
+    set_target_properties("${PROJECT_NAME}-static" PROPERTIES DEBUG_POSTFIX d)
     
     install(TARGETS "${PROJECT_NAME}-static"
 	    DESTINATION "${CMAKE_INSTALL_LIBDIR}")
