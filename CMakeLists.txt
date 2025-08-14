@@ -92,6 +92,9 @@ add_custom_target(get_git_hash
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include/alumy/git_hash.h
 )
 
+#####################################################################
+# global definitions
+#####################################################################
 add_definitions(-D__STDC_FORMAT_MACROS)
 add_definitions(-DAL_USE_DEFAULT_CONFIG)
 
@@ -103,18 +106,25 @@ link_libraries(m)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+#####################################################################
+# Qt MOC, UI, RCC
+#####################################################################
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-# Set C standard
+#####################################################################
+# c & c++ standard
+#####################################################################
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-# Set C++ standard
 set(CMAKE_CXX_STANDARD 14) 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+#####################################################################
+# Qt Components
+#####################################################################
 set(QT_COMPONENTS Widgets Network Core SerialPort Multimedia Concurrent)
 
 find_package(QT NAMES Qt6 Qt5 COMPONENTS ${QT_COMPONENTS} REQUIRED)
@@ -122,12 +132,21 @@ find_package(Qt${QT_VERSION_MAJOR} COMPONENTS ${QT_COMPONENTS} REQUIRED)
 
 add_compile_options(-Wall)
 
+#####################################################################
+# include directories
+#####################################################################
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
+#####################################################################
+# compile definitions
+#####################################################################
 add_compile_definitions(AL_USE_DEFAULT_CONFIG)
 
+#####################################################################
+# link libraries
+#####################################################################
 link_libraries(
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Widgets
@@ -137,6 +156,9 @@ link_libraries(
     Qt${QT_VERSION_MAJOR}::Concurrent
 )
 
+#####################################################################
+# include directories
+#####################################################################
 include_directories(
     ${Qt${QT_VERSION_MAJOR}Core_INCLUDE_DIRS}
     ${Qt${QT_VERSION_MAJOR}Widgets_INCLUDE_DIRS}
@@ -146,6 +168,9 @@ include_directories(
     ${Qt${QT_VERSION_MAJOR}Concurrent_INCLUDE_DIRS}
 )
 
+#####################################################################
+# subdirectories
+#####################################################################
 add_subdirectory(3rd-party)
 add_subdirectory(crc)
 add_subdirectory(libcsv)  
@@ -156,6 +181,9 @@ add_subdirectory(xyzmodem)
 add_subdirectory(net)
 add_subdirectory(audio)
 
+#####################################################################
+# objects
+#####################################################################
 set(objs
     $<TARGET_OBJECTS:crc>
     $<TARGET_OBJECTS:libcsv>
@@ -167,6 +195,9 @@ set(objs
     $<TARGET_OBJECTS:audio>
 )
 
+#####################################################################
+# sources
+#####################################################################
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} PROJECT_SOURCES)
 
 file(GLOB_RECURSE PROJECT_HEADERS "include/*.h")
@@ -175,8 +206,14 @@ list(FILTER PROJECT_HEADERS EXCLUDE REGEX "\\.h\\.in$")
 
 set(PROJECT_SOURCES ${PROJECT_SOURCES} ${PROJECT_HEADERS})
 
+#####################################################################
+# check type size
+#####################################################################
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_type_size.cmake)
 
+#####################################################################
+# shared library
+#####################################################################
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
     if(BUILD_SHARED_LIBS)
     	message(STATUS "Building shared library for Linux")
@@ -205,6 +242,9 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
     endif()
 endif()
 
+#####################################################################
+# static library
+#####################################################################
 if(BUILD_STATIC_LIBS)
     add_library("${PROJECT_NAME}-static" STATIC ${PROJECT_SOURCES} ${objs})
     target_link_libraries("${PROJECT_NAME}-static" alumy-3rd-party)
@@ -226,12 +266,18 @@ if(BUILD_STATIC_LIBS)
 	    DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 endif()
 
+#####################################################################
+# alias target
+#####################################################################
 if(BUILD_SHARED_LIBS AND TARGET ${PROJECT_NAME})
     add_library(alumy::alumy ALIAS "${PROJECT_NAME}")
 elseif(BUILD_STATIC_LIBS AND TARGET "${PROJECT_NAME}-static")
     add_library(alumy::alumy ALIAS "${PROJECT_NAME}-static")
 endif()
 
+#####################################################################
+# install
+#####################################################################
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
 	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
 	FILES_MATCHING PATTERN "*.h")
@@ -253,6 +299,9 @@ set(CPACK_SOURCE_GENERATOR "TGZ")
 
 include(CPack)
 
+#####################################################################
+# unit test
+#####################################################################
 if(UNIT_TEST EQUAL 1)
 	if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
 		enable_testing()
