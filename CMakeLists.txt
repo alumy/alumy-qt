@@ -69,7 +69,7 @@ add_custom_command(
 )
 
 # rebuild svn_revision.h every time (use unique target name to avoid collisions when used as a subproject)
-add_custom_target(alumy_get_svn_revision
+add_custom_target(get_svn_revision
     ALL
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include/alumy/svn_revision.h
 )
@@ -85,7 +85,7 @@ add_custom_command(
 )
 
 # rebuild git_hash.h every time (use unique target name to avoid collisions when used as a subproject)
-add_custom_target(alumy_get_git_hash
+add_custom_target(get_git_hash
     ALL
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include/alumy/git_hash.h
 )
@@ -188,8 +188,8 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
     	add_library(${PROJECT_NAME} SHARED ${${PROJECT_NAME}_src} ${objs})
     	target_link_libraries(${PROJECT_NAME} 3rd-party)
 
-    	add_dependencies(${PROJECT_NAME} alumy_get_git_hash)
-    	add_dependencies(${PROJECT_NAME} alumy_get_svn_revision)
+    	add_dependencies(${PROJECT_NAME} get_git_hash)
+    	add_dependencies(${PROJECT_NAME} get_svn_revision)
 
     	set_target_properties(${PROJECT_NAME} PROPERTIES
            	VERSION "${PROJECT_VERSION}"
@@ -205,8 +205,8 @@ if(BUILD_STATIC_LIBS)
     add_library("${PROJECT_NAME}-static" STATIC ${${PROJECT_NAME}_src} ${objs})
     target_link_libraries("${PROJECT_NAME}-static" 3rd-party)
     
-    add_dependencies("${PROJECT_NAME}-static" alumy_get_git_hash)
-    add_dependencies("${PROJECT_NAME}-static" alumy_get_svn_revision)
+    add_dependencies("${PROJECT_NAME}-static" get_git_hash)
+    add_dependencies("${PROJECT_NAME}-static" get_svn_revision)
     add_dependencies("${PROJECT_NAME}-static" 3rd-party)
     
     # target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR})
