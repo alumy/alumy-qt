@@ -36,7 +36,7 @@ slog::slog(QObject *parent)
 
 slog::~slog()
 {
-    m_logger->flush();
+
 }
 
 QString slog::bin(const QByteArray &msg)
@@ -255,6 +255,16 @@ void slog::set_level(spdlog::level::level_enum level)
 {
 	m_level = level;
 	rebuild_logger();
+}
+
+void slog::shutdown()
+{
+    try {
+        // 刷新所有logger
+        spdlog::shutdown();
+    } catch (...) {
+        // 静默处理清理错误
+    }
 }
 
 } // namespace alumy
