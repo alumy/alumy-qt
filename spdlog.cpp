@@ -91,7 +91,7 @@ void slog::rebuild_logger()
 		m_logger->set_level(m_level);
 		m_logger->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [%t] %v");
 
-		spdlog::register_logger(m_logger);
+		spdlog::register_or_replace(m_logger);
 	} catch (const spdlog::spdlog_ex &e) {
 		m_logger = spdlog::default_logger();
 	}
