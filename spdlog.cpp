@@ -3,8 +3,10 @@
 #include <vector>
 #include <mutex>
 #include <chrono>
-#include <QtCore/QJsonDocument>
-#include <QtCore/QtGlobal>
+#include <QJsonDocument>
+#include <QGlobal>
+#include <QDir>
+#include <QFileInfo>
 #include "alumy/spdlog.h"
 #include "alumy/log.h"
 #include <spdlog/spdlog.h>
@@ -75,18 +77,20 @@ void slog::rebuild_logger()
 {
 	try {
 		std::vector<spdlog::sink_ptr> sinks;
-		sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
-
+		
 		if (!m_path.isEmpty()) {
 			auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
 				to_std_string(m_path), m_file_size, m_file_count);
 			sinks.push_back(file_sink);
+		} else {
+			sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
 		}
 
 		m_logger = std::make_shared<spdlog::async_logger>(
 			to_std_string(m_name), sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
 		m_logger->set_level(m_level);
 		m_logger->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [%t] %v");
+
 		spdlog::register_logger(m_logger);
 	} catch (const spdlog::spdlog_ex &e) {
 		m_logger = spdlog::default_logger();
@@ -229,6 +233,15 @@ void slog::set_name(QString name)
 
 void slog::set_path(QString path)
 {
+	if (!path.isEmpty()) {
+		QFileInfo fileInfo(path);
+		QDir dir = fileInfo.dir();
+		
+		if (!dir.exists()) {
+			dir.mkpath(".");
+		}
+	}
+	
 	m_path = path;
 	rebuild_logger();
 }
