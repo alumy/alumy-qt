@@ -228,7 +228,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
 
     	add_dependencies(${PROJECT_NAME} get_git_hash)
     	add_dependencies(${PROJECT_NAME} get_svn_revision)
-        add_dependencies("${PROJECT_NAME}-static" alumy-3rd-party)
+        add_dependencies(${PROJECT_NAME} alumy-3rd-party)
 
     	set_target_properties(${PROJECT_NAME} PROPERTIES
            	VERSION "${PROJECT_VERSION}"
