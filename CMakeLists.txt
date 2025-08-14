@@ -120,21 +120,8 @@ set(QT_COMPONENTS Widgets Network Core SerialPort Multimedia Concurrent)
 find_package(QT NAMES Qt6 Qt5 COMPONENTS ${QT_COMPONENTS} REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS ${QT_COMPONENTS} REQUIRED)
 
-# Build type
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug)
-endif()
-
-# Compiler options  
 add_compile_options(-Wall)
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_compile_options(-g -O0)
-else()
-    add_compile_options(-Os -DNDEBUG)
-endif()
-
-# Include directories
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )

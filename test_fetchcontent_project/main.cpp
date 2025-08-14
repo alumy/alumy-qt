@@ -1,6 +1,6 @@
 #include <QApplication>
 #include <QWidget>
-#include <alumy.h>  // This should now work with log4qt dependencies resolved
+#include <alumy.h>
 
 int main(int argc, char *argv[])
 {
