@@ -181,7 +181,13 @@ set(objs
     $<TARGET_OBJECTS:audio>
 )
 
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} ${PROJECT_NAME}_src)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} PROJECT_SOURCES)
+
+file(GLOB_RECURSE PROJECT_HEADERS "include/*.h")
+
+list(FILTER PROJECT_HEADERS EXCLUDE REGEX "\\.h\\.in$")
+
+set(PROJECT_SOURCES ${PROJECT_SOURCES} ${PROJECT_HEADERS})
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_type_size.cmake)
 
@@ -189,7 +195,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
     if(BUILD_SHARED_LIBS)
     	message(STATUS "Building shared library for Linux")
 
-    	add_library(${PROJECT_NAME} SHARED ${${PROJECT_NAME}_src} ${objs})
+    	add_library(${PROJECT_NAME} SHARED ${PROJECT_SOURCES} ${objs})
     	target_link_libraries(${PROJECT_NAME} alumy-3rd-party)
 
     	add_dependencies(${PROJECT_NAME} get_git_hash)
@@ -206,7 +212,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
 endif()
 
 if(BUILD_STATIC_LIBS)
-    add_library("${PROJECT_NAME}-static" STATIC ${${PROJECT_NAME}_src} ${objs})
+    add_library("${PROJECT_NAME}-static" STATIC ${PROJECT_SOURCES} ${objs})
     target_link_libraries("${PROJECT_NAME}-static" alumy-3rd-party)
     
     add_dependencies("${PROJECT_NAME}-static" get_git_hash)

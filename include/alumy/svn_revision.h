@@ -1,7 +1,0 @@
-#ifndef __AL_SVN_REVISION_H
-#define __AL_SVN_REVISION_H 1
-
-#define AL_SVN_REVISION		0
-
-#endif
-
