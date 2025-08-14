@@ -72,7 +72,6 @@ add_custom_command(
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-# rebuild svn_revision.h every time (use unique target name to avoid collisions when used as a subproject)
 add_custom_target(get_svn_revision
     ALL
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include/alumy/svn_revision.h
@@ -88,7 +87,6 @@ add_custom_command(
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-# rebuild git_hash.h every time (use unique target name to avoid collisions when used as a subproject)
 add_custom_target(get_git_hash
     ALL
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include/alumy/git_hash.h
@@ -221,9 +219,6 @@ if(BUILD_STATIC_LIBS)
     add_dependencies("${PROJECT_NAME}-static" get_git_hash)
     add_dependencies("${PROJECT_NAME}-static" get_svn_revision)
     add_dependencies("${PROJECT_NAME}-static" alumy-3rd-party)
-    
-    # target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR})
-    # target_compile_options(<target> [BEFORE] <INTERFACE|PUBLIC|PRIVATE> [items1...] [<INTERFACE|PUBLIC|PRIVATE> [items2...] ...])
     
     set_target_properties("${PROJECT_NAME}-static" PROPERTIES OUTPUT_NAME "${PROJECT_NAME}")
     set_target_properties("${PROJECT_NAME}-static" PROPERTIES PREFIX "lib")
