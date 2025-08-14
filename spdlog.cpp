@@ -36,10 +36,7 @@ slog::slog(QObject *parent)
 
 slog::~slog()
 {
-    if (m_logger) {
-        m_logger->flush();
-        spdlog::shutdown();
-    }
+    m_logger->flush();
 }
 
 QString slog::bin(const QByteArray &msg)
