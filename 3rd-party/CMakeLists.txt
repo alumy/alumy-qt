@@ -57,4 +57,4 @@ set(BUILD_WITH_DOCS OFF CACHE BOOL "Build documentation" FORCE)
 FetchContent_MakeAvailable(log4qt)
 
 target_link_libraries(${target} INTERFACE log4qt)
-target_include_directories(${target} INTERFACE ${log4qt_SOURCE_DIR}/src)
+target_include_directories(${target} INTERFACE ${log4qt_SOURCE_DIR}/include)
