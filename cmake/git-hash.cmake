@@ -2,9 +2,9 @@
 set(GIT_HASH "unknown")
 
 # Determine this module's root directory regardless of superbuild context
-get_filename_component(ALUMY_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
+get_filename_component(ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
 
-message(STATUS "ALUMY_SOURCE_DIR: ${ALUMY_SOURCE_DIR}")
+message(STATUS "ROOT_DIR: ${ROOT_DIR}")
 
 # find Git and if available set GIT_HASH variable
 find_package(Git QUIET)
@@ -12,7 +12,7 @@ find_package(Git QUIET)
 if(GIT_FOUND)
     execute_process(
         COMMAND ${GIT_EXECUTABLE} log -1 --pretty=format:%h
-        WORKING_DIRECTORY ${ALUMY_SOURCE_DIR}
+        WORKING_DIRECTORY ${ROOT_DIR}
         OUTPUT_VARIABLE GIT_HASH
         OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_QUIET)
@@ -22,6 +22,6 @@ message(STATUS "Git hash is ${GIT_HASH}")
 
 # generate file from template within this module's include directory
 configure_file(
-    ${ALUMY_SOURCE_DIR}/include/alumy/git_hash.h.in
-    ${ALUMY_SOURCE_DIR}/include/alumy/git_hash.h
+    ${ROOT_DIR}/include/alumy/git_hash.h.in
+    ${ROOT_DIR}/include/alumy/git_hash.h
     @ONLY)
