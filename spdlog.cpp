@@ -36,6 +36,7 @@ slog::~slog()
 {
     if (m_logger) {
         m_logger->flush();
+        spdlog::shutdown();
     }
 }
 
@@ -85,11 +86,8 @@ void slog::rebuild_logger()
 		m_logger = std::make_shared<spdlog::async_logger>(
 			to_std_string(m_name), sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
 		m_logger->set_level(m_level);
-		m_logger->flush_on(spdlog::level::info);
 		m_logger->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [%t] %v");
 		spdlog::register_logger(m_logger);
-
-
 	} catch (const spdlog::spdlog_ex &e) {
 		m_logger = spdlog::default_logger();
 	}
