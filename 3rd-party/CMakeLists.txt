@@ -44,13 +44,15 @@ FetchContent_Declare(
     GIT_TAG v1.5.1
 )
 
+# Log4Qt build configuration - ensure only static library is built
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared library" FORCE)
+set(BUILD_STATIC_LOG4CXX_LIB ON CACHE BOOL "Build static library" FORCE)
+set(LOG4QT_ENABLE_TESTS OFF CACHE BOOL "Enable Log4Qt tests" FORCE)
+set(LOG4QT_ENABLE_EXAMPLES OFF CACHE BOOL "Enable Log4Qt examples" FORCE)
 set(BUILD_WITH_DB_LOGGING OFF CACHE BOOL "Build with database logging support" FORCE)
 set(BUILD_WITH_TELNET_LOGGING ON CACHE BOOL "Build with telnet appender support" FORCE)
 set(BUILD_WITH_QML_LOGGING OFF CACHE BOOL "Build with QML logger support" FORCE)
 set(BUILD_WITH_DOCS OFF CACHE BOOL "Build documentation" FORCE)
-set(BUILD_STATIC_LOG4CXX_LIB ON CACHE BOOL "Build static library" FORCE)
-set(CMAKE_DISABLE_FIND_PACKAGE_Doxygen TRUE CACHE BOOL "Disable Doxygen" FORCE)
 
 FetchContent_MakeAvailable(log4qt)
 
