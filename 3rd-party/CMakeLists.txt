@@ -1,4 +1,4 @@
-set(target 3rd-party)
+set(target alumy-3rd-party)
 
 add_library(${target} INTERFACE)
 
