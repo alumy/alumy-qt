@@ -4,7 +4,7 @@
 #include <mutex>
 #include <chrono>
 #include <QJsonDocument>
-#include <QGlobal>
+#include <QtGlobal>
 #include <QDir>
 #include <QFileInfo>
 #include "alumy/spdlog.h"
