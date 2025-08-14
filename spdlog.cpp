@@ -1,11 +1,14 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <mutex>
+#include <chrono>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QtGlobal>
 #include "alumy/spdlog.h"
 #include "alumy/log.h"
 #include <spdlog/spdlog.h>
+#include <spdlog/async.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 
@@ -19,11 +22,21 @@ static std::string to_std_string(const QString &s)
 slog::slog(QObject *parent)
 	: QObject(parent)
 {
+    static std::once_flag once_flag;
+
+    std::call_once(once_flag, [](){
+        spdlog::init_thread_pool(8192, 1);
+        spdlog::flush_every(std::chrono::seconds(1));
+    });
+
 	rebuild_logger();
 }
 
 slog::~slog()
 {
+    if (m_logger) {
+        m_logger->flush();
+    }
 }
 
 QString slog::bin(const QByteArray &msg)
@@ -69,13 +82,18 @@ void slog::rebuild_logger()
 			sinks.push_back(file_sink);
 		}
 
-	    m_logger = std::make_shared<spdlog::logger>(to_std_string(m_name), sinks.begin(), sinks.end());
+		m_logger = std::make_shared<spdlog::async_logger>(
+			to_std_string(m_name), sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
 		m_logger->set_level(m_level);
+		m_logger->flush_on(spdlog::level::info);
 		m_logger->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [%t] %v");
 		spdlog::register_logger(m_logger);
+
+
 	} catch (const spdlog::spdlog_ex &e) {
 		m_logger = spdlog::default_logger();
 	}
+
     Q_ASSERT(m_logger);
 }
 
