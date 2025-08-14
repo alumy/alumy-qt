@@ -1,21 +1,23 @@
-# in case SVN is not available, we default to "unknown"
+# in case SVN is not available, default to 0
 set(SVN_REVISION 0)
 
-# find svn revision 
-if(EXISTS "${CMAKE_SOURCE_DIR}/.svn/")
+# Determine this module's root directory regardless of superbuild context
+get_filename_component(ALUMY_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
+
+# find svn revision when building from an SVN working copy of this module
+if(EXISTS "${ALUMY_SOURCE_DIR}/.svn/")
     find_package(Subversion)
 
     if(SUBVERSION_FOUND)
-        Subversion_WC_INFO(${CMAKE_SOURCE_DIR} PROJ)
+        Subversion_WC_INFO(${ALUMY_SOURCE_DIR} PROJ)
         set(SVN_REVISION ${PROJ_WC_REVISION})
-    endif(SUBVERSION_FOUND)
-endif(EXISTS "${CMAKE_SOURCE_DIR}/.svn/")
+    endif()
+endif()
 
 message(STATUS "SVN revision is ${SVN_REVISION}")
 
-# generate file version.hpp based on version.hpp.in
+# generate header from template within this module's include directory
 configure_file(
-    ${CMAKE_SOURCE_DIR}/include/alumy/svn_revision.h.in
-    ${CMAKE_SOURCE_DIR}/include/alumy/svn_revision.h
+    ${ALUMY_SOURCE_DIR}/include/alumy/svn_revision.h.in
+    ${ALUMY_SOURCE_DIR}/include/alumy/svn_revision.h
     @ONLY)
-
