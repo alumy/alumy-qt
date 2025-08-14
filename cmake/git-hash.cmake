@@ -4,8 +4,6 @@ set(GIT_HASH "unknown")
 # Determine this module's root directory regardless of superbuild context
 get_filename_component(ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
 
-message(STATUS "ROOT_DIR: ${ROOT_DIR}")
-
 # find Git and if available set GIT_HASH variable
 find_package(Git QUIET)
 
