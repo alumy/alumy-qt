@@ -1,7 +1,7 @@
-#ifndef __SVN_REVISION_H
-#define __SVN_REVISION_H 1
+#ifndef __AL_SVN_REVISION_H
+#define __AL_SVN_REVISION_H 1
 
-#define SVN_REVISION		@SVN_REVISION@
+#define AL_SVN_REVISION		@SVN_REVISION@
 
 #endif
 
