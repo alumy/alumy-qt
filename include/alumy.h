@@ -28,6 +28,7 @@
 #include "alumy/errno.h"
 #include "alumy/log.h"
 #include "alumy/mod_log.h"
+#include "alumy/spdlog.h"
 #include "alumy/mem.h"
 #include "alumy/string.h"
 #include "alumy/byteswap.h"
