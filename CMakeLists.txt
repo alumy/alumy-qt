@@ -1,7 +1,11 @@
 #############################################################################
 # Toolchain file
 #############################################################################
-message(STATUS "Using toolchain file: ${CMAKE_TOOLCHAIN_FILE}.")
+if(CMAKE_TOOLCHAIN_FILE)
+    message(STATUS "Using toolchain file: ${CMAKE_TOOLCHAIN_FILE}.")
+else()
+    message(STATUS "No toolchain file found.")
+endif()
 
 cmake_minimum_required(VERSION 3.10)
 project(alumy-qt C CXX)
