@@ -10,7 +10,7 @@
 #include "alumy/log.h"
 #include <spdlog/spdlog.h>
 
-namespace spdlog { class logger; }
+namespace alumy {
 
 class slog : public QObject
 {
@@ -62,12 +62,14 @@ private:
 	void rebuild_logger();
 
 private:
-	std::shared_ptr<spdlog::logger> m_logger;
+    std::shared_ptr<spdlog::logger> m_logger;
     QString m_name;
 	QString m_path;
     size_t m_file_size = 2 * 1024 * 1024;
     int32_t m_file_count = 9;
     spdlog::level::level_enum m_level = spdlog::level::trace;
 };
+
+} // namespace alumy
 
 #endif // __AL_SPDLOG_H

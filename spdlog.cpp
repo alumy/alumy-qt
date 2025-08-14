@@ -9,6 +9,8 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 
+namespace alumy {
+
 static std::string to_std_string(const QString &s)
 {
 	return std::string(s.toUtf8().constData());
@@ -229,3 +231,4 @@ void slog::set_level(spdlog::level::level_enum level)
 	rebuild_logger();
 }
 
+} // namespace alumy
