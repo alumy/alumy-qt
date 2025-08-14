@@ -15,9 +15,9 @@ set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT
 #############################################################################
 # Check for linux
 #############################################################################
-include(${PROJECT_SOURCE_DIR}/cmake/toolchain/toolchain-flags.cmake)
-include(${PROJECT_SOURCE_DIR}/cmake/linux_check.cmake)
-include(${PROJECT_SOURCE_DIR}/cmake/generic_check.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/toolchain/toolchain-flags.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/linux_check.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/generic_check.cmake)
 
 #############################################################################
 # Parameter for compile
@@ -46,7 +46,7 @@ if(UNIT_TEST EQUAL 1)
 endif()
 
 include(GNUInstallDirs)
-include(${PROJECT_SOURCE_DIR}/cmake/message.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/message.cmake)
 
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
@@ -55,39 +55,39 @@ if(CCACHE_FOUND)
 endif(CCACHE_FOUND)
 
 configure_file(
-    ${PROJECT_SOURCE_DIR}/include/alumy/version.h.in
-    ${PROJECT_SOURCE_DIR}/include/alumy/version.h)
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/alumy/version.h.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/alumy/version.h)
 
 #######################################################################
 # get svn revision
 #######################################################################
 add_custom_command(
-    OUTPUT ${PROJECT_SOURCE_DIR}/include/alumy/svn_revision.h
+    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/alumy/svn_revision.h
     ALL
-    COMMAND ${CMAKE_COMMAND} -D TARGET_DIR=${CMAKE_CURRENT_BINARY_DIR} -P ${CMAKE_SOURCE_DIR}/cmake/svn-revision.cmake
+    COMMAND ${CMAKE_COMMAND} -D TARGET_DIR=${CMAKE_CURRENT_BINARY_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/svn-revision.cmake
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 # rebuild svn_revision.h every time
 add_custom_target(get_svn_revision
     ALL
-    DEPENDS ${PROJECT_SOURCE_DIR}/include/alumy/svn_revision.h
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include/alumy/svn_revision.h
 )
 
 #####################################################################
 # get git hash
 #####################################################################
 add_custom_command(
-    OUTPUT ${PROJECT_SOURCE_DIR}/include/alumy/git_hash.h
+    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/alumy/git_hash.h
     ALL
-    COMMAND ${CMAKE_COMMAND} -D TARGET_DIR=${CMAKE_CURRENT_BINARY_DIR} -P ${PROJECT_SOURCE_DIR}/cmake/git-hash.cmake
+    COMMAND ${CMAKE_COMMAND} -D TARGET_DIR=${CMAKE_CURRENT_BINARY_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/git-hash.cmake
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 # rebuild git_hash.h every time
 add_custom_target(get_git_hash
     ALL
-    DEPENDS ${PROJECT_SOURCE_DIR}/include/alumy/git_hash.h
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include/alumy/git_hash.h
 )
 
 add_definitions(-D__STDC_FORMAT_MACROS)
@@ -133,7 +133,7 @@ endif()
 
 # Include directories
 include_directories(
-    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 add_compile_definitions(AL_USE_DEFAULT_CONFIG)
@@ -177,9 +177,9 @@ set(objs
     $<TARGET_OBJECTS:audio>
 )
 
-aux_source_directory(${PROJECT_SOURCE_DIR} ${PROJECT_NAME}_src)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} ${PROJECT_NAME}_src)
 
-include(${PROJECT_SOURCE_DIR}/cmake/check_type_size.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_type_size.cmake)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
     if(BUILD_SHARED_LIBS)
@@ -219,13 +219,13 @@ if(BUILD_STATIC_LIBS)
 	    DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 endif()
 
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
 	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
 	FILES_MATCHING PATTERN "*.h")
 
 include(InstallRequiredSystemLibraries)
 set(CPACK_PACKAGE_VENDOR alumy)
-set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
 set(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
 set(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
 set(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
@@ -233,9 +233,9 @@ set(CPACK_PACKAGE_CHECKSUM "SHA256")
 set(CPACK_GENERATOR "STGZ;TGZ;TZ")
 
 set(CPACK_SOURCE_IGNORE_FILES
-    ${PROJECT_SOURCE_DIR}/build
-    ${PROJECT_SOURCE_DIR}/pack
-    ${PROJECT_SOURCE_DIR}/.svn)
+    ${CMAKE_CURRENT_SOURCE_DIR}/build
+    ${CMAKE_CURRENT_SOURCE_DIR}/pack
+    ${CMAKE_CURRENT_SOURCE_DIR}/.svn)
 set(CPACK_SOURCE_GENERATOR "TGZ")
 
 include(CPack)
@@ -243,6 +243,6 @@ include(CPack)
 if(UNIT_TEST EQUAL 1)
 	if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
 		enable_testing()
-		add_subdirectory(${PROJECT_SOURCE_DIR}/test)
+		add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test)
 	endif()
 endif()
