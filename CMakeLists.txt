@@ -197,8 +197,14 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
     	add_library(${PROJECT_NAME} SHARED ${PROJECT_SOURCES} ${objs})
     	target_link_libraries(${PROJECT_NAME} alumy-3rd-party)
 
+    	target_include_directories(${PROJECT_NAME} PUBLIC
+        	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        	$<INSTALL_INTERFACE:include>
+    	)
+
     	add_dependencies(${PROJECT_NAME} get_git_hash)
     	add_dependencies(${PROJECT_NAME} get_svn_revision)
+        add_dependencies("${PROJECT_NAME}-static" alumy-3rd-party)
 
     	set_target_properties(${PROJECT_NAME} PROPERTIES
            	VERSION "${PROJECT_VERSION}"
@@ -215,6 +221,11 @@ endif()
 if(BUILD_STATIC_LIBS)
     add_library("${PROJECT_NAME}-static" STATIC ${PROJECT_SOURCES} ${objs})
     target_link_libraries("${PROJECT_NAME}-static" alumy-3rd-party)
+
+    target_include_directories("${PROJECT_NAME}-static" PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    )
     
     add_dependencies("${PROJECT_NAME}-static" get_git_hash)
     add_dependencies("${PROJECT_NAME}-static" get_svn_revision)
@@ -226,6 +237,12 @@ if(BUILD_STATIC_LIBS)
     
     install(TARGETS "${PROJECT_NAME}-static"
 	    DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+endif()
+
+if(BUILD_SHARED_LIBS AND TARGET ${PROJECT_NAME})
+    add_library(alumy::alumy ALIAS "${PROJECT_NAME}")
+elseif(BUILD_STATIC_LIBS AND TARGET "${PROJECT_NAME}-static")
+    add_library(alumy::alumy ALIAS "${PROJECT_NAME}-static")
 endif()
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/

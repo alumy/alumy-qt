@@ -6,17 +6,12 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
     
-    // Initialize alumy
-    alumy_init();
-    
-    // Create a simple test widget
+    alumy::slog::instance()->info("Test message from alumy log system");
+
     QWidget window;
     window.resize(320, 240);
     window.setWindowTitle("Test FetchContent with Alumy");
     window.show();
 
-    // Cleanup
-    alumy_cleanup();
-    
     return app.exec();
 }
