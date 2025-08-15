@@ -6,3 +6,17 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/dependencies.cmake)
 configure_alumy_dependencies()
 
 link_alumy_dependencies(${target})
+
+# Add QtSingleApplication library
+set(QTSINGLEAPP_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/qt-solutions/qtsingleapplication/src)
+
+add_library(qtsingleapplication STATIC
+    ${QTSINGLEAPP_SRC_DIR}/qtsingleapplication.cpp
+    ${QTSINGLEAPP_SRC_DIR}/qtsingleapplication.h
+    ${QTSINGLEAPP_SRC_DIR}/qtlocalpeer.cpp
+    ${QTSINGLEAPP_SRC_DIR}/qtlocalpeer.h
+)
+
+target_include_directories(qtsingleapplication PUBLIC ${QTSINGLEAPP_SRC_DIR})
+
+target_link_libraries(${target} INTERFACE qtsingleapplication)

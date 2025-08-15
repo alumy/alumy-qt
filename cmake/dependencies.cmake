@@ -45,7 +45,7 @@ macro(configure_alumy_dependencies)
         set(BUILD_WITH_TELNET_LOGGING ON CACHE BOOL "Build with telnet appender support" FORCE)
         set(BUILD_WITH_QML_LOGGING OFF CACHE BOOL "Build with QML logger support" FORCE)
         set(BUILD_WITH_DOCS OFF CACHE BOOL "Build documentation" FORCE)
-        
+
         FetchContent_MakeAvailable(log4qt)
     endif()
 endmacro()
