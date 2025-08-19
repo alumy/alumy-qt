@@ -50,6 +50,23 @@ macro(configure_alumy_dependencies)
         FetchContent_MakeAvailable(log4qt)
     endif()
 
+    if(NOT TARGET SndFile::sndfile)
+        FetchContent_Declare(
+            libsndfile
+            GIT_REPOSITORY https://github.com/libsndfile/libsndfile.git
+            GIT_TAG 1.2.2
+        )
+        
+        set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared library" FORCE)
+        set(BUILD_PROGRAMS OFF CACHE BOOL "Build programs" FORCE)
+        set(BUILD_EXAMPLES OFF CACHE BOOL "Build examples" FORCE)
+        set(BUILD_TESTING OFF CACHE BOOL "Build tests" FORCE)
+        set(ENABLE_EXTERNAL_LIBS ON CACHE BOOL "Enable external libraries support" FORCE)
+        set(ENABLE_MPEG OFF CACHE BOOL "Enable MPEG support" FORCE)
+        
+        FetchContent_MakeAvailable(libsndfile)
+    endif()
+
     set(GRPC_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/grpc-build")
     set(GRPC_INSTALL_DIR "${GRPC_PREFIX}/install")
     set(GRPC_INCLUDE_DIR "${GRPC_INSTALL_DIR}/include")
@@ -175,5 +192,5 @@ macro(configure_alumy_dependencies)
 endmacro()
 
 macro(link_alumy_dependencies target_name)
-    target_link_libraries(${target_name} INTERFACE spdlog::spdlog qpcpp log4qt grpc++)
+    target_link_libraries(${target_name} INTERFACE spdlog::spdlog qpcpp log4qt SndFile::sndfile grpc++)
 endmacro()
