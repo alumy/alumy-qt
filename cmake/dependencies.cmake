@@ -95,7 +95,7 @@ macro(configure_alumy_dependencies)
         -DBUILD_SHARED_LIBS=OFF
     )
 
-    ExternalProject_Add(grpc_external
+    ExternalProject_Add(grpc_proj
         GIT_REPOSITORY https://github.com/grpc/grpc.git
         GIT_TAG v1.48.2
         GIT_SUBMODULES_RECURSE ON
@@ -161,20 +161,20 @@ macro(configure_alumy_dependencies)
         INTERFACE_INCLUDE_DIRECTORIES "${GRPC_INCLUDE_DIR}"
     )
 
-    add_dependencies(grpc++ grpc_external)
-    add_dependencies(grpc grpc_external)
-    add_dependencies(gpr grpc_external)
-    add_dependencies(address_sorting grpc_external)
-    add_dependencies(upb grpc_external)
-    add_dependencies(protobuf::libprotobuf grpc_external)
-    add_dependencies(re2::re2 grpc_external)
-    add_dependencies(c-ares::cares grpc_external)
+    add_dependencies(grpc++ grpc_proj)
+    add_dependencies(grpc grpc_proj)
+    add_dependencies(gpr grpc_proj)
+    add_dependencies(address_sorting grpc_proj)
+    add_dependencies(upb grpc_proj)
+    add_dependencies(protobuf::libprotobuf grpc_proj)
+    add_dependencies(re2::re2 grpc_proj)
+    add_dependencies(c-ares::cares grpc_proj)
 
     add_executable(grpc_cpp_plugin IMPORTED)
     set_target_properties(grpc_cpp_plugin PROPERTIES
         IMPORTED_LOCATION "${GRPC_INSTALL_DIR}/bin/grpc_cpp_plugin"
     )
-    add_dependencies(grpc_cpp_plugin grpc_external)
+    add_dependencies(grpc_cpp_plugin grpc_proj)
 
     target_link_libraries(grpc++ INTERFACE
         grpc
