@@ -99,14 +99,23 @@ macro(configure_alumy_dependencies)
         GIT_REPOSITORY https://github.com/grpc/grpc.git
         GIT_TAG v1.48.2
         GIT_SUBMODULES_RECURSE ON
+        GIT_SHALLOW ON
+        GIT_PROGRESS ON
+        UPDATE_DISCONNECTED ON
         PREFIX ${GRPC_PREFIX}
         CMAKE_ARGS ${GRPC_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build . --parallel ${CMAKE_BUILD_PARALLEL_LEVEL}
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
-        LOG_DOWNLOAD ON
-        LOG_CONFIGURE ON
-        LOG_BUILD ON
-        LOG_INSTALL ON
+        STEP_TARGETS download configure build install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        LOG_OUTPUT_ON_FAILURE ON
+        USES_TERMINAL_DOWNLOAD ON
+        USES_TERMINAL_CONFIGURE ON
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
     )
 
     find_package(OpenSSL REQUIRED)
