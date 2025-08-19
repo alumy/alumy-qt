@@ -1,4 +1,5 @@
 include(FetchContent)
+include(ExternalProject)
 
 macro(configure_alumy_dependencies)
     if(NOT TARGET spdlog::spdlog)
@@ -49,44 +50,130 @@ macro(configure_alumy_dependencies)
         FetchContent_MakeAvailable(log4qt)
     endif()
 
-    if(NOT TARGET grpc)
-        FetchContent_Declare(
-            grpc
-            GIT_REPOSITORY https://github.com/grpc/grpc.git
-            GIT_TAG v1.48.2
-        )
-        
-        set(gRPC_BUILD_TESTS OFF CACHE BOOL "Build tests" FORCE)
-        set(gRPC_BUILD_CSHARP_EXT OFF CACHE BOOL "Build C# extension" FORCE)
-        set(gRPC_BUILD_GRPC_CSHARP_PLUGIN OFF CACHE BOOL "Build C# plugin" FORCE)
-        set(gRPC_BUILD_GRPC_NODE_PLUGIN OFF CACHE BOOL "Build Node.js plugin" FORCE)
-        set(gRPC_BUILD_GRPC_OBJECTIVE_C_PLUGIN OFF CACHE BOOL "Build Objective-C plugin" FORCE)
-        set(gRPC_BUILD_GRPC_PHP_PLUGIN OFF CACHE BOOL "Build PHP plugin" FORCE)
-        set(gRPC_BUILD_GRPC_PYTHON_PLUGIN OFF CACHE BOOL "Build Python plugin" FORCE)
-        set(gRPC_BUILD_GRPC_RUBY_PLUGIN OFF CACHE BOOL "Build Ruby plugin" FORCE)
+    set(GRPC_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/grpc-build")
+    set(GRPC_INSTALL_DIR "${GRPC_PREFIX}/install")
+    set(GRPC_INCLUDE_DIR "${GRPC_INSTALL_DIR}/include")
+    set(GRPC_LIB_DIR "${GRPC_INSTALL_DIR}/lib")
 
-        set(gRPC_ABSL_PROVIDER "module" CACHE STRING "Provider of absl library" FORCE)
-        set(gRPC_CARES_PROVIDER "module" CACHE STRING "Provider of c-ares library" FORCE)  
-        set(gRPC_PROTOBUF_PROVIDER "module" CACHE STRING "Provider of protobuf library" FORCE)
-        set(gRPC_RE2_PROVIDER "module" CACHE STRING "Provider of re2 library" FORCE)
-        set(gRPC_SSL_PROVIDER "module" CACHE STRING "Provider of ssl library" FORCE)
-        set(gRPC_ZLIB_PROVIDER "module" CACHE STRING "Provider of zlib library" FORCE)
+    set(GRPC_CMAKE_ARGS
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_INSTALL_PREFIX=${GRPC_INSTALL_DIR}
+        -DCMAKE_CXX_STANDARD=14
+        -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DCMAKE_CXX_EXTENSIONS=OFF
+        -DgRPC_BUILD_TESTS=OFF
+        -DgRPC_BUILD_CSHARP_EXT=OFF
+        -DgRPC_BUILD_GRPC_CSHARP_PLUGIN=OFF
+        -DgRPC_BUILD_GRPC_NODE_PLUGIN=OFF
+        -DgRPC_BUILD_GRPC_OBJECTIVE_C_PLUGIN=OFF
+        -DgRPC_BUILD_GRPC_PHP_PLUGIN=OFF
+        -DgRPC_BUILD_GRPC_PYTHON_PLUGIN=OFF
+        -DgRPC_BUILD_GRPC_RUBY_PLUGIN=OFF
+        -DgRPC_ABSL_PROVIDER=module
+        -DgRPC_CARES_PROVIDER=module
+        -DgRPC_PROTOBUF_PROVIDER=module
+        -DgRPC_RE2_PROVIDER=module
+        -DgRPC_SSL_PROVIDER=module
+        -DgRPC_ZLIB_PROVIDER=module
+        -DBUILD_SHARED_LIBS=OFF
+    )
 
-        FetchContent_MakeAvailable(grpc)
+    ExternalProject_Add(grpc_external
+        GIT_REPOSITORY https://github.com/grpc/grpc.git
+        GIT_TAG v1.48.2
+        GIT_SUBMODULES_RECURSE ON
+        PREFIX ${GRPC_PREFIX}
+        CMAKE_ARGS ${GRPC_CMAKE_ARGS}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build . --parallel ${CMAKE_BUILD_PARALLEL_LEVEL}
+        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        LOG_DOWNLOAD ON
+        LOG_CONFIGURE ON
+        LOG_BUILD ON
+        LOG_INSTALL ON
+    )
 
-        set_target_properties(grpc++ PROPERTIES
-            CXX_STANDARD 14
-            CXX_STANDARD_REQUIRED ON
-            CXX_EXTENSIONS OFF
-        )
+    find_package(OpenSSL REQUIRED)
+    find_package(ZLIB REQUIRED)
 
-        file(GLOB_RECURSE PROTO_GEN "${CMAKE_CURRENT_BINARY_DIR}/gens/src/proto/**/*.pb.*")
-        if(PROTO_GEN)
-            set_source_files_properties(${PROTO_GEN} PROPERTIES SKIP_AUTOGEN ON)
-        endif()
-    endif()
+    add_library(grpc++ STATIC IMPORTED)
+    add_library(grpc STATIC IMPORTED)
+    add_library(gpr STATIC IMPORTED)
+    add_library(address_sorting STATIC IMPORTED)
+    add_library(upb STATIC IMPORTED)
+    add_library(protobuf::libprotobuf STATIC IMPORTED)
+    add_library(re2::re2 STATIC IMPORTED)
+    add_library(c-ares::cares STATIC IMPORTED)
+
+    set_target_properties(grpc++ PROPERTIES
+        IMPORTED_LOCATION "${GRPC_LIB_DIR}/libgrpc++.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${GRPC_INCLUDE_DIR}"
+    )
+    
+    set_target_properties(grpc PROPERTIES
+        IMPORTED_LOCATION "${GRPC_LIB_DIR}/libgrpc.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${GRPC_INCLUDE_DIR}"
+    )
+    
+    set_target_properties(gpr PROPERTIES
+        IMPORTED_LOCATION "${GRPC_LIB_DIR}/libgpr.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${GRPC_INCLUDE_DIR}"
+    )
+    
+    set_target_properties(address_sorting PROPERTIES
+        IMPORTED_LOCATION "${GRPC_LIB_DIR}/libaddress_sorting.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${GRPC_INCLUDE_DIR}"
+    )
+    
+    set_target_properties(upb PROPERTIES
+        IMPORTED_LOCATION "${GRPC_LIB_DIR}/libupb.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${GRPC_INCLUDE_DIR}"
+    )
+
+    set_target_properties(protobuf::libprotobuf PROPERTIES
+        IMPORTED_LOCATION "${GRPC_LIB_DIR}/libprotobuf.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${GRPC_INCLUDE_DIR}"
+    )
+
+    set_target_properties(re2::re2 PROPERTIES
+        IMPORTED_LOCATION "${GRPC_LIB_DIR}/libre2.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${GRPC_INCLUDE_DIR}"
+    )
+
+    set_target_properties(c-ares::cares PROPERTIES
+        IMPORTED_LOCATION "${GRPC_LIB_DIR}/libcares.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${GRPC_INCLUDE_DIR}"
+    )
+
+    add_dependencies(grpc++ grpc_external)
+    add_dependencies(grpc grpc_external)
+    add_dependencies(gpr grpc_external)
+    add_dependencies(address_sorting grpc_external)
+    add_dependencies(upb grpc_external)
+    add_dependencies(protobuf::libprotobuf grpc_external)
+    add_dependencies(re2::re2 grpc_external)
+    add_dependencies(c-ares::cares grpc_external)
+
+    add_executable(grpc_cpp_plugin IMPORTED)
+    set_target_properties(grpc_cpp_plugin PROPERTIES
+        IMPORTED_LOCATION "${GRPC_INSTALL_DIR}/bin/grpc_cpp_plugin"
+    )
+    add_dependencies(grpc_cpp_plugin grpc_external)
+
+    target_link_libraries(grpc++ INTERFACE
+        grpc
+        gpr
+        address_sorting
+        upb
+        protobuf::libprotobuf
+        re2::re2
+        c-ares::cares
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        ZLIB::ZLIB
+        ${CMAKE_DL_LIBS}
+    )
 endmacro()
 
 macro(link_alumy_dependencies target_name)
-    target_link_libraries(${target_name} INTERFACE spdlog::spdlog qpcpp log4qt grpc)
+    target_link_libraries(${target_name} INTERFACE spdlog::spdlog qpcpp log4qt grpc++)
 endmacro()
