@@ -55,9 +55,6 @@ macro(configure_alumy_dependencies)
             GIT_REPOSITORY https://github.com/grpc/grpc.git
             GIT_TAG v1.48.2
         )
-
-        set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries" FORCE)
-        set(gRPC_BUILD_GRPC_CPP_PLUGIN ON CACHE BOOL "Build C++ plugin" FORCE)
         
         set(gRPC_BUILD_TESTS OFF CACHE BOOL "Build tests" FORCE)
         set(gRPC_BUILD_CSHARP_EXT OFF CACHE BOOL "Build C# extension" FORCE)
@@ -68,10 +65,25 @@ macro(configure_alumy_dependencies)
         set(gRPC_BUILD_GRPC_PYTHON_PLUGIN OFF CACHE BOOL "Build Python plugin" FORCE)
         set(gRPC_BUILD_GRPC_RUBY_PLUGIN OFF CACHE BOOL "Build Ruby plugin" FORCE)
 
-        set(ABSL_PROPAGATE_CXX_STD ON CACHE BOOL "Propagate C++ standard to Abseil" FORCE)
-        set(ABSL_ENABLE_INSTALL ON CACHE BOOL "Enable Abseil install" FORCE)
-        
+        set(gRPC_ABSL_PROVIDER "module" CACHE STRING "Provider of absl library" FORCE)
+        set(gRPC_CARES_PROVIDER "module" CACHE STRING "Provider of c-ares library" FORCE)  
+        set(gRPC_PROTOBUF_PROVIDER "module" CACHE STRING "Provider of protobuf library" FORCE)
+        set(gRPC_RE2_PROVIDER "module" CACHE STRING "Provider of re2 library" FORCE)
+        set(gRPC_SSL_PROVIDER "module" CACHE STRING "Provider of ssl library" FORCE)
+        set(gRPC_ZLIB_PROVIDER "module" CACHE STRING "Provider of zlib library" FORCE)
+
         FetchContent_MakeAvailable(grpc)
+
+        set_target_properties(grpc++ PROPERTIES
+            CXX_STANDARD 14
+            CXX_STANDARD_REQUIRED ON
+            CXX_EXTENSIONS OFF
+        )
+
+        file(GLOB_RECURSE PROTO_GEN "${CMAKE_CURRENT_BINARY_DIR}/gens/src/proto/**/*.pb.*")
+        if(PROTO_GEN)
+            set_source_files_properties(${PROTO_GEN} PROPERTIES SKIP_AUTOGEN ON)
+        endif()
     endif()
 endmacro()
 
