@@ -8,6 +8,7 @@ else()
 endif()
 
 cmake_minimum_required(VERSION 3.10)
+
 project(alumy C CXX)
 
 set(PROJECT_VERSION_MAJOR 0)

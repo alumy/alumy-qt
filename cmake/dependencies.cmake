@@ -48,8 +48,33 @@ macro(configure_alumy_dependencies)
 
         FetchContent_MakeAvailable(log4qt)
     endif()
+
+    if(NOT TARGET grpc)
+        FetchContent_Declare(
+            grpc
+            GIT_REPOSITORY https://github.com/grpc/grpc.git
+            GIT_TAG v1.48.2
+        )
+
+        set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries" FORCE)
+        set(gRPC_BUILD_GRPC_CPP_PLUGIN ON CACHE BOOL "Build C++ plugin" FORCE)
+        
+        set(gRPC_BUILD_TESTS OFF CACHE BOOL "Build tests" FORCE)
+        set(gRPC_BUILD_CSHARP_EXT OFF CACHE BOOL "Build C# extension" FORCE)
+        set(gRPC_BUILD_GRPC_CSHARP_PLUGIN OFF CACHE BOOL "Build C# plugin" FORCE)
+        set(gRPC_BUILD_GRPC_NODE_PLUGIN OFF CACHE BOOL "Build Node.js plugin" FORCE)
+        set(gRPC_BUILD_GRPC_OBJECTIVE_C_PLUGIN OFF CACHE BOOL "Build Objective-C plugin" FORCE)
+        set(gRPC_BUILD_GRPC_PHP_PLUGIN OFF CACHE BOOL "Build PHP plugin" FORCE)
+        set(gRPC_BUILD_GRPC_PYTHON_PLUGIN OFF CACHE BOOL "Build Python plugin" FORCE)
+        set(gRPC_BUILD_GRPC_RUBY_PLUGIN OFF CACHE BOOL "Build Ruby plugin" FORCE)
+
+        set(ABSL_PROPAGATE_CXX_STD ON CACHE BOOL "Propagate C++ standard to Abseil" FORCE)
+        set(ABSL_ENABLE_INSTALL ON CACHE BOOL "Enable Abseil install" FORCE)
+        
+        FetchContent_MakeAvailable(grpc)
+    endif()
 endmacro()
 
 macro(link_alumy_dependencies target_name)
-    target_link_libraries(${target_name} INTERFACE spdlog::spdlog qpcpp log4qt)
+    target_link_libraries(${target_name} INTERFACE spdlog::spdlog qpcpp log4qt grpc)
 endmacro()
