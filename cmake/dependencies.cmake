@@ -25,7 +25,7 @@ macro(configure_alumy_dependencies)
         UPDATE_DISCONNECTED ON
         PREFIX ${SPDLOG_PREFIX}
         CMAKE_ARGS ${SPDLOG_CMAKE_ARGS}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build . --parallel ${CMAKE_BUILD_PARALLEL_LEVEL}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build .
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         STEP_TARGETS download configure build install
         LOG_DOWNLOAD OFF
@@ -77,7 +77,7 @@ macro(configure_alumy_dependencies)
         PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/cmake/qpcpp_force_cxx.cmake <SOURCE_DIR>/force_cxx.cmake
             COMMAND sed -i "1i include(force_cxx.cmake)" <SOURCE_DIR>/CMakeLists.txt
         CMAKE_ARGS ${QPCPP_CMAKE_ARGS}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build . --parallel ${CMAKE_BUILD_PARALLEL_LEVEL}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build .
         INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${QPCPP_INSTALL_DIR}/lib ${QPCPP_INSTALL_DIR}/include
             COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/libqpcpp.a ${QPCPP_INSTALL_DIR}/lib/
             COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/include ${QPCPP_INSTALL_DIR}/include
@@ -123,7 +123,7 @@ macro(configure_alumy_dependencies)
         UPDATE_DISCONNECTED ON
         PREFIX ${LOG4QT_PREFIX}
         CMAKE_ARGS ${LOG4QT_CMAKE_ARGS}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build . --parallel ${CMAKE_BUILD_PARALLEL_LEVEL}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build .
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         STEP_TARGETS download configure build install
         LOG_DOWNLOAD OFF
@@ -168,7 +168,7 @@ macro(configure_alumy_dependencies)
         UPDATE_DISCONNECTED ON
         PREFIX ${LIBSNDFILE_PREFIX}
         CMAKE_ARGS ${LIBSNDFILE_CMAKE_ARGS}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build . --parallel ${CMAKE_BUILD_PARALLEL_LEVEL}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build .
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         STEP_TARGETS download configure build install
         LOG_DOWNLOAD OFF
@@ -194,7 +194,6 @@ macro(configure_alumy_dependencies)
     set(GRPC_INCLUDE_DIR "${GRPC_INSTALL_DIR}/include")
     set(GRPC_LIB_DIR "${GRPC_INSTALL_DIR}/lib")
 
-    # Calculate optimal parallel level for gRPC compilation
     cal_grpc_parallel_level(GRPC_PARALLEL_LEVEL)
 
     set(GRPC_CMAKE_ARGS
@@ -231,7 +230,7 @@ macro(configure_alumy_dependencies)
         UPDATE_DISCONNECTED ON
         PREFIX ${GRPC_PREFIX}
         CMAKE_ARGS ${GRPC_CMAKE_ARGS}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build . --parallel ${GRPC_PARALLEL_LEVEL}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build .
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         STEP_TARGETS download configure build install
         LOG_DOWNLOAD OFF
