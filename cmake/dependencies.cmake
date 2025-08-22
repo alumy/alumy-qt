@@ -1,4 +1,5 @@
 include(ExternalProject)
+include(${CMAKE_CURRENT_LIST_DIR}/cal_parallel_level.cmake)
 
 macro(configure_alumy_dependencies)
     set(SPDLOG_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/3rd-party/spdlog-build")
@@ -193,6 +194,9 @@ macro(configure_alumy_dependencies)
     set(GRPC_INCLUDE_DIR "${GRPC_INSTALL_DIR}/include")
     set(GRPC_LIB_DIR "${GRPC_INSTALL_DIR}/lib")
 
+    # Calculate optimal parallel level for gRPC compilation
+    cal_grpc_parallel_level(GRPC_PARALLEL_LEVEL)
+
     set(GRPC_CMAKE_ARGS
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_INSTALL_PREFIX=${GRPC_INSTALL_DIR}
@@ -227,7 +231,7 @@ macro(configure_alumy_dependencies)
         UPDATE_DISCONNECTED ON
         PREFIX ${GRPC_PREFIX}
         CMAKE_ARGS ${GRPC_CMAKE_ARGS}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build . --parallel ${CMAKE_BUILD_PARALLEL_LEVEL}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build . --parallel ${GRPC_PARALLEL_LEVEL}
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         STEP_TARGETS download configure build install
         LOG_DOWNLOAD OFF
