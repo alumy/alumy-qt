@@ -11,7 +11,6 @@ macro(configure_alumy_dependencies)
         -DCMAKE_INSTALL_PREFIX=${SPDLOG_INSTALL_DIR}
         -DSPDLOG_ENABLE_PCH=ON
         -DSPDLOG_BUILD_SHARED=OFF
-        -DSPDLOG_BUILD_EXAMPLES=OFF
         -DSPDLOG_BUILD_TESTS=OFF
         -DSPDLOG_BUILD_BENCH=OFF
         -DBUILD_SHARED_LIBS=OFF
@@ -54,9 +53,17 @@ macro(configure_alumy_dependencies)
     set(QPCPP_CMAKE_ARGS
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_INSTALL_PREFIX=${QPCPP_INSTALL_DIR}
-        -DQPCPP_CFG_PORT=posix
-        -DQPCPP_BUILD_EXAMPLES=OFF
+        -DCMAKE_CXX_STANDARD=14
+        -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DCMAKE_CXX_EXTENSIONS=OFF
+        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
         -DBUILD_SHARED_LIBS=OFF
+        -DQPCPP_CFG_KERNEL=qv
+        -DQPCPP_CFG_PORT=posix
+        -DQPCPP_CFG_GUI=OFF
+        -DQPCPP_CFG_UNIT_TEST=OFF
+        -DQPCPP_CFG_VERBOSE=OFF
     )
 
     ExternalProject_Add(qpcpp_proj
@@ -66,9 +73,13 @@ macro(configure_alumy_dependencies)
         GIT_PROGRESS ON
         UPDATE_DISCONNECTED ON
         PREFIX ${QPCPP_PREFIX}
+        PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/cmake/qpcpp_force_cxx.cmake <SOURCE_DIR>/force_cxx.cmake
+            COMMAND sed -i "1i include(force_cxx.cmake)" <SOURCE_DIR>/CMakeLists.txt
         CMAKE_ARGS ${QPCPP_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build . --parallel ${CMAKE_BUILD_PARALLEL_LEVEL}
-        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${QPCPP_INSTALL_DIR}/lib ${QPCPP_INSTALL_DIR}/include
+            COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/libqpcpp.a ${QPCPP_INSTALL_DIR}/lib/
+            COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/include ${QPCPP_INSTALL_DIR}/include
         STEP_TARGETS download configure build install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -98,11 +109,8 @@ macro(configure_alumy_dependencies)
         -DCMAKE_INSTALL_PREFIX=${LOG4QT_INSTALL_DIR}
         -DBUILD_SHARED_LIBS=OFF
         -DBUILD_STATIC_LOG4CXX_LIB=ON
-        -DLOG4QT_ENABLE_TESTS=OFF
-        -DLOG4QT_ENABLE_EXAMPLES=OFF
         -DBUILD_WITH_DB_LOGGING=OFF
         -DBUILD_WITH_TELNET_LOGGING=ON
-        -DBUILD_WITH_QML_LOGGING=OFF
         -DBUILD_WITH_DOCS=OFF
     )
 
