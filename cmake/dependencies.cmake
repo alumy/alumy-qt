@@ -214,6 +214,8 @@ macro(configure_alumy_dependencies)
         -DgRPC_SSL_PROVIDER=module
         -DgRPC_ZLIB_PROVIDER=module
         -DBUILD_SHARED_LIBS=OFF
+        -DgRPC_BUILD_GRPC_CPP_PLUGIN=ON
+        -DgRPC_BUILD_CODEGEN=ON
     )
 
     ExternalProject_Add(grpc_proj
