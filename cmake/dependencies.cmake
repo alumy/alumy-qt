@@ -1,73 +1,186 @@
-include(FetchContent)
 include(ExternalProject)
 
 macro(configure_alumy_dependencies)
-    if(NOT TARGET spdlog::spdlog)
-        FetchContent_Declare(
-            spdlog
-            GIT_REPOSITORY https://github.com/gabime/spdlog.git
-            GIT_TAG v1.15.3
-        )
-        
-        set(SPDLOG_ENABLE_PCH ON CACHE BOOL "Enable precompiled headers" FORCE)
-        set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "Build shared library" FORCE)
-        set(SPDLOG_BUILD_EXAMPLES OFF CACHE BOOL "Build examples" FORCE)
-        set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "Build tests" FORCE)
-        set(SPDLOG_BUILD_BENCH OFF CACHE BOOL "Build benchmarks" FORCE)
-        
-        FetchContent_MakeAvailable(spdlog)
-    endif()
+    set(SPDLOG_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/3rd-party/spdlog-build")
+    set(SPDLOG_INSTALL_DIR "${SPDLOG_PREFIX}/install")
+    set(SPDLOG_INCLUDE_DIR "${SPDLOG_INSTALL_DIR}/include")
+    set(SPDLOG_LIB_DIR "${SPDLOG_INSTALL_DIR}/lib")
 
-    if(NOT TARGET qpcpp)
-        FetchContent_Declare(
-            qpcpp
-            GIT_REPOSITORY https://github.com/QuantumLeaps/qpcpp.git
-            GIT_TAG v7.3.4
-        )
-        
-        set(QPCPP_CFG_PORT "posix" CACHE STRING "QPCPP port configuration")
-        set(QPCPP_BUILD_EXAMPLES OFF CACHE BOOL "Build examples" FORCE)
-        
-        FetchContent_MakeAvailable(qpcpp)
-    endif()
+    set(SPDLOG_CMAKE_ARGS
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_INSTALL_PREFIX=${SPDLOG_INSTALL_DIR}
+        -DSPDLOG_ENABLE_PCH=ON
+        -DSPDLOG_BUILD_SHARED=OFF
+        -DSPDLOG_BUILD_EXAMPLES=OFF
+        -DSPDLOG_BUILD_TESTS=OFF
+        -DSPDLOG_BUILD_BENCH=OFF
+        -DBUILD_SHARED_LIBS=OFF
+    )
 
-    if(NOT TARGET log4qt)
-        FetchContent_Declare(
-            log4qt
-            GIT_REPOSITORY https://github.com/MEONMedical/Log4Qt.git
-            GIT_TAG v1.5.1
-        )
-        
-        set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared library" FORCE)
-        set(BUILD_STATIC_LOG4CXX_LIB ON CACHE BOOL "Build static library" FORCE)
-        set(LOG4QT_ENABLE_TESTS OFF CACHE BOOL "Enable Log4Qt tests" FORCE)
-        set(LOG4QT_ENABLE_EXAMPLES OFF CACHE BOOL "Enable Log4Qt examples" FORCE)
-        set(BUILD_WITH_DB_LOGGING OFF CACHE BOOL "Build with database logging support" FORCE)
-        set(BUILD_WITH_TELNET_LOGGING ON CACHE BOOL "Build with telnet appender support" FORCE)
-        set(BUILD_WITH_QML_LOGGING OFF CACHE BOOL "Build with QML logger support" FORCE)
-        set(BUILD_WITH_DOCS OFF CACHE BOOL "Build documentation" FORCE)
+    ExternalProject_Add(spdlog_proj
+        GIT_REPOSITORY https://github.com/gabime/spdlog.git
+        GIT_TAG v1.15.3
+        GIT_SHALLOW ON
+        GIT_PROGRESS ON
+        UPDATE_DISCONNECTED ON
+        PREFIX ${SPDLOG_PREFIX}
+        CMAKE_ARGS ${SPDLOG_CMAKE_ARGS}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build . --parallel ${CMAKE_BUILD_PARALLEL_LEVEL}
+        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        STEP_TARGETS download configure build install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        LOG_OUTPUT_ON_FAILURE ON
+        USES_TERMINAL_DOWNLOAD ON
+        USES_TERMINAL_CONFIGURE ON
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+    )
 
-        FetchContent_MakeAvailable(log4qt)
-    endif()
+    add_library(spdlog::spdlog STATIC IMPORTED)
+    set_target_properties(spdlog::spdlog PROPERTIES
+        IMPORTED_LOCATION "${SPDLOG_LIB_DIR}/libspdlog.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${SPDLOG_INCLUDE_DIR}"
+    )
+    add_dependencies(spdlog::spdlog spdlog_proj)
 
-    if(NOT TARGET SndFile::sndfile)
-        FetchContent_Declare(
-            libsndfile
-            GIT_REPOSITORY https://github.com/libsndfile/libsndfile.git
-            GIT_TAG 1.2.2
-        )
-        
-        set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared library" FORCE)
-        set(BUILD_PROGRAMS OFF CACHE BOOL "Build programs" FORCE)
-        set(BUILD_EXAMPLES OFF CACHE BOOL "Build examples" FORCE)
-        set(BUILD_TESTING OFF CACHE BOOL "Build tests" FORCE)
-        set(ENABLE_EXTERNAL_LIBS ON CACHE BOOL "Enable external libraries support" FORCE)
-        set(ENABLE_MPEG OFF CACHE BOOL "Enable MPEG support" FORCE)
-        
-        FetchContent_MakeAvailable(libsndfile)
-    endif()
+    set(QPCPP_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/3rd-party/qpcpp-build")
+    set(QPCPP_INSTALL_DIR "${QPCPP_PREFIX}/install")
+    set(QPCPP_INCLUDE_DIR "${QPCPP_INSTALL_DIR}/include")
+    set(QPCPP_LIB_DIR "${QPCPP_INSTALL_DIR}/lib")
 
-    set(GRPC_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/grpc-build")
+    set(QPCPP_CMAKE_ARGS
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_INSTALL_PREFIX=${QPCPP_INSTALL_DIR}
+        -DQPCPP_CFG_PORT=posix
+        -DQPCPP_BUILD_EXAMPLES=OFF
+        -DBUILD_SHARED_LIBS=OFF
+    )
+
+    ExternalProject_Add(qpcpp_proj
+        GIT_REPOSITORY https://github.com/QuantumLeaps/qpcpp.git
+        GIT_TAG v7.3.4
+        GIT_SHALLOW ON
+        GIT_PROGRESS ON
+        UPDATE_DISCONNECTED ON
+        PREFIX ${QPCPP_PREFIX}
+        CMAKE_ARGS ${QPCPP_CMAKE_ARGS}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build . --parallel ${CMAKE_BUILD_PARALLEL_LEVEL}
+        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        STEP_TARGETS download configure build install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        LOG_OUTPUT_ON_FAILURE ON
+        USES_TERMINAL_DOWNLOAD ON
+        USES_TERMINAL_CONFIGURE ON
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+    )
+
+    add_library(qpcpp STATIC IMPORTED)
+    set_target_properties(qpcpp PROPERTIES
+        IMPORTED_LOCATION "${QPCPP_LIB_DIR}/libqpcpp.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${QPCPP_INCLUDE_DIR}"
+    )
+    add_dependencies(qpcpp qpcpp_proj)
+
+    set(LOG4QT_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/3rd-party/log4qt-build")
+    set(LOG4QT_INSTALL_DIR "${LOG4QT_PREFIX}/install")
+    set(LOG4QT_INCLUDE_DIR "${LOG4QT_INSTALL_DIR}/include")
+    set(LOG4QT_LIB_DIR "${LOG4QT_INSTALL_DIR}/lib")
+
+    set(LOG4QT_CMAKE_ARGS
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_INSTALL_PREFIX=${LOG4QT_INSTALL_DIR}
+        -DBUILD_SHARED_LIBS=OFF
+        -DBUILD_STATIC_LOG4CXX_LIB=ON
+        -DLOG4QT_ENABLE_TESTS=OFF
+        -DLOG4QT_ENABLE_EXAMPLES=OFF
+        -DBUILD_WITH_DB_LOGGING=OFF
+        -DBUILD_WITH_TELNET_LOGGING=ON
+        -DBUILD_WITH_QML_LOGGING=OFF
+        -DBUILD_WITH_DOCS=OFF
+    )
+
+    ExternalProject_Add(log4qt_proj
+        GIT_REPOSITORY https://github.com/MEONMedical/Log4Qt.git
+        GIT_TAG v1.5.1
+        GIT_SHALLOW ON
+        GIT_PROGRESS ON
+        UPDATE_DISCONNECTED ON
+        PREFIX ${LOG4QT_PREFIX}
+        CMAKE_ARGS ${LOG4QT_CMAKE_ARGS}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build . --parallel ${CMAKE_BUILD_PARALLEL_LEVEL}
+        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        STEP_TARGETS download configure build install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        LOG_OUTPUT_ON_FAILURE ON
+        USES_TERMINAL_DOWNLOAD ON
+        USES_TERMINAL_CONFIGURE ON
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+    )
+
+    add_library(log4qt STATIC IMPORTED)
+    set_target_properties(log4qt PROPERTIES
+        IMPORTED_LOCATION "${LOG4QT_LIB_DIR}/liblog4qt.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${LOG4QT_INCLUDE_DIR}"
+    )
+    add_dependencies(log4qt log4qt_proj)
+
+    set(LIBSNDFILE_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/3rd-party/libsndfile-build")
+    set(LIBSNDFILE_INSTALL_DIR "${LIBSNDFILE_PREFIX}/install")
+    set(LIBSNDFILE_INCLUDE_DIR "${LIBSNDFILE_INSTALL_DIR}/include")
+    set(LIBSNDFILE_LIB_DIR "${LIBSNDFILE_INSTALL_DIR}/lib")
+
+    set(LIBSNDFILE_CMAKE_ARGS
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_INSTALL_PREFIX=${LIBSNDFILE_INSTALL_DIR}
+        -DBUILD_SHARED_LIBS=OFF
+        -DBUILD_PROGRAMS=OFF
+        -DBUILD_EXAMPLES=OFF
+        -DBUILD_TESTING=OFF
+        -DENABLE_EXTERNAL_LIBS=ON
+        -DENABLE_MPEG=OFF
+    )
+
+    ExternalProject_Add(libsndfile_proj
+        GIT_REPOSITORY https://github.com/libsndfile/libsndfile.git
+        GIT_TAG 1.2.2
+        GIT_SHALLOW ON
+        GIT_PROGRESS ON
+        UPDATE_DISCONNECTED ON
+        PREFIX ${LIBSNDFILE_PREFIX}
+        CMAKE_ARGS ${LIBSNDFILE_CMAKE_ARGS}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build . --parallel ${CMAKE_BUILD_PARALLEL_LEVEL}
+        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        STEP_TARGETS download configure build install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        LOG_OUTPUT_ON_FAILURE ON
+        USES_TERMINAL_DOWNLOAD ON
+        USES_TERMINAL_CONFIGURE ON
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+    )
+
+    add_library(SndFile::sndfile STATIC IMPORTED)
+    set_target_properties(SndFile::sndfile PROPERTIES
+        IMPORTED_LOCATION "${LIBSNDFILE_LIB_DIR}/libsndfile.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${LIBSNDFILE_INCLUDE_DIR}"
+    )
+    add_dependencies(SndFile::sndfile libsndfile_proj)
+
+    set(GRPC_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/3rd-party/grpc-build")
     set(GRPC_INSTALL_DIR "${GRPC_PREFIX}/install")
     set(GRPC_INCLUDE_DIR "${GRPC_INSTALL_DIR}/include")
     set(GRPC_LIB_DIR "${GRPC_INSTALL_DIR}/lib")
