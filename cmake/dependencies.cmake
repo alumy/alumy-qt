@@ -2,11 +2,11 @@ include(FetchContent)
 include(ExternalProject)
 
 macro(configure_alumy_dependencies)
-    # Configure spdlog
     set(SPDLOG_ENABLE_PCH ON CACHE BOOL "" FORCE)
     set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "" FORCE)
     set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "" FORCE)
     set(SPDLOG_BUILD_BENCH OFF CACHE BOOL "" FORCE)
+    set(SPDLOG_INSTALL ON CACHE BOOL "" FORCE)
     set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
     FetchContent_Declare(spdlog
@@ -31,7 +31,6 @@ macro(configure_alumy_dependencies)
             COMMAND sed -i "1i include(force_cxx.cmake)" <SOURCE_DIR>/CMakeLists.txt
     )
 
-    # Configure log4qt
     set(BUILD_STATIC_LOG4CXX_LIB ON CACHE BOOL "" FORCE)
     set(BUILD_WITH_DB_LOGGING OFF CACHE BOOL "" FORCE)
     set(BUILD_WITH_TELNET_LOGGING ON CACHE BOOL "" FORCE)
@@ -44,23 +43,19 @@ macro(configure_alumy_dependencies)
     )
     FetchContent_MakeAvailable(log4qt)
 
-    # Configure libsndfile
     set(BUILD_PROGRAMS OFF CACHE BOOL "" FORCE)
     set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
     set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
     set(ENABLE_EXTERNAL_LIBS ON CACHE BOOL "" FORCE)
     set(ENABLE_MPEG OFF CACHE BOOL "" FORCE)
-    
-    # Set CMake policy to suppress AUTOMOC/AUTOUIC warning for .hh files
-    if(POLICY CMP0100)
-        cmake_policy(SET CMP0100 NEW)
-    endif()
+    set(ENABLE_INSTALL ON CACHE BOOL "" FORCE)
 
     FetchContent_Declare(libsndfile
         GIT_REPOSITORY https://github.com/libsndfile/libsndfile.git
         GIT_TAG 1.2.2
         GIT_SHALLOW ON
     )
+
     FetchContent_MakeAvailable(libsndfile)
 
     set(GRPC_INSTALL_DIR ${CMAKE_BINARY_DIR}/grpc-install)
@@ -151,6 +146,98 @@ macro(install_alumy_grpc)
         FILES_MATCHING 
         PATTERN "*"
         PATTERN "*.cmake" EXCLUDE)
+endmacro()
+
+macro(install_alumy_fetchcontent_dependencies)
+    if(TARGET spdlog)
+        install(TARGETS spdlog
+            EXPORT spdlog-targets
+            LIBRARY DESTINATION lib
+            ARCHIVE DESTINATION lib
+            RUNTIME DESTINATION bin
+            INCLUDES DESTINATION include
+        )
+        install(DIRECTORY ${spdlog_SOURCE_DIR}/include/
+            DESTINATION include
+            FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
+        )
+        install(EXPORT spdlog-targets
+            FILE spdlog-targets.cmake
+            DESTINATION lib/cmake/spdlog
+        )
+    endif()
+
+    if(TARGET log4qt)
+        install(TARGETS log4qt
+            EXPORT log4qt-targets
+            LIBRARY DESTINATION lib
+            ARCHIVE DESTINATION lib
+            RUNTIME DESTINATION bin
+            INCLUDES DESTINATION include
+        )
+        if(log4qt_SOURCE_DIR)
+            install(DIRECTORY ${log4qt_SOURCE_DIR}/src/
+                DESTINATION include/log4qt
+                FILES_MATCHING PATTERN "*.h"
+            )
+        endif()
+        install(EXPORT log4qt-targets
+            FILE log4qt-targets.cmake
+            DESTINATION lib/cmake/log4qt
+        )
+    endif()
+
+    if(TARGET qpcpp)
+        install(TARGETS qpcpp
+            EXPORT qpcpp-targets
+            LIBRARY DESTINATION lib
+            ARCHIVE DESTINATION lib
+            RUNTIME DESTINATION bin
+            INCLUDES DESTINATION include
+        )
+        if(qpcpp_SOURCE_DIR)
+            install(DIRECTORY ${qpcpp_SOURCE_DIR}/include/
+                DESTINATION include
+                FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h"
+            )
+        endif()
+        install(EXPORT qpcpp-targets
+            FILE qpcpp-targets.cmake
+            DESTINATION lib/cmake/qpcpp
+        )
+    endif()
+
+    if(TARGET SndFile::sndfile)
+        get_target_property(sndfile_actual_target SndFile::sndfile ALIASED_TARGET)
+        if(sndfile_actual_target)
+            set(sndfile_target ${sndfile_actual_target})
+        else()
+            set(sndfile_target SndFile::sndfile)
+        endif()
+        
+        install(TARGETS ${sndfile_target}
+            EXPORT SndFile-targets
+            LIBRARY DESTINATION lib
+            ARCHIVE DESTINATION lib
+            RUNTIME DESTINATION bin
+            INCLUDES DESTINATION include
+        )
+        if(libsndfile_SOURCE_DIR)
+            install(DIRECTORY ${libsndfile_SOURCE_DIR}/include/
+                DESTINATION include
+                FILES_MATCHING PATTERN "*.h" PATTERN "*.hh"
+            )
+        endif()
+        install(EXPORT SndFile-targets
+            FILE SndFile-targets.cmake
+            DESTINATION lib/cmake/SndFile
+        )
+    endif()
+endmacro()
+
+macro(install_alumy_dependencies)
+    install_alumy_grpc()
+    install_alumy_fetchcontent_dependencies()
 endmacro()
 
 macro(link_alumy_dependencies target_name)

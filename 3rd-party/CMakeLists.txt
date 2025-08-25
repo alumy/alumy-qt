@@ -29,6 +29,6 @@ install(FILES
     ${QTSINGLEAPP_SRC_DIR}/qtlocalpeer.h
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
-install_alumy_grpc()
+install_alumy_dependencies()
 
 target_link_libraries(${target} INTERFACE qtsingleapplication)
