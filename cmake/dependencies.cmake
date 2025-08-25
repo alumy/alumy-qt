@@ -133,9 +133,10 @@ macro(configure_alumy_dependencies)
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         LOG_DOWNLOAD ON
         LOG_CONFIGURE ON
-        LOG_BUILD ON
+        LOG_BUILD OFF
         LOG_INSTALL ON
         USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
     )
 
     list(APPEND CMAKE_PREFIX_PATH ${GRPC_INSTALL_DIR})
