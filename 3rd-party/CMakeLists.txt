@@ -19,4 +19,9 @@ add_library(qtsingleapplication STATIC
 
 target_include_directories(qtsingleapplication PUBLIC ${QTSINGLEAPP_SRC_DIR})
 
+install(FILES 
+    ${QTSINGLEAPP_SRC_DIR}/qtsingleapplication.h
+    ${QTSINGLEAPP_SRC_DIR}/qtlocalpeer.h
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+
 target_link_libraries(${target} INTERFACE qtsingleapplication)
