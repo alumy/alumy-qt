@@ -3,13 +3,12 @@ include(${CMAKE_CURRENT_LIST_DIR}/cal_parallel_level.cmake)
 
 macro(configure_alumy_dependencies)
     set(SPDLOG_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/3rd-party/spdlog-build")
-    set(SPDLOG_INSTALL_DIR "${SPDLOG_PREFIX}/install")
-    set(SPDLOG_INCLUDE_DIR "${SPDLOG_INSTALL_DIR}/include")
-    set(SPDLOG_LIB_DIR "${SPDLOG_INSTALL_DIR}/lib")
+    set(SPDLOG_INCLUDE_DIR "${CMAKE_INSTALL_PREFIX}/include")
+    set(SPDLOG_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 
     set(SPDLOG_CMAKE_ARGS
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-        -DCMAKE_INSTALL_PREFIX=${SPDLOG_INSTALL_DIR}
+        -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
         -DSPDLOG_ENABLE_PCH=ON
         -DSPDLOG_BUILD_SHARED=OFF
         -DSPDLOG_BUILD_TESTS=OFF
@@ -47,13 +46,12 @@ macro(configure_alumy_dependencies)
     add_dependencies(spdlog::spdlog spdlog_proj)
 
     set(QPCPP_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/3rd-party/qpcpp-build")
-    set(QPCPP_INSTALL_DIR "${QPCPP_PREFIX}/install")
-    set(QPCPP_INCLUDE_DIR "${QPCPP_INSTALL_DIR}/include")
-    set(QPCPP_LIB_DIR "${QPCPP_INSTALL_DIR}/lib")
+    set(QPCPP_INCLUDE_DIR "${CMAKE_INSTALL_PREFIX}/include")
+    set(QPCPP_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 
     set(QPCPP_CMAKE_ARGS
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-        -DCMAKE_INSTALL_PREFIX=${QPCPP_INSTALL_DIR}
+        -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
         -DCMAKE_CXX_STANDARD=14
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
         -DCMAKE_CXX_EXTENSIONS=OFF
@@ -78,9 +76,9 @@ macro(configure_alumy_dependencies)
             COMMAND sed -i "1i include(force_cxx.cmake)" <SOURCE_DIR>/CMakeLists.txt
         CMAKE_ARGS ${QPCPP_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
-        INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${QPCPP_INSTALL_DIR}/lib ${QPCPP_INSTALL_DIR}/include
-            COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/libqpcpp.a ${QPCPP_INSTALL_DIR}/lib/
-            COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/include ${QPCPP_INSTALL_DIR}/include
+        INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/lib ${CMAKE_INSTALL_PREFIX}/include
+            COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/libqpcpp.a ${CMAKE_INSTALL_PREFIX}/lib/
+            COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/include ${CMAKE_INSTALL_PREFIX}/include
         STEP_TARGETS download configure build install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -101,13 +99,12 @@ macro(configure_alumy_dependencies)
     add_dependencies(qpcpp qpcpp_proj)
 
     set(LOG4QT_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/3rd-party/log4qt-build")
-    set(LOG4QT_INSTALL_DIR "${LOG4QT_PREFIX}/install")
-    set(LOG4QT_INCLUDE_DIR "${LOG4QT_INSTALL_DIR}/include")
-    set(LOG4QT_LIB_DIR "${LOG4QT_INSTALL_DIR}/lib")
+    set(LOG4QT_INCLUDE_DIR "${CMAKE_INSTALL_PREFIX}/include")
+    set(LOG4QT_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 
     set(LOG4QT_CMAKE_ARGS
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-        -DCMAKE_INSTALL_PREFIX=${LOG4QT_INSTALL_DIR}
+        -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
         -DBUILD_SHARED_LIBS=OFF
         -DBUILD_STATIC_LOG4CXX_LIB=ON
         -DBUILD_WITH_DB_LOGGING=OFF
@@ -145,13 +142,12 @@ macro(configure_alumy_dependencies)
     add_dependencies(log4qt log4qt_proj)
 
     set(LIBSNDFILE_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/3rd-party/libsndfile-build")
-    set(LIBSNDFILE_INSTALL_DIR "${LIBSNDFILE_PREFIX}/install")
-    set(LIBSNDFILE_INCLUDE_DIR "${LIBSNDFILE_INSTALL_DIR}/include")
-    set(LIBSNDFILE_LIB_DIR "${LIBSNDFILE_INSTALL_DIR}/lib")
+    set(LIBSNDFILE_INCLUDE_DIR "${CMAKE_INSTALL_PREFIX}/include")
+    set(LIBSNDFILE_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 
     set(LIBSNDFILE_CMAKE_ARGS
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-        -DCMAKE_INSTALL_PREFIX=${LIBSNDFILE_INSTALL_DIR}
+        -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
         -DBUILD_SHARED_LIBS=OFF
         -DBUILD_PROGRAMS=OFF
         -DBUILD_EXAMPLES=OFF
@@ -190,15 +186,14 @@ macro(configure_alumy_dependencies)
     add_dependencies(SndFile::sndfile libsndfile_proj)
 
     set(GRPC_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/3rd-party/grpc-build")
-    set(GRPC_INSTALL_DIR "${GRPC_PREFIX}/install")
-    set(GRPC_INCLUDE_DIR "${GRPC_INSTALL_DIR}/include")
-    set(GRPC_LIB_DIR "${GRPC_INSTALL_DIR}/lib")
+    set(GRPC_INCLUDE_DIR "${CMAKE_INSTALL_PREFIX}/include")
+    set(GRPC_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 
     cal_grpc_parallel_level(GRPC_PARALLEL_LEVEL)
 
     set(GRPC_CMAKE_ARGS
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-        -DCMAKE_INSTALL_PREFIX=${GRPC_INSTALL_DIR}
+        -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
         -DCMAKE_CXX_STANDARD=14
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
         -DCMAKE_CXX_EXTENSIONS=OFF
@@ -307,7 +302,7 @@ macro(configure_alumy_dependencies)
 
     add_executable(grpc_cpp_plugin IMPORTED)
     set_target_properties(grpc_cpp_plugin PROPERTIES
-        IMPORTED_LOCATION "${GRPC_INSTALL_DIR}/bin/grpc_cpp_plugin"
+        IMPORTED_LOCATION "${CMAKE_INSTALL_PREFIX}/bin/grpc_cpp_plugin"
     )
     add_dependencies(grpc_cpp_plugin grpc_proj)
 
