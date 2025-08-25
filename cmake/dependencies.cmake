@@ -1,6 +1,5 @@
 include(FetchContent)
 include(ExternalProject)
-include(${CMAKE_CURRENT_LIST_DIR}/cal_parallel_level.cmake)
 
 macro(configure_alumy_dependencies)
     # Configure spdlog
@@ -51,6 +50,11 @@ macro(configure_alumy_dependencies)
     set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
     set(ENABLE_EXTERNAL_LIBS ON CACHE BOOL "" FORCE)
     set(ENABLE_MPEG OFF CACHE BOOL "" FORCE)
+    
+    # Set CMake policy to suppress AUTOMOC/AUTOUIC warning for .hh files
+    if(POLICY CMP0100)
+        cmake_policy(SET CMP0100 NEW)
+    endif()
 
     FetchContent_Declare(libsndfile
         GIT_REPOSITORY https://github.com/libsndfile/libsndfile.git
@@ -76,20 +80,40 @@ macro(configure_alumy_dependencies)
         -DgRPC_BUILD_GRPC_PYTHON_PLUGIN=OFF
         -DgRPC_BUILD_GRPC_RUBY_PLUGIN=OFF
         -DgRPC_BUILD_GRPC_REFLECTION=OFF
+        -DgRPC_BUILD_GRPC_GOOGLE_CLOUD_CPP_PLUGIN=OFF
         -DgRPC_ABSL_PROVIDER=module
         -DgRPC_CARES_PROVIDER=module
         -DgRPC_PROTOBUF_PROVIDER=module
         -DgRPC_RE2_PROVIDER=module
         -DgRPC_SSL_PROVIDER=none
         -DgRPC_ZLIB_PROVIDER=module
+        -DgRPC_BENCHMARK_PROVIDER=none
+        -DgRPC_UPB_PROVIDER=module
         -DgRPC_BUILD_GRPC_CPP_PLUGIN=ON
         -DgRPC_BUILD_CODEGEN=ON
         -DgRPC_INSTALL=ON
+        -DgRPC_BACKWARDS_COMPATIBILITY_MODE=OFF
         -DABSL_BUILD_TESTING=OFF
         -DABSL_PROPAGATE_CXX_STD=ON
         -DABSL_BUILD_MONOLITHIC_SHARED_LIBS=OFF
-        -DgRPC_BACKWARDS_COMPATIBILITY_MODE=OFF
-        -DgRPC_BUILD_GRPC_GOOGLE_CLOUD_CPP_PLUGIN=OFF
+        -DABSL_ENABLE_INSTALL=ON
+        -DABSL_BUILD_DLL=OFF
+        -Dprotobuf_BUILD_TESTS=OFF
+        -Dprotobuf_BUILD_EXAMPLES=OFF
+        -Dprotobuf_WITH_ZLIB=OFF
+        -Dprotobuf_BUILD_SHARED_LIBS=OFF
+        -DRE2_BUILD_TESTING=OFF
+        -DCARES_STATIC=ON
+        -DCARES_SHARED=OFF
+        -DCARES_BUILD_TESTS=OFF
+        -DCARES_BUILD_TOOLS=OFF
+        -DZLIB_BUILD_EXAMPLES=OFF
+        -DgRPC_BUILD_GRPC_RUBY_PLUGIN=OFF
+        -DgRPC_BUILD_GRPC_PYTHON_PLUGIN=OFF
+        -DgRPC_BUILD_GRPC_PHP_PLUGIN=OFF
+        -DgRPC_BUILD_GRPC_OBJECTIVE_C_PLUGIN=OFF
+        -DgRPC_BUILD_GRPC_NODE_PLUGIN=OFF
+        -DgRPC_BUILD_GRPC_CSHARP_PLUGIN=OFF
     )
     
     ExternalProject_Add(grpc-external
@@ -98,6 +122,7 @@ macro(configure_alumy_dependencies)
         GIT_SUBMODULES_RECURSE ON
         GIT_SHALLOW ON
         CMAKE_ARGS ${GRPC_CMAKE_ARGS}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS 
             ${GRPC_INSTALL_DIR}/lib/libgrpc++.a
             ${GRPC_INSTALL_DIR}/lib/libgrpc.a
@@ -106,6 +131,11 @@ macro(configure_alumy_dependencies)
             ${GRPC_INSTALL_DIR}/lib/libupb.a
             ${GRPC_INSTALL_DIR}/bin/grpc_cpp_plugin
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        LOG_DOWNLOAD ON
+        LOG_CONFIGURE ON
+        LOG_BUILD ON
+        LOG_INSTALL ON
+        USES_TERMINAL_BUILD ON
     )
 
     list(APPEND CMAKE_PREFIX_PATH ${GRPC_INSTALL_DIR})
@@ -123,25 +153,48 @@ macro(install_alumy_grpc)
 endmacro()
 
 macro(link_alumy_dependencies target_name)
-    list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
-    find_package(gRPC QUIET)
+    target_link_libraries(${target_name} INTERFACE 
+        spdlog::spdlog 
+        qpcpp 
+        log4qt 
+        SndFile::sndfile
+    )
     
-    if(gRPC_FOUND)
-        target_link_libraries(${target_name} INTERFACE 
-            spdlog::spdlog 
-            qpcpp 
-            log4qt 
-            SndFile::sndfile 
-            gRPC::grpc++
-        )
-        add_dependencies(${target_name} grpc-external)
-    else()
-        message(WARNING "gRPC not found, linking without gRPC support")
-        target_link_libraries(${target_name} INTERFACE 
-            spdlog::spdlog 
-            qpcpp 
-            log4qt 
-            SndFile::sndfile
-        )
-    endif()
+    set(GRPC_INSTALL_DIR ${CMAKE_BINARY_DIR}/grpc-install)
+    
+    add_library(grpc++ STATIC IMPORTED)
+    set_target_properties(grpc++ PROPERTIES
+        IMPORTED_LOCATION ${GRPC_INSTALL_DIR}/lib/libgrpc++.a
+        INTERFACE_INCLUDE_DIRECTORIES ${GRPC_INSTALL_DIR}/include
+    )
+    
+    add_library(grpc STATIC IMPORTED)
+    set_target_properties(grpc PROPERTIES
+        IMPORTED_LOCATION ${GRPC_INSTALL_DIR}/lib/libgrpc.a
+        INTERFACE_INCLUDE_DIRECTORIES ${GRPC_INSTALL_DIR}/include
+    )
+    
+    add_library(gpr STATIC IMPORTED)
+    set_target_properties(gpr PROPERTIES
+        IMPORTED_LOCATION ${GRPC_INSTALL_DIR}/lib/libgpr.a
+    )
+    
+    add_library(address_sorting STATIC IMPORTED)
+    set_target_properties(address_sorting PROPERTIES
+        IMPORTED_LOCATION ${GRPC_INSTALL_DIR}/lib/libaddress_sorting.a
+    )
+    
+    add_library(upb STATIC IMPORTED)
+    set_target_properties(upb PROPERTIES
+        IMPORTED_LOCATION ${GRPC_INSTALL_DIR}/lib/libupb.a
+    )
+    
+    target_link_libraries(${target_name} INTERFACE grpc++ grpc gpr address_sorting upb)
+    
+    add_dependencies(${target_name} grpc-external)
+    add_dependencies(grpc++ grpc-external)
+    add_dependencies(grpc grpc-external)
+    add_dependencies(gpr grpc-external)
+    add_dependencies(address_sorting grpc-external)
+    add_dependencies(upb grpc-external)
 endmacro()
