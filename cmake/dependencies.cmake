@@ -1,4 +1,5 @@
 include(FetchContent)
+include(ExternalProject)
 include(${CMAKE_CURRENT_LIST_DIR}/cal_parallel_level.cmake)
 
 macro(configure_alumy_dependencies)
@@ -58,35 +59,89 @@ macro(configure_alumy_dependencies)
     )
     FetchContent_MakeAvailable(libsndfile)
 
-    set(gRPC_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-    set(gRPC_BUILD_CSHARP_EXT OFF CACHE BOOL "" FORCE)
-    set(gRPC_BUILD_GRPC_CSHARP_PLUGIN OFF CACHE BOOL "" FORCE)
-    set(gRPC_BUILD_GRPC_NODE_PLUGIN OFF CACHE BOOL "" FORCE)
-    set(gRPC_BUILD_GRPC_OBJECTIVE_C_PLUGIN OFF CACHE BOOL "" FORCE)
-    set(gRPC_BUILD_GRPC_PHP_PLUGIN OFF CACHE BOOL "" FORCE)
-    set(gRPC_BUILD_GRPC_PYTHON_PLUGIN OFF CACHE BOOL "" FORCE)
-    set(gRPC_BUILD_GRPC_RUBY_PLUGIN OFF CACHE BOOL "" FORCE)
-    set(gRPC_ABSL_PROVIDER module CACHE STRING "" FORCE)
-    set(gRPC_CARES_PROVIDER module CACHE STRING "" FORCE)
-    set(gRPC_PROTOBUF_PROVIDER module CACHE STRING "" FORCE)
-    set(gRPC_RE2_PROVIDER module CACHE STRING "" FORCE)
-    set(gRPC_SSL_PROVIDER module CACHE STRING "" FORCE)
-    set(gRPC_ZLIB_PROVIDER module CACHE STRING "" FORCE)
-    set(gRPC_BUILD_GRPC_CPP_PLUGIN ON CACHE BOOL "" FORCE)
-    set(gRPC_BUILD_CODEGEN ON CACHE BOOL "" FORCE)
+    set(GRPC_INSTALL_DIR ${CMAKE_BINARY_DIR}/grpc-install)
 
-    FetchContent_Declare(grpc
+    set(GRPC_CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=${GRPC_INSTALL_DIR}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_CXX_STANDARD=17
+        -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DBUILD_SHARED_LIBS=OFF
+        -DgRPC_BUILD_TESTS=OFF
+        -DgRPC_BUILD_CSHARP_EXT=OFF
+        -DgRPC_BUILD_GRPC_CSHARP_PLUGIN=OFF
+        -DgRPC_BUILD_GRPC_NODE_PLUGIN=OFF
+        -DgRPC_BUILD_GRPC_OBJECTIVE_C_PLUGIN=OFF
+        -DgRPC_BUILD_GRPC_PHP_PLUGIN=OFF
+        -DgRPC_BUILD_GRPC_PYTHON_PLUGIN=OFF
+        -DgRPC_BUILD_GRPC_RUBY_PLUGIN=OFF
+        -DgRPC_BUILD_GRPC_REFLECTION=OFF
+        -DgRPC_ABSL_PROVIDER=module
+        -DgRPC_CARES_PROVIDER=module
+        -DgRPC_PROTOBUF_PROVIDER=module
+        -DgRPC_RE2_PROVIDER=module
+        -DgRPC_SSL_PROVIDER=none
+        -DgRPC_ZLIB_PROVIDER=module
+        -DgRPC_BUILD_GRPC_CPP_PLUGIN=ON
+        -DgRPC_BUILD_CODEGEN=ON
+        -DgRPC_INSTALL=ON
+        -DABSL_BUILD_TESTING=OFF
+        -DABSL_PROPAGATE_CXX_STD=ON
+        -DABSL_BUILD_MONOLITHIC_SHARED_LIBS=OFF
+        -DgRPC_BACKWARDS_COMPATIBILITY_MODE=OFF
+        -DgRPC_BUILD_GRPC_GOOGLE_CLOUD_CPP_PLUGIN=OFF
+    )
+    
+    ExternalProject_Add(grpc-external
         GIT_REPOSITORY https://github.com/grpc/grpc.git
         GIT_TAG v1.46.7
         GIT_SUBMODULES_RECURSE ON
         GIT_SHALLOW ON
+        CMAKE_ARGS ${GRPC_CMAKE_ARGS}
+        BUILD_BYPRODUCTS 
+            ${GRPC_INSTALL_DIR}/lib/libgrpc++.a
+            ${GRPC_INSTALL_DIR}/lib/libgrpc.a
+            ${GRPC_INSTALL_DIR}/lib/libgpr.a
+            ${GRPC_INSTALL_DIR}/lib/libaddress_sorting.a
+            ${GRPC_INSTALL_DIR}/lib/libupb.a
+            ${GRPC_INSTALL_DIR}/bin/grpc_cpp_plugin
+        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
     )
-    FetchContent_MakeAvailable(grpc)
 
-    find_package(OpenSSL REQUIRED)
-    find_package(ZLIB REQUIRED)
+    list(APPEND CMAKE_PREFIX_PATH ${GRPC_INSTALL_DIR})
+endmacro()
+
+macro(install_alumy_grpc)
+    set(GRPC_INSTALL_DIR ${CMAKE_BINARY_DIR}/grpc-install)
+
+    install(DIRECTORY ${GRPC_INSTALL_DIR}/
+        DESTINATION "."
+        USE_SOURCE_PERMISSIONS
+        FILES_MATCHING 
+        PATTERN "*"
+        PATTERN "*.cmake" EXCLUDE)
 endmacro()
 
 macro(link_alumy_dependencies target_name)
-    target_link_libraries(${target_name} INTERFACE spdlog::spdlog qpcpp log4qt SndFile::sndfile grpc++)
+    list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
+    find_package(gRPC QUIET)
+    
+    if(gRPC_FOUND)
+        target_link_libraries(${target_name} INTERFACE 
+            spdlog::spdlog 
+            qpcpp 
+            log4qt 
+            SndFile::sndfile 
+            gRPC::grpc++
+        )
+        add_dependencies(${target_name} grpc-external)
+    else()
+        message(WARNING "gRPC not found, linking without gRPC support")
+        target_link_libraries(${target_name} INTERFACE 
+            spdlog::spdlog 
+            qpcpp 
+            log4qt 
+            SndFile::sndfile
+        )
+    endif()
 endmacro()
