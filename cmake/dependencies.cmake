@@ -2,61 +2,73 @@ include(FetchContent)
 include(ExternalProject)
 
 macro(configure_alumy_dependencies)
-    set(SPDLOG_ENABLE_PCH ON CACHE BOOL "" FORCE)
-    set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "" FORCE)
-    set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-    set(SPDLOG_BUILD_BENCH OFF CACHE BOOL "" FORCE)
-    set(SPDLOG_INSTALL ON CACHE BOOL "" FORCE)
-    set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+    # Only configure dependencies if they haven't been configured already
+    if(NOT TARGET spdlog AND NOT TARGET spdlog::spdlog)
+        set(SPDLOG_ENABLE_PCH ON CACHE BOOL "" FORCE)
+        set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+        set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+        set(SPDLOG_BUILD_BENCH OFF CACHE BOOL "" FORCE)
+        set(SPDLOG_INSTALL ON CACHE BOOL "" FORCE)
+        
+        # Save current BUILD_SHARED_LIBS value
+        set(_ALUMY_ORIGINAL_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+        set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
-    FetchContent_Declare(spdlog
-        GIT_REPOSITORY https://github.com/gabime/spdlog.git
-        GIT_TAG v1.15.3
-        GIT_SHALLOW ON
-    )
-    FetchContent_MakeAvailable(spdlog)
+        FetchContent_Declare(spdlog
+            GIT_REPOSITORY https://github.com/gabime/spdlog.git
+            GIT_TAG v1.15.3
+            GIT_SHALLOW ON
+        )
+        FetchContent_MakeAvailable(spdlog)
+    endif()
 
-    set(QPCPP_CXX_STANDARD 11 CACHE STRING "" FORCE)
-    set(QPCPP_CFG_KERNEL qv CACHE STRING "" FORCE)
-    set(QPCPP_CFG_PORT posix CACHE STRING "" FORCE)
-    set(QPCPP_CFG_GUI OFF CACHE BOOL "" FORCE)
-    set(QPCPP_CFG_UNIT_TEST OFF CACHE BOOL "" FORCE)
-    set(QPCPP_CFG_VERBOSE OFF CACHE BOOL "" FORCE)
+    if(NOT TARGET qpcpp)
+        set(QPCPP_CXX_STANDARD 11 CACHE STRING "" FORCE)
+        set(QPCPP_CFG_KERNEL qv CACHE STRING "" FORCE)
+        set(QPCPP_CFG_PORT posix CACHE STRING "" FORCE)
+        set(QPCPP_CFG_GUI OFF CACHE BOOL "" FORCE)
+        set(QPCPP_CFG_UNIT_TEST OFF CACHE BOOL "" FORCE)
+        set(QPCPP_CFG_VERBOSE OFF CACHE BOOL "" FORCE)
 
-    FetchContent_Declare(qpcpp
-        GIT_REPOSITORY https://github.com/QuantumLeaps/qpcpp.git
-        GIT_TAG v7.3.4
-        GIT_SHALLOW ON
-        PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/cmake/qpcpp_force_cxx.cmake <SOURCE_DIR>/force_cxx.cmake
-            COMMAND sed -i "1i include(force_cxx.cmake)" <SOURCE_DIR>/CMakeLists.txt
-    )
+        FetchContent_Declare(qpcpp
+            GIT_REPOSITORY https://github.com/QuantumLeaps/qpcpp.git
+            GIT_TAG v7.3.4
+            GIT_SHALLOW ON
+            PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/cmake/qpcpp_force_cxx.cmake <SOURCE_DIR>/force_cxx.cmake
+                COMMAND sed -i "1i include(force_cxx.cmake)" <SOURCE_DIR>/CMakeLists.txt
+        )
+    endif()
 
-    set(BUILD_STATIC_LOG4CXX_LIB ON CACHE BOOL "" FORCE)
-    set(BUILD_WITH_DB_LOGGING OFF CACHE BOOL "" FORCE)
-    set(BUILD_WITH_TELNET_LOGGING ON CACHE BOOL "" FORCE)
-    set(BUILD_WITH_DOCS OFF CACHE BOOL "" FORCE)
+    if(NOT TARGET log4qt)
+        set(BUILD_STATIC_LOG4CXX_LIB ON CACHE BOOL "" FORCE)
+        set(BUILD_WITH_DB_LOGGING OFF CACHE BOOL "" FORCE)
+        set(BUILD_WITH_TELNET_LOGGING ON CACHE BOOL "" FORCE)
+        set(BUILD_WITH_DOCS OFF CACHE BOOL "" FORCE)
 
-    FetchContent_Declare(log4qt
-        GIT_REPOSITORY https://github.com/MEONMedical/Log4Qt.git
-        GIT_TAG v1.5.1
-        GIT_SHALLOW ON
-    )
-    FetchContent_MakeAvailable(log4qt)
+        FetchContent_Declare(log4qt
+            GIT_REPOSITORY https://github.com/MEONMedical/Log4Qt.git
+            GIT_TAG v1.5.1
+            GIT_SHALLOW ON
+        )
+        FetchContent_MakeAvailable(log4qt)
+    endif()
 
-    set(BUILD_PROGRAMS OFF CACHE BOOL "" FORCE)
-    set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-    set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
-    set(ENABLE_EXTERNAL_LIBS ON CACHE BOOL "" FORCE)
-    set(ENABLE_MPEG OFF CACHE BOOL "" FORCE)
-    set(ENABLE_INSTALL ON CACHE BOOL "" FORCE)
+    if(NOT TARGET SndFile::sndfile)
+        set(BUILD_PROGRAMS OFF CACHE BOOL "" FORCE)
+        set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+        set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+        set(ENABLE_EXTERNAL_LIBS ON CACHE BOOL "" FORCE)
+        set(ENABLE_MPEG OFF CACHE BOOL "" FORCE)
+        set(ENABLE_INSTALL ON CACHE BOOL "" FORCE)
 
-    FetchContent_Declare(libsndfile
-        GIT_REPOSITORY https://github.com/libsndfile/libsndfile.git
-        GIT_TAG 1.2.2
-        GIT_SHALLOW ON
-    )
+        FetchContent_Declare(libsndfile
+            GIT_REPOSITORY https://github.com/libsndfile/libsndfile.git
+            GIT_TAG 1.2.2
+            GIT_SHALLOW ON
+        )
 
-    FetchContent_MakeAvailable(libsndfile)
+        FetchContent_MakeAvailable(libsndfile)
+    endif()
 
     set(GRPC_INSTALL_DIR ${CMAKE_BINARY_DIR}/grpc-install)
 
@@ -135,6 +147,12 @@ macro(configure_alumy_dependencies)
     )
 
     list(APPEND CMAKE_PREFIX_PATH ${GRPC_INSTALL_DIR})
+    
+    # Restore original BUILD_SHARED_LIBS value if it was saved
+    if(DEFINED _ALUMY_ORIGINAL_BUILD_SHARED_LIBS)
+        set(BUILD_SHARED_LIBS ${_ALUMY_ORIGINAL_BUILD_SHARED_LIBS} CACHE BOOL "" FORCE)
+        unset(_ALUMY_ORIGINAL_BUILD_SHARED_LIBS)
+    endif()
 endmacro()
 
 macro(install_alumy_grpc)

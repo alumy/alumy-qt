@@ -19,9 +19,14 @@ add_library(qtsingleapplication STATIC
     ${QTSINGLEAPP_SRC_DIR}/qtlocalpeer.h
 )
 
-target_include_directories(qtsingleapplication PUBLIC ${QTSINGLEAPP_SRC_DIR})
+target_include_directories(qtsingleapplication PUBLIC 
+    $<BUILD_INTERFACE:${QTSINGLEAPP_SRC_DIR}>
+    $<INSTALL_INTERFACE:include>
+)
 
+# Install qtsingleapplication with proper export
 install(TARGETS qtsingleapplication
+    EXPORT alumy-targets
     DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 
 install(FILES 
@@ -29,6 +34,13 @@ install(FILES
     ${QTSINGLEAPP_SRC_DIR}/qtlocalpeer.h
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
+# Install all dependencies
 install_alumy_dependencies()
 
 target_link_libraries(${target} INTERFACE qtsingleapplication)
+
+# Set up the interface target properties for proper export
+target_include_directories(${target} INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+    $<INSTALL_INTERFACE:include>
+)

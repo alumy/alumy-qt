@@ -2,18 +2,61 @@
 
 include(CMakeFindDependencyMacro)
 
+# Set up paths
+set_and_check(alumy_INCLUDE_DIR "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@")
+set_and_check(alumy_LIB_DIR "@PACKAGE_CMAKE_INSTALL_LIBDIR@")
+
 # Find required Qt components
 find_dependency(QT NAMES Qt6 Qt5 COMPONENTS Widgets Network Core SerialPort Multimedia Concurrent REQUIRED)
 find_dependency(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Network Core SerialPort Multimedia Concurrent REQUIRED)
 
-# Find required third-party dependencies
+# Find system dependencies
+if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
+    find_library(RT_LIBRARY rt)
+    if(RT_LIBRARY)
+        list(APPEND alumy_LIBRARIES ${RT_LIBRARY})
+    endif()
+endif()
+
+find_library(M_LIBRARY m)
+if(M_LIBRARY)
+    list(APPEND alumy_LIBRARIES ${M_LIBRARY})
+endif()
+
+# Configure and include third-party dependencies
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/dependencies.cmake")
 configure_alumy_dependencies()
 
-# Note: The 3rd-party dependencies (spdlog, qpcpp, log4qt) are included
-# as part of the alumy-3rd-party target which is exported with the library
-
 # Include the targets file
 include("${CMAKE_CURRENT_LIST_DIR}/alumy-targets.cmake")
+
+# Provide legacy variables for compatibility
+set(alumy_LIBRARIES alumy::alumy)
+set(alumy_INCLUDE_DIRS ${alumy_INCLUDE_DIR})
+set(alumy_VERSION @PROJECT_VERSION@)
+
+# Define a helper function to link all dependencies to a target
+function(alumy_link_libraries target_name)
+    target_link_libraries(${target_name} PUBLIC alumy::alumy)
+    
+    # Link Qt libraries
+    target_link_libraries(${target_name} PUBLIC
+        Qt${QT_VERSION_MAJOR}::Core
+        Qt${QT_VERSION_MAJOR}::Widgets
+        Qt${QT_VERSION_MAJOR}::Network
+        Qt${QT_VERSION_MAJOR}::SerialPort
+        Qt${QT_VERSION_MAJOR}::Multimedia
+        Qt${QT_VERSION_MAJOR}::Concurrent
+    )
+    
+    # Link third-party dependencies
+    link_alumy_dependencies(${target_name})
+    
+    # Set include directories
+    target_include_directories(${target_name} PUBLIC ${alumy_INCLUDE_DIRS})
+    
+    # Set compile definitions
+    target_compile_definitions(${target_name} PUBLIC AL_USE_DEFAULT_CONFIG)
+endfunction()
 
 check_required_components(alumy)

@@ -278,11 +278,74 @@ elseif(BUILD_STATIC_LIBS AND TARGET "${PROJECT_NAME}-static")
 endif()
 
 #####################################################################
-# install
+# install targets and export
 #####################################################################
+if(BUILD_SHARED_LIBS AND TARGET ${PROJECT_NAME})
+    install(TARGETS ${PROJECT_NAME}
+        EXPORT alumy-targets
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+endif()
+
+if(BUILD_STATIC_LIBS AND TARGET "${PROJECT_NAME}-static")
+    install(TARGETS "${PROJECT_NAME}-static"
+        EXPORT alumy-targets
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+endif()
+
+# Install the 3rd-party target if it exists
+if(TARGET alumy-3rd-party)
+    install(TARGETS alumy-3rd-party
+        EXPORT alumy-targets
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+endif()
+
+# Install headers
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
 	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
 	FILES_MATCHING PATTERN "*.h")
+
+# Install dependencies cmake file
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/alumy/cmake)
+
+# Export targets
+install(EXPORT alumy-targets
+    FILE alumy-targets.cmake
+    NAMESPACE alumy::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/alumy)
+
+# Configure package config files
+include(CMakePackageConfigHelpers)
+
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/alumy-config.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/alumy-config.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/alumy
+    PATH_VARS CMAKE_INSTALL_INCLUDEDIR CMAKE_INSTALL_LIBDIR
+)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/alumy-config-version.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/alumy-config.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/alumy-config-version.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/alumy)
 
 include(InstallRequiredSystemLibraries)
 set(CPACK_PACKAGE_VENDOR alumy)
