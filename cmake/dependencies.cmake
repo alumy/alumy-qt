@@ -228,12 +228,6 @@ macro(install_alumy_fetchcontent_dependencies)
             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
             INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         )
-        if(libsndfile_SOURCE_DIR)
-            install(DIRECTORY ${libsndfile_SOURCE_DIR}/include/
-                DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-                FILES_MATCHING PATTERN "*.h" PATTERN "*.hh"
-            )
-        endif()
     endif()
 endmacro()
 

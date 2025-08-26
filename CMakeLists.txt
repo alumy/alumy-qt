@@ -8,7 +8,6 @@ else()
 endif()
 
 cmake_minimum_required(VERSION 3.20)
-cmake_policy(VERSION 3.20)
 
 project(alumy C CXX)
 
@@ -195,6 +194,7 @@ set(objs
     $<TARGET_OBJECTS:xyzmodem>
     $<TARGET_OBJECTS:net>
     $<TARGET_OBJECTS:audio>
+    $<TARGET_OBJECTS:3rd-party>
 )
 
 #####################################################################
@@ -221,7 +221,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
     	message(STATUS "Building shared library for Linux")
 
     	add_library(${PROJECT_NAME} SHARED ${PROJECT_SOURCES} ${objs})
-    	target_link_libraries(${PROJECT_NAME} alumy-3rd-party)
+    	    target_link_libraries(${PROJECT_NAME} 3rd-party)
 
     	target_include_directories(${PROJECT_NAME} PUBLIC
         	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -230,7 +230,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
 
     	add_dependencies(${PROJECT_NAME} get_git_hash)
     	add_dependencies(${PROJECT_NAME} get_svn_revision)
-        add_dependencies(${PROJECT_NAME} alumy-3rd-party)
+        add_dependencies(${PROJECT_NAME} 3rd-party)
 
     	set_target_properties(${PROJECT_NAME} PROPERTIES
            	VERSION "${PROJECT_VERSION}"
@@ -249,7 +249,7 @@ endif()
 #####################################################################
 if(BUILD_STATIC_LIBS)
     add_library("${PROJECT_NAME}-static" STATIC ${PROJECT_SOURCES} ${objs})
-    target_link_libraries("${PROJECT_NAME}-static" alumy-3rd-party)
+    target_link_libraries("${PROJECT_NAME}-static" 3rd-party)
 
     target_include_directories("${PROJECT_NAME}-static" PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -258,7 +258,7 @@ if(BUILD_STATIC_LIBS)
     
     add_dependencies("${PROJECT_NAME}-static" get_git_hash)
     add_dependencies("${PROJECT_NAME}-static" get_svn_revision)
-    add_dependencies("${PROJECT_NAME}-static" alumy-3rd-party)
+    add_dependencies("${PROJECT_NAME}-static" 3rd-party)
     
     set_target_properties("${PROJECT_NAME}-static" PROPERTIES OUTPUT_NAME "${PROJECT_NAME}")
     set_target_properties("${PROJECT_NAME}-static" PROPERTIES PREFIX "lib")
@@ -300,33 +300,21 @@ if(BUILD_STATIC_LIBS AND TARGET "${PROJECT_NAME}-static")
     )
 endif()
 
-# Install the 3rd-party target if it exists
-if(TARGET alumy-3rd-party)
-    install(TARGETS alumy-3rd-party
-        EXPORT alumy-targets
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    )
+# Install project headers only from the main project directory
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+        FILES_MATCHING PATTERN "*.h")
 endif()
 
-# Install headers
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
-	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-	FILES_MATCHING PATTERN "*.h")
-
-# Install dependencies cmake file
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies.cmake
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/alumy/cmake)
 
-# Export targets
 install(EXPORT alumy-targets
     FILE alumy-targets.cmake
     NAMESPACE alumy::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/alumy)
 
-# Configure package config files
 include(CMakePackageConfigHelpers)
 
 configure_package_config_file(
