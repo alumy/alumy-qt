@@ -22,22 +22,47 @@ macro(configure_alumy_dependencies)
         FetchContent_MakeAvailable(spdlog)
     endif()
 
-    if(NOT TARGET qpcpp)
-        set(QPCPP_CXX_STANDARD 11 CACHE STRING "" FORCE)
-        set(QPCPP_CFG_KERNEL qv CACHE STRING "" FORCE)
-        set(QPCPP_CFG_PORT posix CACHE STRING "" FORCE)
-        set(QPCPP_CFG_GUI OFF CACHE BOOL "" FORCE)
-        set(QPCPP_CFG_UNIT_TEST OFF CACHE BOOL "" FORCE)
-        set(QPCPP_CFG_VERBOSE OFF CACHE BOOL "" FORCE)
+    set(QPCPP_INSTALL_DIR ${CMAKE_BINARY_DIR}/qpcpp-install)
+    
+    set(QPCPP_CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=${QPCPP_INSTALL_DIR}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_CXX_STANDARD=11
+        -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DBUILD_SHARED_LIBS=OFF
+        -DQPCPP_CXX_STANDARD=11
+        -DQPCPP_CFG_KERNEL=qv
+        -DQPCPP_CFG_PORT=posix
+        -DQPCPP_CFG_GUI=OFF
+        -DQPCPP_CFG_UNIT_TEST=OFF
+        -DQPCPP_CFG_VERBOSE=OFF
+    )
+    
+    ExternalProject_Add(qpcpp-external
+        GIT_REPOSITORY https://github.com/QuantumLeaps/qpcpp.git
+        GIT_TAG v7.3.4
+        GIT_SHALLOW ON
+        PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/cmake/qpcpp_force_cxx.cmake <SOURCE_DIR>/force_cxx.cmake
+            COMMAND sed -i "1i include(force_cxx.cmake)" <SOURCE_DIR>/CMakeLists.txt
+        CMAKE_ARGS ${QPCPP_CMAKE_ARGS}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_BYPRODUCTS 
+            ${QPCPP_INSTALL_DIR}/lib/libqpcpp.a
+        INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${QPCPP_INSTALL_DIR}/lib
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${QPCPP_INSTALL_DIR}/include
+            COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/libqpcpp.a ${QPCPP_INSTALL_DIR}/lib/
+            COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/include ${QPCPP_INSTALL_DIR}/include
+            COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/src ${QPCPP_INSTALL_DIR}/include
+            COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/ports/posix-qv ${QPCPP_INSTALL_DIR}/include/ports/posix-qv
+        LOG_DOWNLOAD ON
+        LOG_CONFIGURE ON
+        LOG_BUILD OFF
+        LOG_INSTALL ON
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+    )
 
-        FetchContent_Declare(qpcpp
-            GIT_REPOSITORY https://github.com/QuantumLeaps/qpcpp.git
-            GIT_TAG v7.3.4
-            GIT_SHALLOW ON
-            PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/cmake/qpcpp_force_cxx.cmake <SOURCE_DIR>/force_cxx.cmake
-                COMMAND sed -i "1i include(force_cxx.cmake)" <SOURCE_DIR>/CMakeLists.txt
-        )
-    endif()
+    list(APPEND CMAKE_PREFIX_PATH ${QPCPP_INSTALL_DIR})
 
     if(NOT TARGET log4qt)
         set(BUILD_STATIC_LOG4CXX_LIB ON CACHE BOOL "" FORCE)
@@ -147,8 +172,7 @@ macro(configure_alumy_dependencies)
     )
 
     list(APPEND CMAKE_PREFIX_PATH ${GRPC_INSTALL_DIR})
-    
-    # Restore original BUILD_SHARED_LIBS value if it was saved
+
     if(DEFINED _ALUMY_ORIGINAL_BUILD_SHARED_LIBS)
         set(BUILD_SHARED_LIBS ${_ALUMY_ORIGINAL_BUILD_SHARED_LIBS} CACHE BOOL "" FORCE)
         unset(_ALUMY_ORIGINAL_BUILD_SHARED_LIBS)
@@ -197,20 +221,15 @@ macro(install_alumy_fetchcontent_dependencies)
         endif()
     endif()
 
-    if(TARGET qpcpp)
-        install(TARGETS qpcpp
-            EXPORT alumy-targets
-            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-            INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    set(QPCPP_INSTALL_DIR ${CMAKE_BINARY_DIR}/qpcpp-install)
+    if(EXISTS ${QPCPP_INSTALL_DIR})
+        install(DIRECTORY ${QPCPP_INSTALL_DIR}/
+            DESTINATION "."
+            USE_SOURCE_PERMISSIONS
+            FILES_MATCHING 
+            PATTERN "*"
+            PATTERN "*.cmake" EXCLUDE
         )
-        if(qpcpp_SOURCE_DIR)
-            install(DIRECTORY ${qpcpp_SOURCE_DIR}/include/
-                DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-                FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h"
-            )
-        endif()
     endif()
 
     if(TARGET SndFile::sndfile)
@@ -237,6 +256,15 @@ macro(install_alumy_dependencies)
 endmacro()
 
 macro(link_alumy_dependencies target_name)
+    set(QPCPP_INSTALL_DIR ${CMAKE_BINARY_DIR}/qpcpp-install)
+    
+    add_library(qpcpp STATIC IMPORTED)
+    set_target_properties(qpcpp PROPERTIES
+        IMPORTED_LOCATION ${QPCPP_INSTALL_DIR}/lib/libqpcpp.a
+        INTERFACE_INCLUDE_DIRECTORIES "${QPCPP_INSTALL_DIR}/include"
+    )
+    add_dependencies(qpcpp qpcpp-external)
+
     target_link_libraries(${target_name} INTERFACE 
         spdlog::spdlog 
         qpcpp 
@@ -275,7 +303,7 @@ macro(link_alumy_dependencies target_name)
     
     target_link_libraries(${target_name} INTERFACE grpc++ grpc gpr address_sorting upb)
     
-    add_dependencies(${target_name} grpc-external)
+    add_dependencies(${target_name} grpc-external qpcpp-external)
     add_dependencies(grpc++ grpc-external)
     add_dependencies(grpc grpc-external)
     add_dependencies(gpr grpc-external)
