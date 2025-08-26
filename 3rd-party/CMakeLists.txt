@@ -24,6 +24,11 @@ target_include_directories(qtsingleapplication PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
+target_link_libraries(qtsingleapplication PUBLIC
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Network
+)
+
 # Install qtsingleapplication with proper export
 install(TARGETS qtsingleapplication
     EXPORT alumy-targets

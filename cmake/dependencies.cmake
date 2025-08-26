@@ -169,60 +169,48 @@ endmacro()
 macro(install_alumy_fetchcontent_dependencies)
     if(TARGET spdlog)
         install(TARGETS spdlog
-            EXPORT spdlog-targets
-            LIBRARY DESTINATION lib
-            ARCHIVE DESTINATION lib
-            RUNTIME DESTINATION bin
-            INCLUDES DESTINATION include
+            EXPORT alumy-targets
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+            INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         )
         install(DIRECTORY ${spdlog_SOURCE_DIR}/include/
-            DESTINATION include
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
             FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
-        )
-        install(EXPORT spdlog-targets
-            FILE spdlog-targets.cmake
-            DESTINATION lib/cmake/spdlog
         )
     endif()
 
     if(TARGET log4qt)
         install(TARGETS log4qt
-            EXPORT log4qt-targets
-            LIBRARY DESTINATION lib
-            ARCHIVE DESTINATION lib
-            RUNTIME DESTINATION bin
-            INCLUDES DESTINATION include
+            EXPORT alumy-targets
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+            INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         )
         if(log4qt_SOURCE_DIR)
             install(DIRECTORY ${log4qt_SOURCE_DIR}/src/
-                DESTINATION include/log4qt
+                DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/log4qt
                 FILES_MATCHING PATTERN "*.h"
             )
         endif()
-        install(EXPORT log4qt-targets
-            FILE log4qt-targets.cmake
-            DESTINATION lib/cmake/log4qt
-        )
     endif()
 
     if(TARGET qpcpp)
         install(TARGETS qpcpp
-            EXPORT qpcpp-targets
-            LIBRARY DESTINATION lib
-            ARCHIVE DESTINATION lib
-            RUNTIME DESTINATION bin
-            INCLUDES DESTINATION include
+            EXPORT alumy-targets
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+            INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         )
         if(qpcpp_SOURCE_DIR)
             install(DIRECTORY ${qpcpp_SOURCE_DIR}/include/
-                DESTINATION include
+                DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
                 FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h"
             )
         endif()
-        install(EXPORT qpcpp-targets
-            FILE qpcpp-targets.cmake
-            DESTINATION lib/cmake/qpcpp
-        )
     endif()
 
     if(TARGET SndFile::sndfile)
@@ -234,22 +222,18 @@ macro(install_alumy_fetchcontent_dependencies)
         endif()
         
         install(TARGETS ${sndfile_target}
-            EXPORT SndFile-targets
-            LIBRARY DESTINATION lib
-            ARCHIVE DESTINATION lib
-            RUNTIME DESTINATION bin
-            INCLUDES DESTINATION include
+            EXPORT alumy-targets
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+            INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         )
         if(libsndfile_SOURCE_DIR)
             install(DIRECTORY ${libsndfile_SOURCE_DIR}/include/
-                DESTINATION include
+                DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
                 FILES_MATCHING PATTERN "*.h" PATTERN "*.hh"
             )
         endif()
-        install(EXPORT SndFile-targets
-            FILE SndFile-targets.cmake
-            DESTINATION lib/cmake/SndFile
-        )
     endif()
 endmacro()
 
