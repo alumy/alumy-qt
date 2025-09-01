@@ -184,10 +184,7 @@ macro(install_alumy_grpc)
 
     install(DIRECTORY ${GRPC_INSTALL_DIR}/
         DESTINATION "."
-        USE_SOURCE_PERMISSIONS
-        FILES_MATCHING 
-        PATTERN "*"
-        PATTERN "*.cmake" EXCLUDE)
+        USE_SOURCE_PERMISSIONS)
 endmacro()
 
 macro(install_alumy_fetchcontent_dependencies)
@@ -226,9 +223,6 @@ macro(install_alumy_fetchcontent_dependencies)
         install(DIRECTORY ${QPCPP_INSTALL_DIR}/
             DESTINATION "."
             USE_SOURCE_PERMISSIONS
-            FILES_MATCHING 
-            PATTERN "*"
-            PATTERN "*.cmake" EXCLUDE
         )
     endif()
 
