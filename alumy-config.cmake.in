@@ -47,16 +47,16 @@ function(alumy_link_libraries target_name)
     
     # Link third-party dependencies if they exist as targets
     if(TARGET spdlog::spdlog)
-        target_link_libraries(${target_name} PUBLIC spdlog::spdlog)
+        target_link_libraries(${target_name} INTERFACE spdlog::spdlog)
     endif()
     if(TARGET log4qt)
-        target_link_libraries(${target_name} PUBLIC log4qt)
+        target_link_libraries(${target_name} INTERFACE log4qt)
     endif()
     if(TARGET SndFile::sndfile)
-        target_link_libraries(${target_name} PUBLIC SndFile::sndfile)
+        target_link_libraries(${target_name} INTERFACE SndFile::sndfile)
     endif()
     if(TARGET gRPC::grpc++)
-        target_link_libraries(${target_name} PUBLIC gRPC::grpc++)
+        target_link_libraries(${target_name} INTERFACE gRPC::grpc++)
     endif()
     
     # Set include directories
