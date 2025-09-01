@@ -291,6 +291,8 @@ if(BUILD_SHARED_LIBS AND TARGET ${PROJECT_NAME})
 endif()
 
 if(BUILD_STATIC_LIBS AND TARGET "${PROJECT_NAME}-static")
+    set_target_properties("${PROJECT_NAME}-static" PROPERTIES EXPORT_NAME "alumy")
+
     install(TARGETS "${PROJECT_NAME}-static"
         EXPORT alumy-targets
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
