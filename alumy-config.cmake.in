@@ -33,19 +33,51 @@ set(alumy_VERSION @PROJECT_VERSION@)
 
 # Define a helper function to link all dependencies to a target
 function(alumy_link_libraries target_name)
-    target_link_libraries(${target_name} PUBLIC alumy::alumy)
+    # Check if the target is an INTERFACE library
+    get_target_property(target_type ${target_name} TYPE)
     
-    # Link Qt libraries
-    target_link_libraries(${target_name} PUBLIC
-        Qt${QT_VERSION_MAJOR}::Core
-        Qt${QT_VERSION_MAJOR}::Widgets
-        Qt${QT_VERSION_MAJOR}::Network
-        Qt${QT_VERSION_MAJOR}::SerialPort
-        Qt${QT_VERSION_MAJOR}::Multimedia
-        Qt${QT_VERSION_MAJOR}::Concurrent
-    )
+    if(target_type STREQUAL "INTERFACE_LIBRARY")
+        # For INTERFACE libraries, use INTERFACE keyword
+        target_link_libraries(${target_name} INTERFACE alumy::alumy)
+        
+        # Link Qt libraries
+        target_link_libraries(${target_name} INTERFACE
+            Qt${QT_VERSION_MAJOR}::Core
+            Qt${QT_VERSION_MAJOR}::Widgets
+            Qt${QT_VERSION_MAJOR}::Network
+            Qt${QT_VERSION_MAJOR}::SerialPort
+            Qt${QT_VERSION_MAJOR}::Multimedia
+            Qt${QT_VERSION_MAJOR}::Concurrent
+        )
+        
+        # Set include directories
+        target_include_directories(${target_name} INTERFACE ${alumy_INCLUDE_DIRS})
+        
+        # Set compile definitions
+        target_compile_definitions(${target_name} INTERFACE AL_USE_DEFAULT_CONFIG)
+    else()
+        # For regular libraries, use PUBLIC keyword
+        target_link_libraries(${target_name} PUBLIC alumy::alumy)
+        
+        # Link Qt libraries
+        target_link_libraries(${target_name} PUBLIC
+            Qt${QT_VERSION_MAJOR}::Core
+            Qt${QT_VERSION_MAJOR}::Widgets
+            Qt${QT_VERSION_MAJOR}::Network
+            Qt${QT_VERSION_MAJOR}::SerialPort
+            Qt${QT_VERSION_MAJOR}::Multimedia
+            Qt${QT_VERSION_MAJOR}::Concurrent
+        )
+        
+        # Set include directories
+        target_include_directories(${target_name} PUBLIC ${alumy_INCLUDE_DIRS})
+        
+        # Set compile definitions
+        target_compile_definitions(${target_name} PUBLIC AL_USE_DEFAULT_CONFIG)
+    endif()
     
     # Link third-party dependencies if they exist as targets
+    # These should always use INTERFACE regardless of target type since they're optional
     if(TARGET spdlog::spdlog)
         target_link_libraries(${target_name} INTERFACE spdlog::spdlog)
     endif()
@@ -58,12 +90,6 @@ function(alumy_link_libraries target_name)
     if(TARGET gRPC::grpc++)
         target_link_libraries(${target_name} INTERFACE gRPC::grpc++)
     endif()
-    
-    # Set include directories
-    target_include_directories(${target_name} PUBLIC ${alumy_INCLUDE_DIRS})
-    
-    # Set compile definitions
-    target_compile_definitions(${target_name} PUBLIC AL_USE_DEFAULT_CONFIG)
 endfunction()
 
 check_required_components(alumy)
