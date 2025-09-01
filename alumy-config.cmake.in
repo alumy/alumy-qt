@@ -23,8 +23,126 @@ if(M_LIBRARY)
     list(APPEND alumy_LIBRARIES ${M_LIBRARY})
 endif()
 
+# Find optional third-party dependencies that may have been bundled with alumy
+set(alumy_LIB_DIR_PARENT "@PACKAGE_CMAKE_INSTALL_LIBDIR@")
+
+# Try to find spdlog
+if(NOT TARGET spdlog::spdlog)
+    find_dependency(spdlog QUIET)
+endif()
+
+# Try to find log4qt  
+if(NOT TARGET log4qt)
+    find_library(log4qt_LIBRARY 
+        NAMES log4qt
+        PATHS ${alumy_LIB_DIR} 
+        NO_DEFAULT_PATH)
+    if(log4qt_LIBRARY)
+        add_library(log4qt STATIC IMPORTED)
+        set_target_properties(log4qt PROPERTIES
+            IMPORTED_LOCATION ${log4qt_LIBRARY}
+            INTERFACE_INCLUDE_DIRECTORIES "${alumy_INCLUDE_DIR}/log4qt"
+        )
+    endif()
+endif()
+
+# Try to find libsndfile
+if(NOT TARGET SndFile::sndfile)
+    find_dependency(SndFile QUIET)
+endif()
+
+# Try to find qpcpp
+if(NOT TARGET qpcpp)
+    find_library(qpcpp_LIBRARY 
+        NAMES qpcpp libqpcpp
+        PATHS ${alumy_LIB_DIR} 
+        NO_DEFAULT_PATH)
+    if(qpcpp_LIBRARY)
+        add_library(qpcpp STATIC IMPORTED)
+        set_target_properties(qpcpp PROPERTIES
+            IMPORTED_LOCATION ${qpcpp_LIBRARY}
+            INTERFACE_INCLUDE_DIRECTORIES "${alumy_INCLUDE_DIR}"
+        )
+    endif()
+endif()
+
+# Try to find gRPC libraries
+if(NOT TARGET gRPC::grpc++)
+    # Try to find system gRPC first
+    find_dependency(gRPC QUIET)
+    
+    # If not found, try to find bundled gRPC libraries
+    if(NOT TARGET gRPC::grpc++)
+        find_library(grpcpp_LIBRARY 
+            NAMES grpc++ libgrpc++
+            PATHS ${alumy_LIB_DIR} 
+            NO_DEFAULT_PATH)
+        find_library(grpc_LIBRARY 
+            NAMES grpc libgrpc
+            PATHS ${alumy_LIB_DIR} 
+            NO_DEFAULT_PATH)
+        find_library(gpr_LIBRARY 
+            NAMES gpr libgpr  
+            PATHS ${alumy_LIB_DIR} 
+            NO_DEFAULT_PATH)
+        find_library(address_sorting_LIBRARY 
+            NAMES address_sorting libaddress_sorting
+            PATHS ${alumy_LIB_DIR} 
+            NO_DEFAULT_PATH)
+        find_library(upb_LIBRARY 
+            NAMES upb libupb
+            PATHS ${alumy_LIB_DIR} 
+            NO_DEFAULT_PATH)
+            
+        if(grpcpp_LIBRARY AND grpc_LIBRARY AND gpr_LIBRARY AND address_sorting_LIBRARY AND upb_LIBRARY)
+            # Create imported targets for gRPC
+            add_library(gRPC::grpc++ STATIC IMPORTED)
+            set_target_properties(gRPC::grpc++ PROPERTIES
+                IMPORTED_LOCATION ${grpcpp_LIBRARY}
+                INTERFACE_INCLUDE_DIRECTORIES "${alumy_INCLUDE_DIR}"
+            )
+            
+            add_library(gRPC::grpc STATIC IMPORTED)
+            set_target_properties(gRPC::grpc PROPERTIES
+                IMPORTED_LOCATION ${grpc_LIBRARY}
+                INTERFACE_INCLUDE_DIRECTORIES "${alumy_INCLUDE_DIR}"
+            )
+            
+            add_library(gRPC::gpr STATIC IMPORTED)
+            set_target_properties(gRPC::gpr PROPERTIES
+                IMPORTED_LOCATION ${gpr_LIBRARY}
+            )
+            
+            add_library(gRPC::address_sorting STATIC IMPORTED)
+            set_target_properties(gRPC::address_sorting PROPERTIES
+                IMPORTED_LOCATION ${address_sorting_LIBRARY}
+            )
+            
+            add_library(gRPC::upb STATIC IMPORTED)
+            set_target_properties(gRPC::upb PROPERTIES
+                IMPORTED_LOCATION ${upb_LIBRARY}
+            )
+            
+            # Set up dependencies between gRPC targets
+            set_property(TARGET gRPC::grpc++ PROPERTY INTERFACE_LINK_LIBRARIES 
+                gRPC::grpc gRPC::gpr gRPC::address_sorting gRPC::upb)
+        endif()
+    endif()
+endif()
+
 # Include the targets file  
 include("${CMAKE_CURRENT_LIST_DIR}/alumy-targets.cmake")
+
+# Create the alumy::alumy alias for the imported target
+if(TARGET alumy::alumy)
+    # If shared library was imported, alumy::alumy already exists
+    # No need to create alias
+elseif(TARGET alumy::alumy-static)
+    # If only static library was imported, create alias to it
+    add_library(alumy::alumy ALIAS alumy::alumy-static)
+else()
+    message(FATAL_ERROR "Neither alumy::alumy nor alumy::alumy-static target was found!")
+endif()
 
 # Provide legacy variables for compatibility
 set(alumy_LIBRARIES alumy::alumy)
@@ -76,17 +194,23 @@ function(alumy_link_libraries target_name)
         target_compile_definitions(${target_name} PUBLIC AL_USE_DEFAULT_CONFIG)
     endif()
     
-    # Link third-party dependencies if they exist as targets
-    # These should always use INTERFACE regardless of target type since they're optional
+    # Link third-party dependencies if they were found and imported
     if(TARGET spdlog::spdlog)
         target_link_libraries(${target_name} INTERFACE spdlog::spdlog)
     endif()
+    
     if(TARGET log4qt)
         target_link_libraries(${target_name} INTERFACE log4qt)
     endif()
+    
     if(TARGET SndFile::sndfile)
         target_link_libraries(${target_name} INTERFACE SndFile::sndfile)
     endif()
+    
+    if(TARGET qpcpp)
+        target_link_libraries(${target_name} INTERFACE qpcpp)
+    endif()
+    
     if(TARGET gRPC::grpc++)
         target_link_libraries(${target_name} INTERFACE gRPC::grpc++)
     endif()
