@@ -28,13 +28,13 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/generic_check.cmake)
 # Parameter for compile
 #############################################################################
 
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    message(STATUS "64 bits cpu")
-    set(CMAKE_INSTALL_LIBDIR lib64)
-else()
-    message(STATUS "32 bits cpu")
-    set(CMAKE_INSTALL_LIBDIR lib)
-endif()
+# if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+#    message(STATUS "64 bits cpu")
+#    set(CMAKE_INSTALL_LIBDIR lib64)
+# else()
+#    message(STATUS "32 bits cpu")
+#    set(CMAKE_INSTALL_LIBDIR lib)
+# endif()
 
 #############################################################################
 # Options
