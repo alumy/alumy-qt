@@ -1,10 +1,79 @@
 @PACKAGE_INIT@
 
+# ==============================================================================
+# ALUMY CMAKE CONFIGURATION FILE
+# ==============================================================================
+# This file configures the alumy library and its dependencies for use in
+# external projects. It handles finding and setting up Qt components, system
+# libraries, and optional third-party dependencies including gRPC.
+#
+# Features:
+# - Automatic detection of bundled vs system libraries
+# - Helper functions for simplified dependency management
+# - Debug output control via ALUMY_DEBUG_CMAKE option
+# - Support for both legacy and modern CMake target patterns
+# ==============================================================================
+
 include(CMakeFindDependencyMacro)
+
+# ==============================================================================
+# CONFIGURATION OPTIONS
+# ==============================================================================
+
+# Configuration options
+option(ALUMY_DEBUG_CMAKE "Enable debug output for alumy CMake configuration" OFF)
 
 # Set up paths
 set_and_check(alumy_INCLUDE_DIR "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@")
 set_and_check(alumy_LIB_DIR "@PACKAGE_CMAKE_INSTALL_LIBDIR@")
+
+# Debug helper macro
+macro(alumy_debug_message)
+    if(ALUMY_DEBUG_CMAKE)
+        message(STATUS ${ARGN})
+    endif()
+endmacro()
+
+# Helper function to create imported library target
+function(alumy_create_imported_target target_name library_path include_dirs)
+    if(NOT TARGET ${target_name})
+        add_library(${target_name} UNKNOWN IMPORTED)
+        set_target_properties(${target_name} PROPERTIES
+            IMPORTED_LOCATION ${library_path}
+        )
+        if(include_dirs)
+            set_target_properties(${target_name} PROPERTIES
+                INTERFACE_INCLUDE_DIRECTORIES "${include_dirs}"
+            )
+        endif()
+        alumy_debug_message("Created imported target: ${target_name} -> ${library_path}")
+    endif()
+endfunction()
+
+# Helper function to find and create library target
+function(alumy_find_and_create_target target_name library_names search_paths include_dirs)
+    if(NOT TARGET ${target_name})
+        # First try in specified paths (prefer bundled versions)
+        find_library(${target_name}_LIBRARY 
+            NAMES ${library_names}
+            PATHS ${search_paths}
+            NO_DEFAULT_PATH
+        )
+        
+        # If not found, fall back to system-wide search
+        if(NOT ${target_name}_LIBRARY)
+            find_library(${target_name}_LIBRARY 
+                NAMES ${library_names}
+            )
+        endif()
+        
+        if(${target_name}_LIBRARY)
+            alumy_create_imported_target(${target_name} ${${target_name}_LIBRARY} "${include_dirs}")
+        else()
+            alumy_debug_message("Library not found: ${target_name} (searched: ${library_names})")
+        endif()
+    endif()
+endfunction()
 
 # Find required Qt components
 find_dependency(QT NAMES Qt6 Qt5 COMPONENTS Widgets Network Core SerialPort Multimedia Concurrent REQUIRED)
@@ -41,53 +110,39 @@ if(NOT TARGET spdlog::spdlog)
     find_dependency(spdlog QUIET)
 endif()
 
-# Try to find log4qt  
-if(NOT TARGET log4qt)
-    find_library(log4qt_LIBRARY 
-        NAMES log4qt
-        PATHS ${alumy_LIB_DIR} 
-        NO_DEFAULT_PATH)
-    if(log4qt_LIBRARY)
-        add_library(log4qt UNKNOWN IMPORTED)
-        set_target_properties(log4qt PROPERTIES
-            IMPORTED_LOCATION ${log4qt_LIBRARY}
-            INTERFACE_INCLUDE_DIRECTORIES "${alumy_INCLUDE_DIR}/log4qt"
-        )
-    endif()
-endif()
+# Find bundled third-party libraries using helper functions
+alumy_find_and_create_target(log4qt "log4qt" "${alumy_LIB_DIR}" "${alumy_INCLUDE_DIR}/log4qt")
 
 # Try to find libsndfile
 if(NOT TARGET SndFile::sndfile)
     find_dependency(SndFile QUIET)
 endif()
 
-# Try to find qpcpp
-if(NOT TARGET qpcpp)
-    find_library(qpcpp_LIBRARY 
-        NAMES qpcpp libqpcpp
-        PATHS ${alumy_LIB_DIR} 
-        NO_DEFAULT_PATH)
-    if(qpcpp_LIBRARY)
-        add_library(qpcpp UNKNOWN IMPORTED)
-        set_target_properties(qpcpp PROPERTIES
-            IMPORTED_LOCATION ${qpcpp_LIBRARY}
-            INTERFACE_INCLUDE_DIRECTORIES "${alumy_INCLUDE_DIR}"
-        )
-    endif()
-endif()
+alumy_find_and_create_target(qpcpp "qpcpp;libqpcpp" "${alumy_LIB_DIR}" "${alumy_INCLUDE_DIR}")
 
 # Try to find protobuf first (required by gRPC)
 if(NOT TARGET protobuf::libprotobuf)
     find_dependency(Protobuf QUIET)
 endif()
 
-# Try to find gRPC libraries (prefer bundled ones in alumy first)
-if(NOT TARGET gRPC::grpc++)
-    # Candidate library directories (installed layout and build-tree layout)
+# Function to setup gRPC libraries
+function(alumy_setup_grpc_libraries)
+    # Define gRPC component libraries and their alternative names
+    set(GRPC_COMPONENTS grpc++ grpc gpr address_sorting upb)
+    
+    # Create mapping of components to library names
+    set(grpc++_NAMES grpc++ libgrpc++)
+    set(grpc_NAMES grpc libgrpc)
+    set(gpr_NAMES gpr libgpr)
+    set(address_sorting_NAMES address_sorting libaddress_sorting)
+    set(upb_NAMES upb libupb)
+    
+    # Find candidate library directories
     set(_ALUMY_GRPC_LIBDIR_CANDIDATES
         ${alumy_LIB_DIR}
         "${PACKAGE_PREFIX_DIR}/grpc-install/lib"
     )
+    
     set(alumy_GRPC_LIB_DIR "")
     foreach(_cand IN LISTS _ALUMY_GRPC_LIBDIR_CANDIDATES)
         if(EXISTS "${_cand}/libgrpc++.a" OR EXISTS "${_cand}/libgrpc++.so")
@@ -95,174 +150,90 @@ if(NOT TARGET gRPC::grpc++)
             break()
         endif()
     endforeach()
-
-    # First attempt: look for static libs inside alumy install dir
-    find_library(grpcpp_LIBRARY 
-        NAMES grpc++ libgrpc++
-        PATHS ${alumy_GRPC_LIB_DIR} ${alumy_LIB_DIR} 
-        NO_DEFAULT_PATH)
-    find_library(grpc_LIBRARY 
-        NAMES grpc libgrpc
-        PATHS ${alumy_GRPC_LIB_DIR} ${alumy_LIB_DIR} 
-        NO_DEFAULT_PATH)
-    find_library(gpr_LIBRARY 
-        NAMES gpr libgpr  
-        PATHS ${alumy_GRPC_LIB_DIR} ${alumy_LIB_DIR} 
-        NO_DEFAULT_PATH)
-    find_library(address_sorting_LIBRARY 
-        NAMES address_sorting libaddress_sorting
-        PATHS ${alumy_GRPC_LIB_DIR} ${alumy_LIB_DIR} 
-        NO_DEFAULT_PATH)
-    find_library(upb_LIBRARY 
-        NAMES upb libupb
-        PATHS ${alumy_GRPC_LIB_DIR} ${alumy_LIB_DIR} 
-        NO_DEFAULT_PATH)
-
-    # Debug: Print library search results
-    if(alumy_GRPC_LIB_DIR)
-        message(STATUS "gRPC library search in ${alumy_GRPC_LIB_DIR}:")
-    else()
-        message(STATUS "gRPC library search in ${alumy_LIB_DIR}:")
-    endif()
-    message(STATUS "  grpcpp_LIBRARY: ${grpcpp_LIBRARY}")
-    message(STATUS "  grpc_LIBRARY: ${grpc_LIBRARY}")
-    message(STATUS "  gpr_LIBRARY: ${gpr_LIBRARY}")
-    message(STATUS "  address_sorting_LIBRARY: ${address_sorting_LIBRARY}")
-    message(STATUS "  upb_LIBRARY: ${upb_LIBRARY}")
-
-    # Check if protobuf libraries are available and create targets if needed
-    find_library(protobuf_LIBRARY 
-        NAMES protobuf libprotobuf
-        PATHS ${alumy_GRPC_LIB_DIR} ${alumy_LIB_DIR} 
-        NO_DEFAULT_PATH)
-    find_library(protoc_LIBRARY 
-        NAMES protoc libprotoc
-        PATHS ${alumy_GRPC_LIB_DIR} ${alumy_LIB_DIR} 
-        NO_DEFAULT_PATH)
-
-    if(protobuf_LIBRARY AND NOT TARGET protobuf::libprotobuf)
-        add_library(protobuf::libprotobuf UNKNOWN IMPORTED)
-        set_target_properties(protobuf::libprotobuf PROPERTIES
-            IMPORTED_LOCATION ${protobuf_LIBRARY}
-            INTERFACE_INCLUDE_DIRECTORIES "${alumy_INCLUDE_DIR}"
+    
+    # Search paths for libraries
+    set(_grpc_search_paths ${alumy_GRPC_LIB_DIR} ${alumy_LIB_DIR})
+    
+    # Find all gRPC libraries
+    set(_all_grpc_found TRUE)
+    set(_grpc_libraries "")
+    
+    foreach(comp IN LISTS GRPC_COMPONENTS)
+        find_library(${comp}_LIBRARY 
+            NAMES ${${comp}_NAMES}
+            PATHS ${_grpc_search_paths}
+            NO_DEFAULT_PATH
         )
-    endif()
-
-    if(protoc_LIBRARY AND NOT TARGET protobuf::libprotoc)
-        add_library(protobuf::libprotoc UNKNOWN IMPORTED)
-        set_target_properties(protobuf::libprotoc PROPERTIES
-            IMPORTED_LOCATION ${protoc_LIBRARY}
-            INTERFACE_INCLUDE_DIRECTORIES "${alumy_INCLUDE_DIR}"
+        
+        alumy_debug_message("gRPC ${comp}: ${${comp}_LIBRARY}")
+        
+        if(${comp}_LIBRARY)
+            list(APPEND _grpc_libraries ${${comp}_LIBRARY})
+        else()
+            set(_all_grpc_found FALSE)
+        endif()
+    endforeach()
+    
+    # Handle protobuf libraries if needed
+    foreach(pb_comp IN ITEMS protobuf protoc)
+        find_library(${pb_comp}_LIBRARY 
+            NAMES ${pb_comp} lib${pb_comp}
+            PATHS ${_grpc_search_paths}
+            NO_DEFAULT_PATH
         )
-    endif()
-
-    if(grpcpp_LIBRARY AND grpc_LIBRARY AND gpr_LIBRARY AND address_sorting_LIBRARY AND upb_LIBRARY)
-        # Create imported targets for gRPC (both namespaced and non-namespaced versions)
-
-        # Non-namespaced targets (for backward compatibility)
-        add_library(grpc++ UNKNOWN IMPORTED)
-        set_target_properties(grpc++ PROPERTIES
-            IMPORTED_LOCATION ${grpcpp_LIBRARY}
-            INTERFACE_INCLUDE_DIRECTORIES "${alumy_INCLUDE_DIR}"
-        )
-
-        add_library(grpc UNKNOWN IMPORTED)
-        set_target_properties(grpc PROPERTIES
-            IMPORTED_LOCATION ${grpc_LIBRARY}
-            INTERFACE_INCLUDE_DIRECTORIES "${alumy_INCLUDE_DIR}"
-        )
-
-        add_library(gpr UNKNOWN IMPORTED)
-        set_target_properties(gpr PROPERTIES
-            IMPORTED_LOCATION ${gpr_LIBRARY}
-        )
-
-        add_library(address_sorting UNKNOWN IMPORTED)
-        set_target_properties(address_sorting PROPERTIES
-            IMPORTED_LOCATION ${address_sorting_LIBRARY}
-        )
-
-        add_library(upb UNKNOWN IMPORTED)
-        set_target_properties(upb PROPERTIES
-            IMPORTED_LOCATION ${upb_LIBRARY}
-        )
-
-        # Namespaced targets (for gRPC standard compliance)
-        add_library(gRPC::grpc++ UNKNOWN IMPORTED)
-        set_target_properties(gRPC::grpc++ PROPERTIES
-            IMPORTED_LOCATION ${grpcpp_LIBRARY}
-            INTERFACE_INCLUDE_DIRECTORIES "${alumy_INCLUDE_DIR}"
-        )
-
-        add_library(gRPC::grpc UNKNOWN IMPORTED)
-        set_target_properties(gRPC::grpc PROPERTIES
-            IMPORTED_LOCATION ${grpc_LIBRARY}
-            INTERFACE_INCLUDE_DIRECTORIES "${alumy_INCLUDE_DIR}"
-        )
-
-        add_library(gRPC::gpr UNKNOWN IMPORTED)
-        set_target_properties(gRPC::gpr PROPERTIES
-            IMPORTED_LOCATION ${gpr_LIBRARY}
-        )
-
-        add_library(gRPC::address_sorting UNKNOWN IMPORTED)
-        set_target_properties(gRPC::address_sorting PROPERTIES
-            IMPORTED_LOCATION ${address_sorting_LIBRARY}
-        )
-
-        add_library(gRPC::upb UNKNOWN IMPORTED)
-        set_target_properties(gRPC::upb PROPERTIES
-            IMPORTED_LOCATION ${upb_LIBRARY}
-        )
-
-        # Set up dependencies between gRPC targets
-        set_property(TARGET grpc++ PROPERTY INTERFACE_LINK_LIBRARIES 
-            grpc gpr address_sorting upb)
-        set_property(TARGET gRPC::grpc++ PROPERTY INTERFACE_LINK_LIBRARIES 
-            gRPC::grpc gRPC::gpr gRPC::address_sorting gRPC::upb)
-
-        # Collect absolute library paths for explicit linking in consumers
-        set(alumy_GRPC_LIBRARIES_ABS "")
-        list(APPEND alumy_GRPC_LIBRARIES_ABS
-            ${grpcpp_LIBRARY}
-            ${grpc_LIBRARY}
-            ${gpr_LIBRARY}
-            ${address_sorting_LIBRARY}
-            ${upb_LIBRARY}
-        )
-        # Propagate library directory to consumers to avoid -l resolution issues
+        if(${pb_comp}_LIBRARY AND NOT TARGET protobuf::lib${pb_comp})
+            alumy_create_imported_target(protobuf::lib${pb_comp} ${${pb_comp}_LIBRARY} "${alumy_INCLUDE_DIR}")
+        endif()
+    endforeach()
+    
+    if(_all_grpc_found)
+        # Create both namespaced and non-namespaced targets
+        foreach(comp IN LISTS GRPC_COMPONENTS)
+            set(_include_dirs "")
+            if(comp MATCHES "grpc\\+\\+|grpc$")
+                set(_include_dirs "${alumy_INCLUDE_DIR}")
+            endif()
+            
+            # Non-namespaced (legacy)
+            alumy_create_imported_target(${comp} ${${comp}_LIBRARY} "${_include_dirs}")
+            
+            # Namespaced (standard)
+            alumy_create_imported_target(gRPC::${comp} ${${comp}_LIBRARY} "${_include_dirs}")
+        endforeach()
+        
+        # Set up dependencies
+        set_property(TARGET grpc++ PROPERTY INTERFACE_LINK_LIBRARIES grpc gpr address_sorting upb)
+        set_property(TARGET gRPC::grpc++ PROPERTY INTERFACE_LINK_LIBRARIES gRPC::grpc gRPC::gpr gRPC::address_sorting gRPC::upb)
+        
+        # Store library paths and directory for consumers
+        set(alumy_GRPC_LIBRARIES_ABS ${_grpc_libraries} PARENT_SCOPE)
         if(alumy_GRPC_LIB_DIR)
-            set(alumy_GRPC_LINK_DIR "${alumy_GRPC_LIB_DIR}")
+            set(alumy_GRPC_LINK_DIR "${alumy_GRPC_LIB_DIR}" PARENT_SCOPE)
         endif()
     else()
         # Fall back to system-installed gRPC
         find_dependency(gRPC QUIET)
         if(TARGET gRPC::grpc++)
-            # Collect absolute library paths when provided by the package
-            get_target_property(_al_grpcpp_loc gRPC::grpc++ IMPORTED_LOCATION)
-            get_target_property(_al_grpc_loc  gRPC::grpc  IMPORTED_LOCATION)
-            get_target_property(_al_gpr_loc   gRPC::gpr   IMPORTED_LOCATION)
-            get_target_property(_al_addr_loc  gRPC::address_sorting IMPORTED_LOCATION)
-            get_target_property(_al_upb_loc   gRPC::upb   IMPORTED_LOCATION)
-            set(alumy_GRPC_LIBRARIES_ABS "")
-            if(_al_grpcpp_loc)
-                list(APPEND alumy_GRPC_LIBRARIES_ABS ${_al_grpcpp_loc})
-            endif()
-            if(_al_grpc_loc)
-                list(APPEND alumy_GRPC_LIBRARIES_ABS ${_al_grpc_loc})
-            endif()
-            if(_al_gpr_loc)
-                list(APPEND alumy_GRPC_LIBRARIES_ABS ${_al_gpr_loc})
-            endif()
-            if(_al_addr_loc)
-                list(APPEND alumy_GRPC_LIBRARIES_ABS ${_al_addr_loc})
-            endif()
-            if(_al_upb_loc)
-                list(APPEND alumy_GRPC_LIBRARIES_ABS ${_al_upb_loc})
-            endif()
+            set(_grpc_system_libs "")
+            foreach(comp IN LISTS GRPC_COMPONENTS)
+                get_target_property(_loc gRPC::${comp} IMPORTED_LOCATION)
+                if(_loc)
+                    list(APPEND _grpc_system_libs ${_loc})
+                endif()
+            endforeach()
+            set(alumy_GRPC_LIBRARIES_ABS ${_grpc_system_libs} PARENT_SCOPE)
         endif()
     endif()
+endfunction()
+
+# Try to find gRPC libraries (prefer bundled ones in alumy first)
+if(NOT TARGET gRPC::grpc++)
+    alumy_setup_grpc_libraries()
 endif()
+
+# ==============================================================================
+# TARGET CONFIGURATION
+# ==============================================================================
 
 # Include the targets file  
 include("${CMAKE_CURRENT_LIST_DIR}/alumy-targets.cmake")
@@ -272,12 +243,20 @@ if(NOT TARGET alumy::alumy)
     message(FATAL_ERROR "alumy::alumy target was not found!")
 endif()
 
+# ==============================================================================
+# LEGACY COMPATIBILITY VARIABLES
+# ==============================================================================
+
 # Provide legacy variables for compatibility  
 set(alumy_LIBRARIES alumy::alumy)
 set(alumy_INCLUDE_DIRS ${alumy_INCLUDE_DIR})
 set(alumy_VERSION @PROJECT_VERSION@)
 
-# Qt usage list for convenience
+# ==============================================================================
+# QT CONFIGURATION
+# ==============================================================================
+
+# Qt library list for convenience
 set(_alumy_qt_libs
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Widgets
@@ -287,60 +266,93 @@ set(_alumy_qt_libs
     Qt${QT_VERSION_MAJOR}::Concurrent
 )
 
-# Define a helper function to link all dependencies to a target
-function(alumy_link_libraries target_name)
-    # Check if the target is an INTERFACE library
+# ==============================================================================
+# LINKING HELPER FUNCTIONS
+# ==============================================================================
+
+# Helper function to determine target scope
+function(alumy_get_target_scope target_name out_scope)
     get_target_property(target_type ${target_name} TYPE)
     if(target_type STREQUAL "INTERFACE_LIBRARY")
-        set(_al_scope INTERFACE)
+        set(${out_scope} INTERFACE PARENT_SCOPE)
     else()
-        set(_al_scope PUBLIC)
+        set(${out_scope} PUBLIC PARENT_SCOPE)
     endif()
+endfunction()
 
-    # Core alumy + Qt
-    target_link_libraries(${target_name} ${_al_scope} alumy::alumy)
-    target_link_libraries(${target_name} ${_al_scope} ${_alumy_qt_libs})
-    target_include_directories(${target_name} ${_al_scope} ${alumy_INCLUDE_DIRS})
-    target_compile_definitions(${target_name} ${_al_scope} AL_USE_DEFAULT_CONFIG)
+# Helper function to link core dependencies
+function(alumy_link_core_dependencies target_name scope)
+    target_link_libraries(${target_name} ${scope} alumy::alumy)
+    target_link_libraries(${target_name} ${scope} ${_alumy_qt_libs})
+    target_include_directories(${target_name} ${scope} ${alumy_INCLUDE_DIRS})
+    target_compile_definitions(${target_name} ${scope} AL_USE_DEFAULT_CONFIG)
+endfunction()
 
-    # Link third-party dependencies if they were found and imported
-    if(TARGET spdlog::spdlog)
-        target_link_libraries(${target_name} ${_al_scope} spdlog::spdlog)
-    endif()
-    if(TARGET log4qt)
-        target_link_libraries(${target_name} ${_al_scope} log4qt)
-    endif()
-    if(TARGET SndFile::sndfile)
-        target_link_libraries(${target_name} ${_al_scope} SndFile::sndfile)
-    endif()
-    if(TARGET qpcpp)
-        target_link_libraries(${target_name} ${_al_scope} qpcpp)
-    endif()
-
-    # gRPC targets availability
-    message(STATUS "Checking gRPC targets for ${target_name}:")
-    if(TARGET gRPC::grpc++)
-        message(STATUS "  Found gRPC::grpc++, linking it")
-        target_link_libraries(${target_name} ${_al_scope} gRPC::grpc++)
-        target_link_directories(${target_name} ${_al_scope} ${alumy_LIB_DIR})
-        if(alumy_GRPC_LINK_DIR)
-            target_link_directories(${target_name} ${_al_scope} ${alumy_GRPC_LINK_DIR})
+# Helper function to link optional third-party dependencies
+function(alumy_link_optional_dependencies target_name scope)
+    # List of optional dependencies to check and link
+    set(_optional_targets 
+        spdlog::spdlog
+        log4qt
+        SndFile::sndfile
+        qpcpp
+    )
+    
+    foreach(dep_target IN LISTS _optional_targets)
+        if(TARGET ${dep_target})
+            target_link_libraries(${target_name} ${scope} ${dep_target})
+            alumy_debug_message("Linked optional dependency: ${dep_target} to ${target_name}")
         endif()
-    elseif(TARGET grpc++)
-        message(STATUS "  Found grpc++, linking it")
-        target_link_libraries(${target_name} ${_al_scope} grpc++)
-        target_link_directories(${target_name} ${_al_scope} ${alumy_LIB_DIR})
-        if(alumy_GRPC_LINK_DIR)
-            target_link_directories(${target_name} ${_al_scope} ${alumy_GRPC_LINK_DIR})
-        endif()
-    else()
-        message(STATUS "  No gRPC++ target found")
-    endif()
+    endforeach()
+endfunction()
 
+# Helper function to link gRPC dependencies
+function(alumy_link_grpc_dependencies target_name scope)
+    alumy_debug_message("Checking gRPC targets for ${target_name}:")
+    
+    # Prefer namespaced targets, fall back to non-namespaced
+    set(_grpc_targets gRPC::grpc++ grpc++)
+    set(_linked_grpc FALSE)
+    
+    foreach(grpc_target IN LISTS _grpc_targets)
+        if(TARGET ${grpc_target})
+            alumy_debug_message("Found ${grpc_target}, linking it")
+            target_link_libraries(${target_name} ${scope} ${grpc_target})
+            target_link_directories(${target_name} ${scope} ${alumy_LIB_DIR})
+            if(alumy_GRPC_LINK_DIR)
+                target_link_directories(${target_name} ${scope} ${alumy_GRPC_LINK_DIR})
+            endif()
+            set(_linked_grpc TRUE)
+            break()
+        endif()
+    endforeach()
+    
+    if(NOT _linked_grpc)
+        alumy_debug_message("No gRPC++ target found")
+    endif()
+    
     # Also link absolute paths to avoid -l resolution issues
     if(alumy_GRPC_LIBRARIES_ABS)
-        target_link_libraries(${target_name} ${_al_scope} ${alumy_GRPC_LIBRARIES_ABS})
+        target_link_libraries(${target_name} ${scope} ${alumy_GRPC_LIBRARIES_ABS})
     endif()
+endfunction()
+
+# Main function to link all alumy dependencies to a target
+function(alumy_link_libraries target_name)
+    # Validate target exists
+    if(NOT TARGET ${target_name})
+        message(FATAL_ERROR "Target '${target_name}' does not exist")
+    endif()
+    
+    # Determine scope based on target type
+    alumy_get_target_scope(${target_name} _al_scope)
+    
+    # Link dependencies in logical groups
+    alumy_link_core_dependencies(${target_name} ${_al_scope})
+    alumy_link_optional_dependencies(${target_name} ${_al_scope})
+    alumy_link_grpc_dependencies(${target_name} ${_al_scope})
+    
+    alumy_debug_message("Successfully linked all alumy dependencies to ${target_name}")
 endfunction()
 
 # Restore original CMAKE_PREFIX_PATH
