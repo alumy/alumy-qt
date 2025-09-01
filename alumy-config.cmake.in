@@ -23,11 +23,7 @@ if(M_LIBRARY)
     list(APPEND alumy_LIBRARIES ${M_LIBRARY})
 endif()
 
-# Configure and include third-party dependencies
-include("${CMAKE_CURRENT_LIST_DIR}/cmake/dependencies.cmake")
-configure_alumy_dependencies()
-
-# Include the targets file
+# Include the targets file  
 include("${CMAKE_CURRENT_LIST_DIR}/alumy-targets.cmake")
 
 # Provide legacy variables for compatibility
@@ -49,8 +45,19 @@ function(alumy_link_libraries target_name)
         Qt${QT_VERSION_MAJOR}::Concurrent
     )
     
-    # Link third-party dependencies
-    link_alumy_dependencies(${target_name})
+    # Link third-party dependencies if they exist as targets
+    if(TARGET spdlog::spdlog)
+        target_link_libraries(${target_name} PUBLIC spdlog::spdlog)
+    endif()
+    if(TARGET log4qt)
+        target_link_libraries(${target_name} PUBLIC log4qt)
+    endif()
+    if(TARGET SndFile::sndfile)
+        target_link_libraries(${target_name} PUBLIC SndFile::sndfile)
+    endif()
+    if(TARGET gRPC::grpc++)
+        target_link_libraries(${target_name} PUBLIC gRPC::grpc++)
+    endif()
     
     # Set include directories
     target_include_directories(${target_name} PUBLIC ${alumy_INCLUDE_DIRS})
