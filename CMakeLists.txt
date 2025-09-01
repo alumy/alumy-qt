@@ -307,9 +307,6 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
         FILES_MATCHING PATTERN "*.h")
 endif()
 
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies.cmake
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/alumy/cmake)
-
 install(EXPORT alumy-targets
     FILE alumy-targets.cmake
     NAMESPACE alumy::
