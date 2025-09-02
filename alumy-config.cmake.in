@@ -174,6 +174,29 @@ function(alumy_setup_grpc_libraries)
         endif()
     endforeach()
     
+    # Find zlib (required by gRPC)
+    find_library(_zlib_library 
+        NAMES z libz
+        PATHS ${_grpc_search_paths}
+        NO_DEFAULT_PATH
+    )
+    
+    # If not found in bundled paths, search system-wide
+    if(NOT _zlib_library)
+        find_library(_zlib_library 
+            NAMES z libz
+        )
+    endif()
+    
+    alumy_debug_message("zlib for gRPC: ${_zlib_library}")
+    
+    if(_zlib_library)
+        list(APPEND _grpc_libraries ${_zlib_library})
+        set(alumy_GRPC_ZLIB_LIBRARY ${_zlib_library} PARENT_SCOPE)
+    else()
+        alumy_debug_message("Warning: zlib not found, gRPC linking may fail")
+    endif()
+    
     # Handle protobuf libraries if needed
     foreach(pb_comp IN ITEMS protobuf protoc)
         find_library(${pb_comp}_LIBRARY 
@@ -334,6 +357,12 @@ function(alumy_link_grpc_dependencies target_name scope)
     # Also link absolute paths to avoid -l resolution issues
     if(alumy_GRPC_LIBRARIES_ABS)
         target_link_libraries(${target_name} ${scope} ${alumy_GRPC_LIBRARIES_ABS})
+    endif()
+    
+    # Link zlib if available (required by gRPC for compression)
+    if(alumy_GRPC_ZLIB_LIBRARY)
+        target_link_libraries(${target_name} ${scope} ${alumy_GRPC_ZLIB_LIBRARY})
+        alumy_debug_message("Linked zlib for gRPC: ${alumy_GRPC_ZLIB_LIBRARY}")
     endif()
 endfunction()
 
