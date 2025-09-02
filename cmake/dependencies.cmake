@@ -212,11 +212,9 @@ endmacro()
 macro(install_qpcpp)
     set(QPCPP_INSTALL_DIR ${CMAKE_BINARY_DIR}/qpcpp-install)
 
-    if(EXISTS ${QPCPP_INSTALL_DIR})
-        install(DIRECTORY ${QPCPP_INSTALL_DIR}/
-            DESTINATION "."
-            USE_SOURCE_PERMISSIONS)
-    endif()
+    install(DIRECTORY ${QPCPP_INSTALL_DIR}/
+        DESTINATION "."
+        USE_SOURCE_PERMISSIONS)
 endmacro()
 
 macro(install_alumy_grpc)
@@ -230,12 +228,9 @@ endmacro()
 macro(install_alumy_openssl)
     set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
     
-    if(EXISTS ${OPENSSL_INSTALL_DIR})
-        install(DIRECTORY ${OPENSSL_INSTALL_DIR}/
-            DESTINATION "."
-            USE_SOURCE_PERMISSIONS)
-        message(STATUS "Installing bundled OpenSSL from ${OPENSSL_INSTALL_DIR}")
-    endif()
+    install(DIRECTORY ${OPENSSL_INSTALL_DIR}/
+        DESTINATION "."
+        USE_SOURCE_PERMISSIONS)
 endmacro()
 
 macro(install_alumy_fetchcontent_dependencies)
