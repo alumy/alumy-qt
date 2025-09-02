@@ -173,12 +173,10 @@ macro(configure_alumy_dependencies)
 
     list(APPEND CMAKE_PREFIX_PATH ${GRPC_INSTALL_DIR})
 
-    # OpenSSL configuration - always use bundled version
     set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
     
     message(STATUS "Configuring bundled OpenSSL build")
     
-    # Configure OpenSSL build
     ExternalProject_Add(openssl-external
         GIT_REPOSITORY https://github.com/openssl/openssl.git
         GIT_TAG openssl-3.0.17
@@ -293,88 +291,21 @@ macro(install_alumy_dependencies)
     install_alumy_fetchcontent_dependencies()
 endmacro()
 
-macro(link_alumy_dependencies target_name)
-    set(QPCPP_INSTALL_DIR ${CMAKE_BINARY_DIR}/qpcpp-install)
-    
-    add_library(qpcpp STATIC IMPORTED GLOBAL)
-    set_target_properties(qpcpp PROPERTIES
-        IMPORTED_LOCATION ${QPCPP_INSTALL_DIR}/lib/libqpcpp.a
-        INTERFACE_INCLUDE_DIRECTORIES "${QPCPP_INSTALL_DIR}/include"
-    )
-    add_dependencies(qpcpp qpcpp-external)
+macro(add_alumy_dependencies target)
+    add_dependencies(${target} qpcpp-external grpc-external openssl-external)
+endmacro()
 
-    # Determine appropriate link scope based on target type
-    get_target_property(_target_type ${target_name} TYPE)
-    if(_target_type STREQUAL "INTERFACE_LIBRARY")
-        set(_link_scope INTERFACE)
-    else()
-        set(_link_scope PUBLIC)
-    endif()
-
-    target_link_libraries(${target_name} ${_link_scope}
-        spdlog::spdlog 
-        qpcpp 
+macro(link_alumy_dependencies target)
+    target_link_libraries(${target} PUBLIC 
         log4qt 
         SndFile::sndfile
-    )
-    
-    set(GRPC_INSTALL_DIR ${CMAKE_BINARY_DIR}/grpc-install)
-    
-    add_library(grpc++ STATIC IMPORTED)
-    set_target_properties(grpc++ PROPERTIES
-        IMPORTED_LOCATION ${GRPC_INSTALL_DIR}/lib/libgrpc++.a
-        INTERFACE_INCLUDE_DIRECTORIES ${GRPC_INSTALL_DIR}/include
-    )
-    
-    add_library(grpc STATIC IMPORTED)
-    set_target_properties(grpc PROPERTIES
-        IMPORTED_LOCATION ${GRPC_INSTALL_DIR}/lib/libgrpc.a
-        INTERFACE_INCLUDE_DIRECTORIES ${GRPC_INSTALL_DIR}/include
-    )
-    
-    add_library(gpr STATIC IMPORTED)
-    set_target_properties(gpr PROPERTIES
-        IMPORTED_LOCATION ${GRPC_INSTALL_DIR}/lib/libgpr.a
-    )
-    
-    add_library(address_sorting STATIC IMPORTED)
-    set_target_properties(address_sorting PROPERTIES
-        IMPORTED_LOCATION ${GRPC_INSTALL_DIR}/lib/libaddress_sorting.a
-    )
-    
-    add_library(upb STATIC IMPORTED)
-    set_target_properties(upb PROPERTIES
-        IMPORTED_LOCATION ${GRPC_INSTALL_DIR}/lib/libupb.a
-    )
-    
-    target_link_libraries(${target_name} ${_link_scope} grpc++ grpc gpr address_sorting upb)
-    
-    # OpenSSL libraries - always use bundled version
-    set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
-    
-    add_library(ssl STATIC IMPORTED)
-    set_target_properties(ssl PROPERTIES
-        IMPORTED_LOCATION ${OPENSSL_INSTALL_DIR}/lib/libssl.a
-        INTERFACE_INCLUDE_DIRECTORIES ${OPENSSL_INSTALL_DIR}/include
-    )
-    
-    add_library(crypto STATIC IMPORTED)
-    set_target_properties(crypto PROPERTIES
-        IMPORTED_LOCATION ${OPENSSL_INSTALL_DIR}/lib/libcrypto.a
-        INTERFACE_INCLUDE_DIRECTORIES ${OPENSSL_INSTALL_DIR}/include
-    )
-    
-    target_link_libraries(${target_name} ${_link_scope} ssl crypto)
-    add_dependencies(ssl openssl-external)
-    add_dependencies(crypto openssl-external)
-    
-    message(STATUS "Linking bundled OpenSSL libraries")
-    
-    # Add external project dependencies
-    add_dependencies(${target_name} grpc-external qpcpp-external openssl-external)
-    add_dependencies(grpc++ grpc-external)
-    add_dependencies(grpc grpc-external)
-    add_dependencies(gpr grpc-external)
-    add_dependencies(address_sorting grpc-external)
-    add_dependencies(upb grpc-external)
+        spdlog
+        qpcpp
+        grpc++
+        grpc
+        gpr
+        address_sorting
+        upb
+        ssl 
+        crypto)
 endmacro()

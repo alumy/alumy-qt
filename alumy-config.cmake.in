@@ -209,6 +209,12 @@ function(alumy_discover_and_configure_libraries)
             alumy_create_imported_target("${_lib_file}" "${_target_name}")
             list(APPEND _created_targets ${_target_name})
             message(STATUS "  Created target: ${_target_name} <- ${_lib_file}")
+            
+            # Create alias for backward compatibility (without alumy:: prefix)
+            if(NOT TARGET ${_lib_name})
+                add_library(${_lib_name} ALIAS ${_target_name})
+                message(STATUS "  Created alias: ${_lib_name} -> ${_target_name}")
+            endif()
         endif()
     endforeach()
     
