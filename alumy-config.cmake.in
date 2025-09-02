@@ -197,17 +197,173 @@ function(alumy_setup_grpc_libraries)
         alumy_debug_message("Warning: zlib not found, gRPC linking may fail")
     endif()
     
+    # Find OpenSSL libraries (required by gRPC for encryption)
+    find_library(_ssl_library 
+        NAMES ssl libssl
+        PATHS ${_grpc_search_paths}
+        NO_DEFAULT_PATH
+    )
+    
+    find_library(_crypto_library 
+        NAMES crypto libcrypto
+        PATHS ${_grpc_search_paths}
+        NO_DEFAULT_PATH
+    )
+    
+    # If not found in bundled paths, search system-wide
+    if(NOT _ssl_library)
+        find_library(_ssl_library 
+            NAMES ssl libssl
+        )
+    endif()
+    
+    if(NOT _crypto_library)
+        find_library(_crypto_library 
+            NAMES crypto libcrypto
+        )
+    endif()
+    
+    alumy_debug_message("OpenSSL ssl: ${_ssl_library}")
+    alumy_debug_message("OpenSSL crypto: ${_crypto_library}")
+    
+    if(_ssl_library AND _crypto_library)
+        # Link crypto before ssl for proper dependency order
+        list(APPEND _grpc_libraries ${_crypto_library} ${_ssl_library})
+        set(alumy_GRPC_SSL_LIBRARY ${_ssl_library} PARENT_SCOPE)
+        set(alumy_GRPC_CRYPTO_LIBRARY ${_crypto_library} PARENT_SCOPE)
+    else()
+        alumy_debug_message("Warning: OpenSSL not found, gRPC encryption may fail")
+    endif()
+    
+    # Find Abseil libraries (required by gRPC)
+    set(_abseil_libraries "")
+    set(_abseil_components 
+        base synchronization strings str_format_internal 
+        random_random hash time status statusor
+        raw_logging_internal city low_level_hash civil_time time_zone
+        spinlock_wait throw_delegate
+        cord cord_internal cordz_functions cordz_handle cordz_info cordz_sample_token
+        int128 leak_check leak_check_disable malloc_internal
+        random_distributions random_internal_distribution_test_util random_internal_platform
+        random_internal_pool_urbg random_internal_randen random_internal_randen_hwaes
+        random_internal_randen_hwaes_impl random_internal_randen_slow random_internal_seed_material
+        random_seed_gen_exception random_seed_sequences
+        stacktrace symbolize
+        strings_internal debugging_internal exponential_biased periodic_sampler
+    )
+    
+    foreach(_comp IN LISTS _abseil_components)
+        find_library(_abseil_${_comp}_library 
+            NAMES absl_${_comp} libabsl_${_comp}
+            PATHS ${_grpc_search_paths}
+            NO_DEFAULT_PATH
+        )
+        
+        if(_abseil_${_comp}_library)
+            list(APPEND _abseil_libraries ${_abseil_${_comp}_library})
+        endif()
+    endforeach()
+    
+    # If not found in bundled paths, search system-wide
+    if(NOT _abseil_libraries)
+        foreach(_comp IN LISTS _abseil_components)
+            find_library(_abseil_${_comp}_library 
+                NAMES absl_${_comp} libabsl_${_comp}
+            )
+            
+            if(_abseil_${_comp}_library)
+                list(APPEND _abseil_libraries ${_abseil_${_comp}_library})
+            endif()
+        endforeach()
+    endif()
+    
+    alumy_debug_message("Abseil libraries: ${_abseil_libraries}")
+    
+    if(_abseil_libraries)
+        list(APPEND _grpc_libraries ${_abseil_libraries})
+        set(alumy_GRPC_ABSEIL_LIBRARIES ${_abseil_libraries} PARENT_SCOPE)
+    else()
+        alumy_debug_message("Warning: Abseil libraries not found, gRPC may fail")
+    endif()
+    
     # Handle protobuf libraries if needed
-    foreach(pb_comp IN ITEMS protobuf protoc)
+    set(_protobuf_libraries "")
+    foreach(pb_comp IN ITEMS protobuf protobuf-lite protoc)
         find_library(${pb_comp}_LIBRARY 
             NAMES ${pb_comp} lib${pb_comp}
             PATHS ${_grpc_search_paths}
             NO_DEFAULT_PATH
         )
-        if(${pb_comp}_LIBRARY AND NOT TARGET protobuf::lib${pb_comp})
-            alumy_create_imported_target(protobuf::lib${pb_comp} ${${pb_comp}_LIBRARY} "${alumy_INCLUDE_DIR}")
+        
+        # If not found in bundled paths, search system-wide
+        if(NOT ${pb_comp}_LIBRARY)
+            find_library(${pb_comp}_LIBRARY 
+                NAMES ${pb_comp} lib${pb_comp}
+            )
+        endif()
+        
+        if(${pb_comp}_LIBRARY)
+            list(APPEND _protobuf_libraries ${${pb_comp}_LIBRARY})
+            if(NOT TARGET protobuf::lib${pb_comp})
+                alumy_create_imported_target(protobuf::lib${pb_comp} ${${pb_comp}_LIBRARY} "${alumy_INCLUDE_DIR}")
+            endif()
         endif()
     endforeach()
+    
+    alumy_debug_message("Protobuf libraries: ${_protobuf_libraries}")
+    
+    if(_protobuf_libraries)
+        list(APPEND _grpc_libraries ${_protobuf_libraries})
+        set(alumy_GRPC_PROTOBUF_LIBRARIES ${_protobuf_libraries} PARENT_SCOPE)
+    else()
+        alumy_debug_message("Warning: Protobuf libraries not found, gRPC may fail")
+    endif()
+    
+    # Find RE2 library (required by gRPC for regex)
+    find_library(_re2_library 
+        NAMES re2 libre2
+        PATHS ${_grpc_search_paths}
+        NO_DEFAULT_PATH
+    )
+    
+    # If not found in bundled paths, search system-wide
+    if(NOT _re2_library)
+        find_library(_re2_library 
+            NAMES re2 libre2
+        )
+    endif()
+    
+    alumy_debug_message("RE2 library: ${_re2_library}")
+    
+    if(_re2_library)
+        list(APPEND _grpc_libraries ${_re2_library})
+        set(alumy_GRPC_RE2_LIBRARY ${_re2_library} PARENT_SCOPE)
+    else()
+        alumy_debug_message("Warning: RE2 library not found, gRPC regex may fail")
+    endif()
+    
+    # Find c-ares library (required by gRPC for DNS)
+    find_library(_cares_library 
+        NAMES cares libcares
+        PATHS ${_grpc_search_paths}
+        NO_DEFAULT_PATH
+    )
+    
+    # If not found in bundled paths, search system-wide
+    if(NOT _cares_library)
+        find_library(_cares_library 
+            NAMES cares libcares
+        )
+    endif()
+    
+    alumy_debug_message("c-ares library: ${_cares_library}")
+    
+    if(_cares_library)
+        list(APPEND _grpc_libraries ${_cares_library})
+        set(alumy_GRPC_CARES_LIBRARY ${_cares_library} PARENT_SCOPE)
+    else()
+        alumy_debug_message("Warning: c-ares library not found, gRPC DNS may fail")
+    endif()
     
     if(_all_grpc_found)
         # Create both namespaced and non-namespaced targets
@@ -363,6 +519,37 @@ function(alumy_link_grpc_dependencies target_name scope)
     if(alumy_GRPC_ZLIB_LIBRARY)
         target_link_libraries(${target_name} ${scope} ${alumy_GRPC_ZLIB_LIBRARY})
         alumy_debug_message("Linked zlib for gRPC: ${alumy_GRPC_ZLIB_LIBRARY}")
+    endif()
+    
+    # Link OpenSSL if available (required by gRPC for encryption)
+    if(alumy_GRPC_SSL_LIBRARY AND alumy_GRPC_CRYPTO_LIBRARY)
+        # Link crypto before ssl for proper dependency order
+        target_link_libraries(${target_name} ${scope} ${alumy_GRPC_CRYPTO_LIBRARY} ${alumy_GRPC_SSL_LIBRARY})
+        alumy_debug_message("Linked OpenSSL for gRPC: ${alumy_GRPC_CRYPTO_LIBRARY} ${alumy_GRPC_SSL_LIBRARY}")
+    endif()
+    
+    # Link Abseil libraries if available (required by gRPC)
+    if(alumy_GRPC_ABSEIL_LIBRARIES)
+        target_link_libraries(${target_name} ${scope} ${alumy_GRPC_ABSEIL_LIBRARIES})
+        alumy_debug_message("Linked Abseil for gRPC: ${alumy_GRPC_ABSEIL_LIBRARIES}")
+    endif()
+    
+    # Link Protobuf libraries if available (required by gRPC)
+    if(alumy_GRPC_PROTOBUF_LIBRARIES)
+        target_link_libraries(${target_name} ${scope} ${alumy_GRPC_PROTOBUF_LIBRARIES})
+        alumy_debug_message("Linked Protobuf for gRPC: ${alumy_GRPC_PROTOBUF_LIBRARIES}")
+    endif()
+    
+    # Link RE2 library if available (required by gRPC for regex)
+    if(alumy_GRPC_RE2_LIBRARY)
+        target_link_libraries(${target_name} ${scope} ${alumy_GRPC_RE2_LIBRARY})
+        alumy_debug_message("Linked RE2 for gRPC: ${alumy_GRPC_RE2_LIBRARY}")
+    endif()
+    
+    # Link c-ares library if available (required by gRPC for DNS)
+    if(alumy_GRPC_CARES_LIBRARY)
+        target_link_libraries(${target_name} ${scope} ${alumy_GRPC_CARES_LIBRARY})
+        alumy_debug_message("Linked c-ares for gRPC: ${alumy_GRPC_CARES_LIBRARY}")
     endif()
 endfunction()
 

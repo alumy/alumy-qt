@@ -173,6 +173,36 @@ macro(configure_alumy_dependencies)
 
     list(APPEND CMAKE_PREFIX_PATH ${GRPC_INSTALL_DIR})
 
+    # OpenSSL configuration
+    set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
+    
+    # Configure OpenSSL build
+    ExternalProject_Add(openssl-external
+        GIT_REPOSITORY https://github.com/openssl/openssl.git
+        GIT_TAG OpenSSL_3_0_12
+        GIT_SHALLOW ON
+        CONFIGURE_COMMAND <SOURCE_DIR>/config 
+            --prefix=<INSTALL_DIR>
+            --openssldir=<INSTALL_DIR>/ssl
+            no-shared
+            no-tests
+            no-docs
+            -DOPENSSL_USE_NODELETE
+        BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
+        BUILD_BYPRODUCTS
+            ${OPENSSL_INSTALL_DIR}/lib/libssl.a
+            ${OPENSSL_INSTALL_DIR}/lib/libcrypto.a
+        INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install_sw
+        LOG_DOWNLOAD ON
+        LOG_CONFIGURE ON
+        LOG_BUILD OFF
+        LOG_INSTALL ON
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+    )
+
+    list(APPEND CMAKE_PREFIX_PATH ${OPENSSL_INSTALL_DIR})
+
     if(DEFINED _ALUMY_ORIGINAL_BUILD_SHARED_LIBS)
         set(BUILD_SHARED_LIBS ${_ALUMY_ORIGINAL_BUILD_SHARED_LIBS} CACHE BOOL "" FORCE)
         unset(_ALUMY_ORIGINAL_BUILD_SHARED_LIBS)
@@ -183,6 +213,14 @@ macro(install_alumy_grpc)
     set(GRPC_INSTALL_DIR ${CMAKE_BINARY_DIR}/grpc-install)
 
     install(DIRECTORY ${GRPC_INSTALL_DIR}/
+        DESTINATION "."
+        USE_SOURCE_PERMISSIONS)
+endmacro()
+
+macro(install_alumy_openssl)
+    set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
+
+    install(DIRECTORY ${OPENSSL_INSTALL_DIR}/
         DESTINATION "."
         USE_SOURCE_PERMISSIONS)
 endmacro()
@@ -246,6 +284,7 @@ endmacro()
 
 macro(install_alumy_dependencies)
     install_alumy_grpc()
+    install_alumy_openssl()
     install_alumy_fetchcontent_dependencies()
 endmacro()
 
@@ -297,12 +336,31 @@ macro(link_alumy_dependencies target_name)
     
     target_link_libraries(${target_name} INTERFACE grpc++ grpc gpr address_sorting upb)
     
-    add_dependencies(${target_name} grpc-external qpcpp-external)
+    # OpenSSL libraries
+    set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
+    
+    add_library(ssl STATIC IMPORTED)
+    set_target_properties(ssl PROPERTIES
+        IMPORTED_LOCATION ${OPENSSL_INSTALL_DIR}/lib/libssl.a
+        INTERFACE_INCLUDE_DIRECTORIES ${OPENSSL_INSTALL_DIR}/include
+    )
+    
+    add_library(crypto STATIC IMPORTED)
+    set_target_properties(crypto PROPERTIES
+        IMPORTED_LOCATION ${OPENSSL_INSTALL_DIR}/lib/libcrypto.a
+        INTERFACE_INCLUDE_DIRECTORIES ${OPENSSL_INSTALL_DIR}/include
+    )
+    
+    target_link_libraries(${target_name} INTERFACE ssl crypto)
+    
+    add_dependencies(${target_name} grpc-external qpcpp-external openssl-external)
     add_dependencies(grpc++ grpc-external)
     add_dependencies(grpc grpc-external)
     add_dependencies(gpr grpc-external)
     add_dependencies(address_sorting grpc-external)
     add_dependencies(upb grpc-external)
+    add_dependencies(ssl openssl-external)
+    add_dependencies(crypto openssl-external)
 endmacro()
 
 
