@@ -173,20 +173,22 @@ macro(configure_alumy_dependencies)
 
     list(APPEND CMAKE_PREFIX_PATH ${GRPC_INSTALL_DIR})
 
-    # OpenSSL configuration
+    # OpenSSL configuration - always use bundled version
     set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
+    
+    message(STATUS "Configuring bundled OpenSSL build")
     
     # Configure OpenSSL build
     ExternalProject_Add(openssl-external
         GIT_REPOSITORY https://github.com/openssl/openssl.git
-        GIT_TAG OpenSSL_3_0_12
+        GIT_TAG openssl-3.0.17
         GIT_SHALLOW ON
+        INSTALL_DIR ${OPENSSL_INSTALL_DIR}
         CONFIGURE_COMMAND <SOURCE_DIR>/config 
             --prefix=<INSTALL_DIR>
             --openssldir=<INSTALL_DIR>/ssl
             no-shared
             no-tests
-            no-docs
             -DOPENSSL_USE_NODELETE
         BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
         BUILD_BYPRODUCTS
@@ -200,7 +202,7 @@ macro(configure_alumy_dependencies)
         USES_TERMINAL_BUILD ON
         USES_TERMINAL_INSTALL ON
     )
-
+    
     list(APPEND CMAKE_PREFIX_PATH ${OPENSSL_INSTALL_DIR})
 
     if(DEFINED _ALUMY_ORIGINAL_BUILD_SHARED_LIBS)
@@ -219,10 +221,13 @@ endmacro()
 
 macro(install_alumy_openssl)
     set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
-
-    install(DIRECTORY ${OPENSSL_INSTALL_DIR}/
-        DESTINATION "."
-        USE_SOURCE_PERMISSIONS)
+    
+    if(EXISTS ${OPENSSL_INSTALL_DIR})
+        install(DIRECTORY ${OPENSSL_INSTALL_DIR}/
+            DESTINATION "."
+            USE_SOURCE_PERMISSIONS)
+        message(STATUS "Installing bundled OpenSSL from ${OPENSSL_INSTALL_DIR}")
+    endif()
 endmacro()
 
 macro(install_alumy_fetchcontent_dependencies)
@@ -336,7 +341,7 @@ macro(link_alumy_dependencies target_name)
     
     target_link_libraries(${target_name} INTERFACE grpc++ grpc gpr address_sorting upb)
     
-    # OpenSSL libraries
+    # OpenSSL libraries - always use bundled version
     set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
     
     add_library(ssl STATIC IMPORTED)
@@ -352,15 +357,18 @@ macro(link_alumy_dependencies target_name)
     )
     
     target_link_libraries(${target_name} INTERFACE ssl crypto)
+    add_dependencies(ssl openssl-external)
+    add_dependencies(crypto openssl-external)
     
+    message(STATUS "Linking bundled OpenSSL libraries")
+    
+    # Add external project dependencies
     add_dependencies(${target_name} grpc-external qpcpp-external openssl-external)
     add_dependencies(grpc++ grpc-external)
     add_dependencies(grpc grpc-external)
     add_dependencies(gpr grpc-external)
     add_dependencies(address_sorting grpc-external)
     add_dependencies(upb grpc-external)
-    add_dependencies(ssl openssl-external)
-    add_dependencies(crypto openssl-external)
 endmacro()
 
 

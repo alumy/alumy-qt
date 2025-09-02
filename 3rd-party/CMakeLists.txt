@@ -25,7 +25,7 @@ target_link_libraries(${target} PUBLIC
 
 configure_alumy_dependencies()
 
-add_dependencies(${target} grpc-external)
+add_dependencies(${target} grpc-external openssl-external)
 
 link_alumy_dependencies(${target})
 

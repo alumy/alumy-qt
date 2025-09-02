@@ -197,31 +197,25 @@ function(alumy_setup_grpc_libraries)
         alumy_debug_message("Warning: zlib not found, gRPC linking may fail")
     endif()
     
-    # Find OpenSSL libraries (required by gRPC for encryption)
+    # Find OpenSSL libraries (required by gRPC for encryption) - prioritize installed directories
+    set(_openssl_grpc_search_paths
+        "${CMAKE_CURRENT_LIST_DIR}/../lib"           # Installed lib directory
+        "${CMAKE_CURRENT_LIST_DIR}/../lib64"         # Installed lib64 directory
+        "${CMAKE_CURRENT_LIST_DIR}/../openssl-install/lib"  # Installed openssl lib directory
+        ${_grpc_search_paths}                        # Build-time paths
+    )
+    
     find_library(_ssl_library 
         NAMES ssl libssl
-        PATHS ${_grpc_search_paths}
+        PATHS ${_openssl_grpc_search_paths}
         NO_DEFAULT_PATH
     )
     
     find_library(_crypto_library 
         NAMES crypto libcrypto
-        PATHS ${_grpc_search_paths}
+        PATHS ${_openssl_grpc_search_paths}
         NO_DEFAULT_PATH
     )
-    
-    # If not found in bundled paths, search system-wide
-    if(NOT _ssl_library)
-        find_library(_ssl_library 
-            NAMES ssl libssl
-        )
-    endif()
-    
-    if(NOT _crypto_library)
-        find_library(_crypto_library 
-            NAMES crypto libcrypto
-        )
-    endif()
     
     alumy_debug_message("OpenSSL ssl: ${_ssl_library}")
     alumy_debug_message("OpenSSL crypto: ${_crypto_library}")
@@ -248,7 +242,7 @@ function(alumy_setup_grpc_libraries)
         random_internal_pool_urbg random_internal_randen random_internal_randen_hwaes
         random_internal_randen_hwaes_impl random_internal_randen_slow random_internal_seed_material
         random_seed_gen_exception random_seed_sequences
-        stacktrace symbolize
+        stacktrace symbolize demangle_internal
         strings_internal debugging_internal exponential_biased periodic_sampler
     )
     
@@ -405,6 +399,116 @@ function(alumy_setup_grpc_libraries)
     endif()
 endfunction()
 
+# ==============================================================================
+# OPENSSL CONFIGURATION
+# ==============================================================================
+
+# Function to setup bundled OpenSSL libraries
+function(alumy_setup_openssl_libraries)
+    # Find bundled OpenSSL libraries - prioritize installed directories
+    set(_ALUMY_OPENSSL_LIBDIR_CANDIDATES
+        "${CMAKE_CURRENT_LIST_DIR}/../lib"           # Installed lib directory
+        "${CMAKE_CURRENT_LIST_DIR}/../lib64"         # Installed lib64 directory
+        ${alumy_LIB_DIR}                             # Build-time lib directory
+        "${PACKAGE_PREFIX_DIR}/openssl-install/lib"  # Build-time openssl lib directory
+    )
+    
+    set(alumy_OPENSSL_LIB_DIR "")
+    foreach(_cand IN LISTS _ALUMY_OPENSSL_LIBDIR_CANDIDATES)
+        if(EXISTS "${_cand}/libssl.a" OR EXISTS "${_cand}/libssl.so" OR 
+           EXISTS "${_cand}/libcrypto.a" OR EXISTS "${_cand}/libcrypto.so")
+            set(alumy_OPENSSL_LIB_DIR "${_cand}")
+            break()
+        endif()
+    endforeach()
+    
+    # Find bundled OpenSSL include directories - prioritize installed directories
+    set(_ALUMY_OPENSSL_INCLUDEDIR_CANDIDATES
+        "${CMAKE_CURRENT_LIST_DIR}/../include"           # Installed include directory
+        "${CMAKE_CURRENT_LIST_DIR}/../openssl-install/include"  # Installed openssl include directory
+        ${alumy_INCLUDE_DIR}                             # Build-time include directory
+        "${PACKAGE_PREFIX_DIR}/openssl-install/include"  # Build-time openssl include directory
+    )
+    
+    set(alumy_OPENSSL_INCLUDE_DIR "")
+    foreach(_cand IN LISTS _ALUMY_OPENSSL_INCLUDEDIR_CANDIDATES)
+        if(EXISTS "${_cand}/openssl/ssl.h")
+            set(alumy_OPENSSL_INCLUDE_DIR "${_cand}")
+            break()
+        endif()
+    endforeach()
+    
+    # Search paths for libraries
+    set(_openssl_search_paths ${alumy_OPENSSL_LIB_DIR} ${alumy_LIB_DIR})
+    
+    # Find bundled OpenSSL libraries
+    find_library(_alumy_ssl_library 
+        NAMES ssl libssl
+        PATHS ${_openssl_search_paths}
+        NO_DEFAULT_PATH
+    )
+    
+    find_library(_alumy_crypto_library 
+        NAMES crypto libcrypto
+        PATHS ${_openssl_search_paths}
+        NO_DEFAULT_PATH
+    )
+    
+    alumy_debug_message("OpenSSL ssl library: ${_alumy_ssl_library}")
+    alumy_debug_message("OpenSSL crypto library: ${_alumy_crypto_library}")
+    alumy_debug_message("OpenSSL include dir: ${alumy_OPENSSL_INCLUDE_DIR}")
+    
+    # Create imported targets if libraries are found
+    if(_alumy_ssl_library AND _alumy_crypto_library)
+        # Create crypto target (dependency of ssl)
+        if(NOT TARGET OpenSSL::Crypto)
+            add_library(OpenSSL::Crypto UNKNOWN IMPORTED)
+            set_target_properties(OpenSSL::Crypto PROPERTIES
+                IMPORTED_LOCATION ${_alumy_crypto_library}
+            )
+            if(alumy_OPENSSL_INCLUDE_DIR)
+                set_target_properties(OpenSSL::Crypto PROPERTIES
+                    INTERFACE_INCLUDE_DIRECTORIES "${alumy_OPENSSL_INCLUDE_DIR}"
+                )
+            endif()
+            alumy_debug_message("Created OpenSSL::Crypto target: ${_alumy_crypto_library}")
+        endif()
+        
+        # Create ssl target  
+        if(NOT TARGET OpenSSL::SSL)
+            add_library(OpenSSL::SSL UNKNOWN IMPORTED)
+            set_target_properties(OpenSSL::SSL PROPERTIES
+                IMPORTED_LOCATION ${_alumy_ssl_library}
+                INTERFACE_LINK_LIBRARIES OpenSSL::Crypto
+            )
+            if(alumy_OPENSSL_INCLUDE_DIR)
+                set_target_properties(OpenSSL::SSL PROPERTIES
+                    INTERFACE_INCLUDE_DIRECTORIES "${alumy_OPENSSL_INCLUDE_DIR}"
+                )
+            endif()
+            alumy_debug_message("Created OpenSSL::SSL target: ${_alumy_ssl_library}")
+        endif()
+        
+        # Store library paths for consumers
+        set(alumy_OPENSSL_SSL_LIBRARY ${_alumy_ssl_library} PARENT_SCOPE)
+        set(alumy_OPENSSL_CRYPTO_LIBRARY ${_alumy_crypto_library} PARENT_SCOPE)
+        set(alumy_OPENSSL_LIBRARIES ${_alumy_crypto_library} ${_alumy_ssl_library} PARENT_SCOPE)
+        if(alumy_OPENSSL_INCLUDE_DIR)
+            set(alumy_OPENSSL_INCLUDE_DIR ${alumy_OPENSSL_INCLUDE_DIR} PARENT_SCOPE)
+        endif()
+        
+        set(alumy_OPENSSL_FOUND TRUE PARENT_SCOPE)
+    else()
+        set(alumy_OPENSSL_FOUND FALSE PARENT_SCOPE)
+        alumy_debug_message("Bundled OpenSSL not found")
+    endif()
+endfunction()
+
+# Setup OpenSSL if not already available
+if(NOT TARGET OpenSSL::SSL OR NOT TARGET OpenSSL::Crypto)
+    alumy_setup_openssl_libraries()
+endif()
+
 # Try to find gRPC libraries (prefer bundled ones in alumy first)
 if(NOT TARGET gRPC::grpc++)
     alumy_setup_grpc_libraries()
@@ -483,6 +587,37 @@ function(alumy_link_optional_dependencies target_name scope)
             alumy_debug_message("Linked optional dependency: ${dep_target} to ${target_name}")
         endif()
     endforeach()
+endfunction()
+
+# Helper function to link OpenSSL dependencies
+function(alumy_link_openssl_dependencies target_name scope)
+    alumy_debug_message("Checking OpenSSL targets for ${target_name}:")
+    
+    # Setup OpenSSL if not already done
+    if(NOT TARGET OpenSSL::SSL OR NOT TARGET OpenSSL::Crypto)
+        alumy_setup_openssl_libraries()
+    endif()
+    
+    # Link using standard OpenSSL targets
+    if(TARGET OpenSSL::SSL AND TARGET OpenSSL::Crypto)
+        target_link_libraries(${target_name} ${scope} OpenSSL::SSL OpenSSL::Crypto)
+        alumy_debug_message("Linked bundled OpenSSL using standard targets")
+    elseif(alumy_OPENSSL_FOUND AND alumy_OPENSSL_LIBRARIES)
+        # Link using absolute paths as fallback
+        target_link_libraries(${target_name} ${scope} ${alumy_OPENSSL_LIBRARIES})
+        if(alumy_OPENSSL_INCLUDE_DIR)
+            target_include_directories(${target_name} ${scope} ${alumy_OPENSSL_INCLUDE_DIR})
+        endif()
+        alumy_debug_message("Linked bundled OpenSSL using absolute paths: ${alumy_OPENSSL_LIBRARIES}")
+    else()
+        # Only show warning if OpenSSL is actually required
+        # For 3rd-party targets, OpenSSL might be optional
+        if(NOT target_name MATCHES "3rd-party")
+            message(WARNING "Bundled OpenSSL not found for ${target_name}")
+        else()
+            alumy_debug_message("Bundled OpenSSL not found for ${target_name} (optional for 3rd-party)")
+        endif()
+    endif()
 endfunction()
 
 # Helper function to link gRPC dependencies
@@ -566,9 +701,31 @@ function(alumy_link_libraries target_name)
     # Link dependencies in logical groups
     alumy_link_core_dependencies(${target_name} ${_al_scope})
     alumy_link_optional_dependencies(${target_name} ${_al_scope})
+    alumy_link_openssl_dependencies(${target_name} ${_al_scope})
     alumy_link_grpc_dependencies(${target_name} ${_al_scope})
     
     alumy_debug_message("Successfully linked all alumy dependencies to ${target_name}")
+endfunction()
+
+# Convenience function to link only OpenSSL to a target
+function(alumy_link_openssl target_name)
+    # Validate target exists
+    if(NOT TARGET ${target_name})
+        message(FATAL_ERROR "Target '${target_name}' does not exist")
+    endif()
+    
+    # Determine scope based on target type
+    alumy_get_target_scope(${target_name} _al_scope)
+    
+    # Setup OpenSSL if not already done
+    if(NOT TARGET OpenSSL::SSL OR NOT TARGET OpenSSL::Crypto)
+        alumy_setup_openssl_libraries()
+    endif()
+    
+    # Link OpenSSL dependencies
+    alumy_link_openssl_dependencies(${target_name} ${_al_scope})
+    
+    alumy_debug_message("Successfully linked OpenSSL to ${target_name}")
 endfunction()
 
 # Restore original CMAKE_PREFIX_PATH
