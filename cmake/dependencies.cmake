@@ -209,6 +209,16 @@ macro(configure_alumy_dependencies)
     endif()
 endmacro()
 
+macro(install_qpcpp)
+    set(QPCPP_INSTALL_DIR ${CMAKE_BINARY_DIR}/qpcpp-install)
+
+    if(EXISTS ${QPCPP_INSTALL_DIR})
+        install(DIRECTORY ${QPCPP_INSTALL_DIR}/
+            DESTINATION "."
+            USE_SOURCE_PERMISSIONS)
+    endif()
+endmacro()
+
 macro(install_alumy_grpc)
     set(GRPC_INSTALL_DIR ${CMAKE_BINARY_DIR}/grpc-install)
 
@@ -259,14 +269,6 @@ macro(install_alumy_fetchcontent_dependencies)
         endif()
     endif()
 
-    set(QPCPP_INSTALL_DIR ${CMAKE_BINARY_DIR}/qpcpp-install)
-    if(EXISTS ${QPCPP_INSTALL_DIR})
-        install(DIRECTORY ${QPCPP_INSTALL_DIR}/
-            DESTINATION "."
-            USE_SOURCE_PERMISSIONS
-        )
-    endif()
-
     if(TARGET SndFile::sndfile)
         get_target_property(sndfile_actual_target SndFile::sndfile ALIASED_TARGET)
         if(sndfile_actual_target)
@@ -286,6 +288,7 @@ macro(install_alumy_fetchcontent_dependencies)
 endmacro()
 
 macro(install_alumy_dependencies)
+    install_qpcpp()
     install_alumy_grpc()
     install_alumy_openssl()
     install_alumy_fetchcontent_dependencies()
