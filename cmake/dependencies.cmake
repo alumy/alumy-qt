@@ -95,6 +95,36 @@ macro(configure_alumy_dependencies)
         FetchContent_MakeAvailable(libsndfile)
     endif()
 
+    set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
+    
+    message(STATUS "Configuring bundled OpenSSL build")
+    
+    ExternalProject_Add(openssl-external
+        GIT_REPOSITORY https://github.com/openssl/openssl.git
+        GIT_TAG openssl-3.0.17
+        GIT_SHALLOW ON
+        INSTALL_DIR ${OPENSSL_INSTALL_DIR}
+        CONFIGURE_COMMAND <SOURCE_DIR>/config 
+            --prefix=<INSTALL_DIR>
+            --openssldir=<INSTALL_DIR>/ssl
+            no-shared
+            no-tests
+            -DOPENSSL_USE_NODELETE
+        BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
+        BUILD_BYPRODUCTS
+            ${OPENSSL_INSTALL_DIR}/lib64/libssl.a
+            ${OPENSSL_INSTALL_DIR}/lib64/libcrypto.a
+        INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install_sw
+        LOG_DOWNLOAD ON
+        LOG_CONFIGURE ON
+        LOG_BUILD OFF
+        LOG_INSTALL ON
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+    )
+    
+    list(APPEND CMAKE_PREFIX_PATH ${OPENSSL_INSTALL_DIR})
+
     set(GRPC_INSTALL_DIR ${CMAKE_BINARY_DIR}/grpc-install)
 
     set(GRPC_CMAKE_ARGS
@@ -117,7 +147,7 @@ macro(configure_alumy_dependencies)
         -DgRPC_CARES_PROVIDER=module
         -DgRPC_PROTOBUF_PROVIDER=module
         -DgRPC_RE2_PROVIDER=module
-        -DgRPC_SSL_PROVIDER=none
+        -DgRPC_SSL_PROVIDER=package
         -DgRPC_ZLIB_PROVIDER=module
         -DgRPC_BENCHMARK_PROVIDER=none
         -DgRPC_UPB_PROVIDER=module
@@ -146,6 +176,10 @@ macro(configure_alumy_dependencies)
         -DgRPC_BUILD_GRPC_OBJECTIVE_C_PLUGIN=OFF
         -DgRPC_BUILD_GRPC_NODE_PLUGIN=OFF
         -DgRPC_BUILD_GRPC_CSHARP_PLUGIN=OFF
+        -DOPENSSL_ROOT_DIR=${OPENSSL_INSTALL_DIR}
+        -DOPENSSL_INCLUDE_DIR=${OPENSSL_INSTALL_DIR}/include
+        -DOPENSSL_CRYPTO_LIBRARY=${OPENSSL_INSTALL_DIR}/lib64/libcrypto.a
+        -DOPENSSL_SSL_LIBRARY=${OPENSSL_INSTALL_DIR}/lib64/libssl.a
     )
     
     ExternalProject_Add(grpc-external
@@ -161,6 +195,11 @@ macro(configure_alumy_dependencies)
             ${GRPC_INSTALL_DIR}/lib/libgpr.a
             ${GRPC_INSTALL_DIR}/lib/libaddress_sorting.a
             ${GRPC_INSTALL_DIR}/lib/libupb.a
+            ${GRPC_INSTALL_DIR}/lib/libabsl_*.a
+            ${GRPC_INSTALL_DIR}/lib/libprotobuf.a
+            ${GRPC_INSTALL_DIR}/lib/libre2.a
+            ${GRPC_INSTALL_DIR}/lib/libcares.a
+            ${GRPC_INSTALL_DIR}/lib/libz.a
             ${GRPC_INSTALL_DIR}/bin/grpc_cpp_plugin
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         LOG_DOWNLOAD ON
@@ -169,39 +208,10 @@ macro(configure_alumy_dependencies)
         LOG_INSTALL ON
         USES_TERMINAL_BUILD ON
         USES_TERMINAL_INSTALL ON
+        DEPENDS openssl-external
     )
 
     list(APPEND CMAKE_PREFIX_PATH ${GRPC_INSTALL_DIR})
-
-    set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
-    
-    message(STATUS "Configuring bundled OpenSSL build")
-    
-    ExternalProject_Add(openssl-external
-        GIT_REPOSITORY https://github.com/openssl/openssl.git
-        GIT_TAG openssl-3.0.17
-        GIT_SHALLOW ON
-        INSTALL_DIR ${OPENSSL_INSTALL_DIR}
-        CONFIGURE_COMMAND <SOURCE_DIR>/config 
-            --prefix=<INSTALL_DIR>
-            --openssldir=<INSTALL_DIR>/ssl
-            no-shared
-            no-tests
-            -DOPENSSL_USE_NODELETE
-        BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
-        BUILD_BYPRODUCTS
-            ${OPENSSL_INSTALL_DIR}/lib/libssl.a
-            ${OPENSSL_INSTALL_DIR}/lib/libcrypto.a
-        INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install_sw
-        LOG_DOWNLOAD ON
-        LOG_CONFIGURE ON
-        LOG_BUILD OFF
-        LOG_INSTALL ON
-        USES_TERMINAL_BUILD ON
-        USES_TERMINAL_INSTALL ON
-    )
-    
-    list(APPEND CMAKE_PREFIX_PATH ${OPENSSL_INSTALL_DIR})
 
     if(DEFINED _ALUMY_ORIGINAL_BUILD_SHARED_LIBS)
         set(BUILD_SHARED_LIBS ${_ALUMY_ORIGINAL_BUILD_SHARED_LIBS} CACHE BOOL "" FORCE)
@@ -305,5 +315,8 @@ macro(link_alumy_dependencies target)
         address_sorting
         upb
         ssl 
-        crypto)
+        crypto
+        pthread
+        dl
+        m)
 endmacro()

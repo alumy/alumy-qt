@@ -1,5 +1,5 @@
 #############################################################################
-# alumy-config.cmake.in - Automatic library discovery and linking configuration
+# alumy-config.cmake.in - Manual library configuration
 #############################################################################
 
 @PACKAGE_INIT@
@@ -13,453 +13,556 @@ set(ALUMY_LIB_DIR "@PACKAGE_CMAKE_INSTALL_LIBDIR@")
 #   find_package(alumy REQUIRED)
 #   target_link_libraries(my_target PRIVATE alumy::alumy)
 
+message(STATUS "Alumy library configuration - manual setup mode")
+message(STATUS "Library directory: ${ALUMY_LIB_DIR}")
+message(STATUS "Include directory: ${ALUMY_INCLUDE_DIR}")
+
+# Resolve install prefix and candidate lib directories (handle lib vs lib64)
+get_filename_component(ALUMY_PREFIX_DIR "${ALUMY_LIB_DIR}" DIRECTORY)
+set(ALUMY_LIB_DIR_CANDIDATES "${ALUMY_LIB_DIR};${ALUMY_PREFIX_DIR}/lib;${ALUMY_PREFIX_DIR}/lib64")
+
 #############################################################################
-# Recursive library discovery functions - automatically traverse installation directories to find all library files
+# Include the main alumy targets
 #############################################################################
 
-# Recursively scan directories to find all library files
-function(alumy_scan_libraries_recursive directory out_static_libs out_shared_libs)
-    set(_static_libs)
-    set(_shared_libs)
-    
-    if(NOT IS_DIRECTORY "${directory}")
-        set(${out_static_libs} "" PARENT_SCOPE)
-        set(${out_shared_libs} "" PARENT_SCOPE)
-        return()
-    endif()
-    
-    # Get all files and subdirectories in the directory
-    file(GLOB_RECURSE _all_files "${directory}/*")
-    
-    foreach(_file ${_all_files})
-        if(IS_DIRECTORY "${_file}")
-            continue()
-        endif()
-        
-        get_filename_component(_filename "${_file}" NAME)
-        get_filename_component(_ext "${_file}" EXT)
-        
-        # Identify static library files (.a, .lib)
-        if(_ext STREQUAL ".a" OR _ext STREQUAL ".lib")
-            # Exclude certain system libraries and temporary files
-            if(NOT _filename MATCHES "^(lib)?crt[0-9].*" AND 
-               NOT _filename MATCHES ".*\\.tmp.*" AND
-               NOT _filename MATCHES ".*\\.bak.*" AND
-               NOT _filename MATCHES ".*debug.*info.*")
-                list(APPEND _static_libs "${_file}")
-            endif()
-        # Identify shared library files (.so, .dll, .dylib)
-        elseif(_ext STREQUAL ".so" OR _ext STREQUAL ".dll" OR _ext STREQUAL ".dylib")
-            # Exclude version symlinks, keep only actual files
-            if(NOT _filename MATCHES ".*\\.so\\.[0-9]+.*")
-                list(APPEND _shared_libs "${_file}")
-            endif()
-        # Handle .so files without extension
-        elseif(_filename MATCHES ".*\\.so$")
-            list(APPEND _shared_libs "${_file}")
-        endif()
+include("${CMAKE_CURRENT_LIST_DIR}/alumy-targets.cmake")
+
+# Try to locate dependency packages from Alumy install only (no system search)
+function(alumy_try_find_local_config pkg_name subdir)
+    set(_paths "")
+    foreach(_libdir ${ALUMY_LIB_DIR_CANDIDATES})
+        list(APPEND _paths "${_libdir}/cmake/${subdir}")
     endforeach()
-    
-    # Remove duplicates and sort
-    if(_static_libs)
-        list(REMOVE_DUPLICATES _static_libs)
-        list(SORT _static_libs)
-    endif()
-    if(_shared_libs)
-        list(REMOVE_DUPLICATES _shared_libs)
-        list(SORT _shared_libs)
-    endif()
-    
-    set(${out_static_libs} "${_static_libs}" PARENT_SCOPE)
-    set(${out_shared_libs} "${_shared_libs}" PARENT_SCOPE)
+    find_package(${pkg_name} CONFIG QUIET PATHS ${_paths} NO_DEFAULT_PATH)
 endfunction()
 
-#############################################################################
-# Smart library selection functions - static libraries first, avoid duplicates
-#############################################################################
+# Prefer local package configs for common deps providing CMake targets
+alumy_try_find_local_config(absl absl)
+alumy_try_find_local_config(absl abseil-cpp)
+alumy_try_find_local_config(re2 re2)
+alumy_try_find_local_config(Protobuf protobuf)
+alumy_try_find_local_config(gRPC gRPC)
+alumy_try_find_local_config(c-ares c-ares)
 
-# Extract library name from library file path
-function(alumy_extract_library_name filepath out_libname)
-    get_filename_component(_filename "${filepath}" NAME_WE)
-    
-    # Remove common prefixes
-    string(REGEX REPLACE "^lib" "" _clean_name "${_filename}")
-    # Remove common suffixes
-    string(REGEX REPLACE "[-_](static|shared|debug|release|d)$" "" _clean_name "${_clean_name}")
-    
-    set(${out_libname} "${_clean_name}" PARENT_SCOPE)
-endfunction()
-
-# Prefer static libraries, avoid duplicate linking
-function(alumy_select_optimal_libraries static_libs shared_libs out_selected_libs)
-    set(_selected_libs)
-    set(_processed_names)
-    
-    # First process all static libraries
-    foreach(_static_lib ${static_libs})
-        alumy_extract_library_name("${_static_lib}" _lib_name)
-        
-        # Avoid adding duplicate libraries with same name
-        list(FIND _processed_names "${_lib_name}" _name_index)
-        if(_name_index EQUAL -1)
-            list(APPEND _selected_libs "${_static_lib}")
-            list(APPEND _processed_names "${_lib_name}")
-        endif()
-    endforeach()
-    
-    # Then process shared libraries (only add those without corresponding static libraries)
-    foreach(_shared_lib ${shared_libs})
-        alumy_extract_library_name("${_shared_lib}" _lib_name)
-        
-        # Only add shared library if no corresponding static library exists
-        list(FIND _processed_names "${_lib_name}" _name_index)
-        if(_name_index EQUAL -1)
-            list(APPEND _selected_libs "${_shared_lib}")
-            list(APPEND _processed_names "${_lib_name}")
-        endif()
-    endforeach()
-    
-    set(${out_selected_libs} "${_selected_libs}" PARENT_SCOPE)
-endfunction()
-
-#############################################################################
-# Create imported target functions
-#############################################################################
-
-# Create IMPORTED target for a single library file
-function(alumy_create_imported_target lib_file target_name)
-    get_filename_component(_lib_ext "${lib_file}" EXT)
-    get_filename_component(_lib_dir "${lib_file}" DIRECTORY)
-    
-    # Determine library type
-    if(_lib_ext STREQUAL ".a" OR _lib_ext STREQUAL ".lib")
-        set(_lib_type STATIC)
-    else()
-        set(_lib_type SHARED)
+# Ensure alumy::alumy propagates usage requirements via INTERFACE link libs
+function(_alumy_append_if_target tgt var)
+    if(TARGET ${tgt})
+        set(${var} "${${var}};${tgt}" PARENT_SCOPE)
     endif()
-    
-    # Create IMPORTED target
-    add_library(${target_name} ${_lib_type} IMPORTED)
-    set_target_properties(${target_name} PROPERTIES
-        IMPORTED_LOCATION "${lib_file}"
+endfunction()
+
+set(_alumy_usage_libs "")
+_alumy_append_if_target(Threads::Threads _alumy_usage_libs)
+_alumy_append_if_target(OpenSSL::SSL _alumy_usage_libs)
+_alumy_append_if_target(OpenSSL::Crypto _alumy_usage_libs)
+_alumy_append_if_target(ZLIB::ZLIB _alumy_usage_libs)
+_alumy_append_if_target(protobuf::libprotobuf _alumy_usage_libs)
+_alumy_append_if_target(gRPC::grpc++ _alumy_usage_libs)
+_alumy_append_if_target(gRPC::grpc _alumy_usage_libs)
+_alumy_append_if_target(gRPC::address_sorting _alumy_usage_libs)
+_alumy_append_if_target(re2::re2 _alumy_usage_libs)
+
+# Abseil components commonly required by gRPC
+foreach(_absl
+    absl::base absl::strings absl::synchronization absl::time absl::status
+    absl::statusor absl::hash absl::cord absl::span absl::variant absl::optional
+    absl::inlined_vector absl::flat_hash_map absl::str_format absl::random_random)
+    _alumy_append_if_target(${_absl} _alumy_usage_libs)
+endforeach()
+
+# c-ares
+_alumy_append_if_target(c-ares::cares _alumy_usage_libs)
+
+# qpcpp static lib (imported by this config, if present)
+_alumy_append_if_target(qpcpp _alumy_usage_libs)
+
+list(REMOVE_DUPLICATES _alumy_usage_libs)
+if(TARGET alumy::alumy AND _alumy_usage_libs)
+    # Always propagate via INTERFACE for consumers
+    target_link_libraries(alumy::alumy INTERFACE ${_alumy_usage_libs})
+endif()
+
+# Provide imported target for qpcpp if available (so exported link interfaces resolve)
+if(NOT TARGET qpcpp)
+    # Prefer an existing library file in the installed libdir
+    find_library(_alumy_qpcpp_lib NAMES qpcpp
+        PATHS ${ALUMY_LIB_DIR_CANDIDATES}
+        NO_DEFAULT_PATH
     )
-    
-    # Try to find corresponding header file directory
-    get_filename_component(_potential_inc_dir "${_lib_dir}/../include" ABSOLUTE)
-    if(IS_DIRECTORY "${_potential_inc_dir}")
-        set_target_properties(${target_name} PROPERTIES
-            INTERFACE_INCLUDE_DIRECTORIES "${_potential_inc_dir}"
+    if(_alumy_qpcpp_lib)
+        add_library(qpcpp STATIC IMPORTED)
+        # qpcpp is header-only + static lib; expose headers via INTERFACE include dir
+        set_target_properties(qpcpp PROPERTIES
+            IMPORTED_LOCATION "${_alumy_qpcpp_lib}"
+            INTERFACE_INCLUDE_DIRECTORIES "${ALUMY_INCLUDE_DIR}"
         )
     endif()
-    
-    # If shared library, set runtime path
-    if(_lib_type STREQUAL "SHARED")
-        if(NOT WIN32)
-            set_target_properties(${target_name} PROPERTIES
-                IMPORTED_NO_SONAME FALSE
-            )
+endif()
+
+#############################################################################
+# Qt discovery to expose imported targets to downstreams
+#############################################################################
+set(QT_COMPONENTS Widgets Core Network SerialPort Multimedia Concurrent)
+
+find_package(QT NAMES Qt6 Qt5 COMPONENTS ${QT_COMPONENTS} REQUIRED)
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS ${QT_COMPONENTS} REQUIRED)
+
+#############################################################################
+# Dependency Resolution - Three Approaches (in priority order)
+#############################################################################
+# Function to find library files directly
+function(alumy_find_library_direct var_name lib_names)
+    set(_found_lib "")
+    foreach(_name ${lib_names})
+        find_library(_lib_${_name} NAMES ${_name}
+            PATHS ${ALUMY_LIB_DIR_CANDIDATES}
+            NO_DEFAULT_PATH
+        )
+        if(_lib_${_name})
+            set(_found_lib ${_lib_${_name}})
+            break()
+        endif()
+    endforeach()
+    set(${var_name} ${_found_lib} PARENT_SCOPE)
+endfunction()
+
+# Function to find header files directly
+function(alumy_find_header_direct var_name header_names)
+    set(_found_header "")
+    foreach(_name ${header_names})
+        find_path(_header_${_name} NAMES ${_name}
+            PATHS ${ALUMY_INCLUDE_DIR}
+            NO_DEFAULT_PATH
+        )
+        if(_header_${_name})
+            set(_found_header ${_header_${_name}})
+            break()
+        endif()
+    endforeach()
+    set(${var_name} ${_found_header} PARENT_SCOPE)
+endfunction()
+
+#############################################################################
+# Library Linking Functions
+#############################################################################
+
+# Normalize library name to a canonical key
+function(alumy_normalize_lib_name input_name output_var)
+    string(TOLOWER "${input_name}" _name)
+    if(_name STREQUAL "ssl")
+        set(_name "openssl")
+    elseif(_name STREQUAL "z")
+        set(_name "zlib")
+    elseif(_name STREQUAL "grpc++")
+        set(_name "grpc")
+    elseif(_name STREQUAL "abseil")
+        set(_name "absl")
+    elseif(_name STREQUAL "pthread" OR _name STREQUAL "thread" OR _name STREQUAL "threads")
+        set(_name "threads")
+    elseif(_name MATCHES "^qt[56]?.*")
+        set(_name "qt")
+    endif()
+    set(${output_var} "${_name}" PARENT_SCOPE)
+endfunction()
+
+# Return appropriate link scope for a target: INTERFACE for interface libs, otherwise PRIVATE
+function(alumy_get_link_scope target_name out_scope)
+    get_target_property(_target_type ${target_name} TYPE)
+    if(_target_type STREQUAL "INTERFACE_LIBRARY")
+        set(_scope INTERFACE)
+    else()
+        set(_scope PRIVATE)
+    endif()
+    set(${out_scope} ${_scope} PARENT_SCOPE)
+endfunction()
+
+# Map canonical lib -> list of CMake targets to link if present
+function(alumy_map_cmake_targets lib_name output_var)
+    set(_targets "")
+    if(lib_name STREQUAL "threads")
+        set(_targets "Threads::Threads")
+    elseif(lib_name STREQUAL "openssl")
+        set(_targets "OpenSSL::SSL;OpenSSL::Crypto")
+    elseif(lib_name STREQUAL "zlib")
+        set(_targets "ZLIB::ZLIB")
+    elseif(lib_name STREQUAL "protobuf")
+        set(_targets "protobuf::libprotobuf")
+    elseif(lib_name STREQUAL "grpc")
+        set(_targets "gRPC::grpc++;gRPC::grpc;gRPC::address_sorting")
+    elseif(lib_name STREQUAL "re2")
+        set(_targets "re2::re2")
+    elseif(lib_name STREQUAL "absl")
+        set(_targets "absl::base;absl::strings;absl::synchronization;absl::time;absl::status;absl::statusor;absl::hash;absl::cord;absl::span;absl::variant;absl::optional;absl::inlined_vector;absl::flat_hash_map;absl::str_format;absl::random_random")
+    elseif(lib_name STREQUAL "qpcpp")
+        set(_targets "qpcpp")
+    elseif(lib_name STREQUAL "qt")
+        set(_targets "Qt${QT_VERSION_MAJOR}::Core;Qt${QT_VERSION_MAJOR}::Widgets;Qt${QT_VERSION_MAJOR}::Network;Qt${QT_VERSION_MAJOR}::SerialPort;Qt${QT_VERSION_MAJOR}::Multimedia;Qt${QT_VERSION_MAJOR}::Concurrent")
+    endif()
+    set(${output_var} "${_targets}" PARENT_SCOPE)
+endfunction()
+
+# Map canonical lib -> pkg-config packages (space separated)
+function(alumy_map_pkg_names lib_name output_var)
+    set(_pkg "")
+    if(lib_name STREQUAL "openssl")
+        set(_pkg "openssl")
+    elseif(lib_name STREQUAL "zlib")
+        set(_pkg "zlib")
+    elseif(lib_name STREQUAL "protobuf")
+        set(_pkg "protobuf")
+    elseif(lib_name STREQUAL "grpc")
+        set(_pkg "grpc++ grpc")
+    elseif(lib_name STREQUAL "re2")
+        set(_pkg "re2")
+    elseif(lib_name STREQUAL "qt")
+        # Prefer Qt6, fall back to Qt5
+        if(QT_VERSION_MAJOR EQUAL 6)
+            set(_pkg "Qt6Core Qt6Widgets Qt6Network Qt6SerialPort Qt6Multimedia Qt6Concurrent")
+        else()
+            set(_pkg "Qt5Core Qt5Widgets Qt5Network Qt5SerialPort Qt5Multimedia Qt5Concurrent")
         endif()
     endif()
+    set(${output_var} "${_pkg}" PARENT_SCOPE)
 endfunction()
 
-#############################################################################
-# Main library discovery and configuration functions
-#############################################################################
+# Map canonical lib -> direct lib files (names) and a representative header
+function(alumy_map_direct_spec lib_name out_libs out_header)
+    set(_libs "")
+    set(_hdr "")
+    if(lib_name STREQUAL "openssl")
+        set(_libs "ssl;crypto")
+        set(_hdr "openssl/ssl.h")
+    elseif(lib_name STREQUAL "zlib")
+        set(_libs "z")
+        set(_hdr "zlib.h")
+    elseif(lib_name STREQUAL "protobuf")
+        set(_libs "protobuf")
+        set(_hdr "google/protobuf/message.h")
+    elseif(lib_name STREQUAL "grpc")
+        set(_libs "grpc++;grpc")
+        set(_hdr "grpcpp/grpcpp.h")
+    elseif(lib_name STREQUAL "re2")
+        set(_libs "re2")
+        set(_hdr "re2/re2.h")
+    elseif(lib_name STREQUAL "threads")
+        set(_libs "pthread")
+        set(_hdr "pthread.h")
+    elseif(lib_name STREQUAL "absl")
+        # Will be handled specially by direct-link function (glob libabsl_*.a)
+        set(_libs "")
+        set(_hdr "")
+    elseif(lib_name STREQUAL "cares")
+        set(_libs "cares")
+        set(_hdr "ares.h")
+    elseif(lib_name STREQUAL "qpcpp")
+        set(_libs "qpcpp")
+        set(_hdr "qpcpp.hpp")
+    elseif(lib_name STREQUAL "qt")
+        set(_libs "")
+        set(_hdr "QtCore/qobject.h")
+    else()
+        set(_libs "${lib_name}")
+        set(_hdr "${lib_name}.h")
+    endif()
+    set(${out_libs} "${_libs}" PARENT_SCOPE)
+    set(${out_header} "${_hdr}" PARENT_SCOPE)
+endfunction()
 
-# Automatically discover and configure all dependency libraries
-function(alumy_discover_and_configure_libraries)
-    message(STATUS "Starting automatic discovery of alumy dependency libraries...")
-    
-    # Scan all possible library directories
-    set(_search_dirs
-        "${ALUMY_LIB_DIR}"
-        "${CMAKE_INSTALL_PREFIX}/lib"
-        "${CMAKE_INSTALL_PREFIX}/lib64"
-        "/usr/local/lib"
-        "/usr/lib"
-        "/opt/local/lib"
-    )
-    
-    set(_all_static_libs)
-    set(_all_shared_libs)
-    
-    # Recursively scan each directory
-    foreach(_dir ${_search_dirs})
-        if(IS_DIRECTORY "${_dir}")
-            alumy_scan_libraries_recursive("${_dir}" _static_libs _shared_libs)
-            list(APPEND _all_static_libs ${_static_libs})
-            list(APPEND _all_shared_libs ${_shared_libs})
+# Try to link one library for a target via CMake targets
+function(alumy_try_link_by_cmake_one target_name lib_key link_scope out_linked)
+    set(_linked FALSE)
+    alumy_map_cmake_targets(${lib_key} _cmake_targets)
+    if(_cmake_targets)
+        set(_any FALSE)
+        foreach(_tgt ${_cmake_targets})
+            if(TARGET ${_tgt})
+                alumy_get_link_scope(${target_name} _scope)
+                target_link_libraries(${target_name} ${_scope} ${_tgt})
+                set(_any TRUE)
+            endif()
+        endforeach()
+        if(_any)
+            set(_linked TRUE)
         endif()
-    endforeach()
-    
-    # Select optimal library combination
-    alumy_select_optimal_libraries("${_all_static_libs}" "${_all_shared_libs}" _selected_libs)
-    
-    list(LENGTH _selected_libs _num_libs)
-    message(STATUS "Found ${_num_libs} library files")
-    
-    # Create IMPORTED target for each library
-    set(_created_targets)
-    foreach(_lib_file ${_selected_libs})
-        alumy_extract_library_name("${_lib_file}" _lib_name)
-        set(_target_name "alumy::${_lib_name}")
-        
-        # Avoid creating duplicate targets
-        if(NOT TARGET ${_target_name})
-            alumy_create_imported_target("${_lib_file}" "${_target_name}")
-            list(APPEND _created_targets ${_target_name})
-            message(STATUS "  Created target: ${_target_name} <- ${_lib_file}")
-            
-            # Create alias for backward compatibility (without alumy:: prefix)
-            if(NOT TARGET ${_lib_name})
-                add_library(${_lib_name} ALIAS ${_target_name})
-                message(STATUS "  Created alias: ${_lib_name} -> ${_target_name}")
+    endif()
+    set(${out_linked} ${_linked} PARENT_SCOPE)
+endfunction()
+
+# Try to link one library for a target via pkg-config
+function(alumy_try_link_by_pkgconfig_one target_name lib_key link_scope out_linked)
+    set(_linked FALSE)
+    find_package(PkgConfig QUIET)
+    if(PKG_CONFIG_FOUND)
+        alumy_map_pkg_names(${lib_key} _pkg_names)
+        if(_pkg_names)
+            string(REPLACE " " ";" _pkg_list "${_pkg_names}")
+            set(_all_found TRUE)
+            set(_all_includes "")
+            set(_all_libs "")
+            set(_all_cflags "")
+            foreach(_pkg ${_pkg_list})
+                pkg_check_modules(PC_${_pkg} QUIET ${_pkg})
+                if(NOT PC_${_pkg}_FOUND)
+                    set(_all_found FALSE)
+                    break()
+                endif()
+                list(APPEND _all_includes ${PC_${_pkg}_INCLUDE_DIRS})
+                list(APPEND _all_libs ${PC_${_pkg}_LIBRARIES})
+                list(APPEND _all_cflags ${PC_${_pkg}_CFLAGS_OTHER})
+            endforeach()
+            if(_all_found)
+                list(REMOVE_DUPLICATES _all_includes)
+                list(REMOVE_DUPLICATES _all_libs)
+                list(REMOVE_DUPLICATES _all_cflags)
+                if(_all_includes)
+                    target_include_directories(${target_name} ${link_scope} ${_all_includes})
+                endif()
+                if(_all_cflags)
+                    target_compile_options(${target_name} ${link_scope} ${_all_cflags})
+                endif()
+                if(_all_libs)
+                    target_link_libraries(${target_name} ${link_scope} ${_all_libs})
+                endif()
+                set(_linked TRUE)
             endif()
         endif()
-    endforeach()
-    
-    # Store created targets in cache variable
-    set(ALUMY_DISCOVERED_TARGETS "${_created_targets}" CACHE INTERNAL "Auto-discovered alumy library targets")
+    endif()
+    set(${out_linked} ${_linked} PARENT_SCOPE)
 endfunction()
 
-#############################################################################
-# Advanced linking functions - automatically link all discovered libraries
-#############################################################################
+# Try to link one library for a target via direct discovery
+function(alumy_try_link_direct_one target_name lib_key link_scope out_linked)
+    set(_linked FALSE)
+    alumy_map_direct_spec(${lib_key} _spec_libs _spec_hdr)
+    if(_spec_libs OR _spec_hdr)
+        set(_found_headers "")
+        if(_spec_hdr)
+            alumy_find_header_direct(_hdr_found "${_spec_hdr}")
+            if(_hdr_found)
+                list(APPEND _found_headers ${_hdr_found})
+            endif()
+        endif()
+        set(_found_libs "")
+        if(_spec_libs)
+            foreach(_l ${_spec_libs})
+                alumy_find_library_direct(_lib_found "${_l}")
+                if(_lib_found)
+                    list(APPEND _found_libs ${_lib_found})
+                endif()
+            endforeach()
+        endif()
+        # Intentionally no direct-link fallback for Abseil; use CMake targets only
+        if(_found_headers)
+            list(REMOVE_DUPLICATES _found_headers)
+            alumy_get_link_scope(${target_name} _scope)
+            target_include_directories(${target_name} ${_scope} ${_found_headers})
+        endif()
+        if(_found_libs)
+            alumy_get_link_scope(${target_name} _scope)
+            target_link_libraries(${target_name} ${_scope} ${_found_libs})
+            set(_linked TRUE)
+        endif()
+    endif()
+    set(${out_linked} ${_linked} PARENT_SCOPE)
+endfunction()
 
-# Link all discovered alumy libraries to target
-function(alumy_link_all_libraries target_name)
+function(alumy_link_by_cmake target_name lib_names)
+    get_target_property(_target_type ${target_name} TYPE)
+    set(_link_scope PRIVATE)
+    if(_target_type STREQUAL "INTERFACE_LIBRARY")
+        set(_link_scope INTERFACE)
+    endif()
+    foreach(_n ${lib_names})
+        alumy_normalize_lib_name(${_n} _k)
+        alumy_try_link_by_cmake_one(${target_name} ${_k} ${_link_scope} _ok)
+        if(_ok)
+            message(STATUS "  Linked (CMake): ${_k}")
+        endif()
+    endforeach()
+endfunction()
+
+# Function to link libraries via PkgConfig
+function(alumy_link_by_pkgconfig target_name lib_names)
+    find_package(PkgConfig QUIET)
+    get_target_property(_target_type ${target_name} TYPE)
+    set(_link_scope PRIVATE)
+    if(_target_type STREQUAL "INTERFACE_LIBRARY")
+        set(_link_scope INTERFACE)
+    endif()
+    foreach(_n ${lib_names})
+        alumy_normalize_lib_name(${_n} _k)
+        alumy_try_link_by_pkgconfig_one(${target_name} ${_k} ${_link_scope} _ok)
+        if(_ok)
+            message(STATUS "  Linked (PkgConfig): ${_k}")
+        endif()
+    endforeach()
+endfunction()
+
+# Function to link libraries via direct discovery
+function(alumy_link_direct target_name lib_names)
+    get_target_property(_target_type ${target_name} TYPE)
+    set(_link_scope PRIVATE)
+    if(_target_type STREQUAL "INTERFACE_LIBRARY")
+        set(_link_scope INTERFACE)
+    endif()
+    foreach(_n ${lib_names})
+        alumy_normalize_lib_name(${_n} _k)
+        alumy_try_link_direct_one(${target_name} ${_k} ${_link_scope} _ok)
+        if(_ok)
+            message(STATUS "  Linked (Direct): ${_k}")
+        endif()
+    endforeach()
+endfunction()
+
+# Convenience function to try linking libraries using all three approaches
+function(alumy_link_libraries target_name lib_names)
     if(NOT TARGET ${target_name})
         message(FATAL_ERROR "Target ${target_name} does not exist")
     endif()
     
-    # If libraries haven't been discovered yet, perform discovery first
-    if(NOT DEFINED ALUMY_DISCOVERED_TARGETS)
-        alumy_discover_and_configure_libraries()
-    endif()
-    
-    # Get target type to determine appropriate linking approach
+    # Determine link scope
     get_target_property(_target_type ${target_name} TYPE)
+    set(_link_scope PRIVATE)
+    if(_target_type STREQUAL "INTERFACE_LIBRARY")
+        set(_link_scope INTERFACE)
+    endif()
+
+    message(STATUS "Attempting to link libraries for target: ${target_name}")
     
-    # Link all discovered libraries
-    foreach(_target ${ALUMY_DISCOVERED_TARGETS})
-        if(TARGET ${_target})
-            # Check the type of the library being linked
-            get_target_property(_lib_type ${_target} TYPE)
-            
-            if(_lib_type STREQUAL "INTERFACE_LIBRARY")
-                # INTERFACE libraries must use INTERFACE keyword
-                if(_target_type STREQUAL "INTERFACE_LIBRARY")
-                    target_link_libraries(${target_name} INTERFACE ${_target})
-                else()
-                    target_link_libraries(${target_name} PRIVATE ${_target})
-                endif()
-            elseif(_lib_type STREQUAL "OBJECT_LIBRARY")
-                # OBJECT libraries need special handling
-                if(_target_type STREQUAL "INTERFACE_LIBRARY")
-                    # Cannot link OBJECT libraries to INTERFACE libraries
-                    message(STATUS "Skipping OBJECT library ${_target} for INTERFACE target ${target_name}")
-                else()
-                    target_link_libraries(${target_name} PRIVATE ${_target})
-                endif()
-            else()
-                # Regular STATIC/SHARED libraries
-                if(_target_type STREQUAL "INTERFACE_LIBRARY")
-                    target_link_libraries(${target_name} INTERFACE ${_target})
-                else()
-                    target_link_libraries(${target_name} PRIVATE ${_target})
-                endif()
+    # Track already linked canonical libs to avoid duplication
+    set(_linked_keys "")
+    
+    foreach(_raw ${lib_names})
+        if(NOT _raw)
+            continue()
+        endif()
+        alumy_normalize_lib_name(${_raw} _key)
+        if(NOT _key)
+            continue()
+        endif()
+        list(FIND _linked_keys ${_key} _idx)
+        if(_idx GREATER -1)
+            continue()
+        endif()
+        
+        # Prefer CMake targets from Alumy install, then direct archives in Alumy lib dirs.
+        # System/pkg-config resolution is intentionally disabled.
+        set(_done FALSE)
+        alumy_try_link_by_cmake_one(${target_name} ${_key} ${_link_scope} _done)
+        if(NOT _done)
+            if(NOT _key STREQUAL "absl")
+                alumy_try_link_direct_one(${target_name} ${_key} ${_link_scope} _done)
             endif()
+        endif()
+
+        if(_done)
+            list(APPEND _linked_keys ${_key})
+            message(STATUS "  Linked: ${_key}")
+        else()
+            message(STATUS "  Warning: Unable to link ${_key}")
         endif()
     endforeach()
     
-    list(LENGTH ALUMY_DISCOVERED_TARGETS _num_targets)
-    message(STATUS "Linked ${_num_targets} libraries to ${target_name}")
+    # Common system libs for non-INTERFACE targets
+    if(NOT _target_type STREQUAL "INTERFACE_LIBRARY")
+        if(UNIX AND NOT APPLE)
+            target_link_libraries(${target_name} ${_link_scope} rt)
+        endif()
+        target_link_libraries(${target_name} ${_link_scope} m dl)
+    endif()
+    
+    list(REMOVE_DUPLICATES _linked_keys)
+    message(STATUS "Linked libraries for ${target_name}: ${_linked_keys}")
 endfunction()
 
 #############################################################################
-# Qt component automatic discovery
+# Convenience: minimal wrapper for common linking
 #############################################################################
 
-function(alumy_setup_qt_components)
-    # Find Qt components
-    set(_qt_components Core Widgets Network SerialPort Multimedia Concurrent)
-    
-    find_package(QT NAMES Qt6 Qt5 COMPONENTS ${_qt_components} QUIET)
-    if(QT_FOUND)
-        find_package(Qt${QT_VERSION_MAJOR} COMPONENTS ${_qt_components} REQUIRED)
-        
-        # Create Qt target aliases
-        foreach(_comp ${_qt_components})
-            set(_qt_target "Qt${QT_VERSION_MAJOR}::${_comp}")
-            if(TARGET ${_qt_target} AND NOT TARGET "alumy::Qt${_comp}")
-                add_library("alumy::Qt${_comp}" ALIAS ${_qt_target})
-            endif()
-        endforeach()
-        
-        message(STATUS "Configured Qt${QT_VERSION_MAJOR} components: ${_qt_components}")
-    endif()
-endfunction()
-
-#############################################################################
-# System library discovery
-#############################################################################
-
-function(alumy_setup_system_libraries)
-    # Find common system libraries
-    find_library(RT_LIBRARY rt)
-    if(RT_LIBRARY AND NOT TARGET alumy::rt)
-        add_library(alumy::rt SHARED IMPORTED)
-        set_target_properties(alumy::rt PROPERTIES IMPORTED_LOCATION ${RT_LIBRARY})
-    endif()
-    
-    find_library(M_LIBRARY m)
-    if(M_LIBRARY AND NOT TARGET alumy::m)
-        add_library(alumy::m SHARED IMPORTED)
-        set_target_properties(alumy::m PROPERTIES IMPORTED_LOCATION ${M_LIBRARY})
-    endif()
-    
-    find_library(PTHREAD_LIBRARY pthread)
-    if(PTHREAD_LIBRARY AND NOT TARGET alumy::pthread)
-        add_library(alumy::pthread SHARED IMPORTED)
-        set_target_properties(alumy::pthread PROPERTIES IMPORTED_LOCATION ${PTHREAD_LIBRARY})
-    endif()
-    
-    find_library(DL_LIBRARY dl)
-    if(DL_LIBRARY AND NOT TARGET alumy::dl)
-        add_library(alumy::dl SHARED IMPORTED)
-        set_target_properties(alumy::dl PROPERTIES IMPORTED_LOCATION ${DL_LIBRARY})
-    endif()
-endfunction()
-
-#############################################################################
-# Main target creation
-#############################################################################
-
-# Check if alumy target exists
-include("${CMAKE_CURRENT_LIST_DIR}/alumy-targets.cmake")
-
-# Automatically discover and configure all libraries
-alumy_discover_and_configure_libraries()
-
-# Setup Qt components
-alumy_setup_qt_components()
-
-# Setup system libraries
-alumy_setup_system_libraries()
-
-#############################################################################
-# Convenience functions - can be called directly by users
-#############################################################################
-
-# Simplified linking function, automatically link alumy and all dependencies
 function(target_link_alumy target_name)
     if(NOT TARGET ${target_name})
         message(FATAL_ERROR "Target ${target_name} does not exist")
     endif()
     
-    # Get target type to determine appropriate linking approach
-    get_target_property(_target_type ${target_name} TYPE)
+    # Order matters for static linking: dependents first, dependencies later
+    # grpc depends on: gpr, upb, absl, re2, cares, zlib, openssl
+    # protobuf depends on: zlib
+    set(_libs "qt;threads;protobuf;grpc;gpr;address_sorting;upb;re2;absl;cares;openssl;zlib;qpcpp")
     
-    # Determine link scope based on target type
-    if(_target_type STREQUAL "INTERFACE_LIBRARY")
-        set(_link_scope INTERFACE)
-    else()
-        set(_link_scope PRIVATE)
-    endif()
+    # Smart per-library linking (CMake → PkgConfig → Direct)
+    alumy_link_libraries(${target_name} "${_libs}")
     
-    # Link main alumy library
+    # Link main alumy target if present
     if(TARGET alumy::alumy)
+        get_target_property(_target_type ${target_name} TYPE)
+        set(_link_scope PRIVATE)
+        if(_target_type STREQUAL "INTERFACE_LIBRARY")
+            set(_link_scope INTERFACE)
+        endif()
         target_link_libraries(${target_name} ${_link_scope} alumy::alumy)
     endif()
     
-    # Automatically link all discovered libraries
-    alumy_link_all_libraries(${target_name})
-    
-    # Link system libraries (only for non-INTERFACE targets)
-    if(NOT _target_type STREQUAL "INTERFACE_LIBRARY")
-        if(UNIX AND NOT APPLE)
-            if(TARGET alumy::rt)
-                target_link_libraries(${target_name} ${_link_scope} alumy::rt)
-            endif()
-        endif()
-        
-        if(TARGET alumy::m)
-            target_link_libraries(${target_name} ${_link_scope} alumy::m)
-        endif()
-        
-        if(TARGET alumy::pthread)
-            target_link_libraries(${target_name} ${_link_scope} alumy::pthread)
-        endif()
-        
-        if(TARGET alumy::dl)
-            target_link_libraries(${target_name} ${_link_scope} alumy::dl)
-        endif()
-    endif()
-    
-    message(STATUS "Completed full alumy dependency configuration for ${target_name}")
+    message(STATUS "Completed target_link_alumy for ${target_name} with: ${_libs}")
 endfunction()
 
 #############################################################################
-# Debug and information functions
+# Debug function
 #############################################################################
 
-# Print information about all discovered libraries
-function(alumy_print_discovered_libraries)
-    message(STATUS "=== Alumy Auto-discovered Libraries ===")
-    message(STATUS "Library installation directory: ${ALUMY_LIB_DIR}")
-    message(STATUS "Header files directory: ${ALUMY_INCLUDE_DIR}")
+function(alumy_print_available_targets)
+    message(STATUS "=== Available Alumy Targets ===")
     
-    if(DEFINED ALUMY_DISCOVERED_TARGETS)
-        list(LENGTH ALUMY_DISCOVERED_TARGETS _num_targets)
-        message(STATUS "Discovered library targets (${_num_targets} total):")
-        foreach(_target ${ALUMY_DISCOVERED_TARGETS})
-            if(TARGET ${_target})
-                get_target_property(_location ${_target} IMPORTED_LOCATION)
-                message(STATUS "  ${_target} -> ${_location}")
-            endif()
-        endforeach()
-    else()
-        message(STATUS "Library discovery not yet executed, please call alumy_discover_and_configure_libraries()")
+    set(_all_possible_targets
+        "alumy::alumy" "alumy::grpc++" "alumy::grpc" "alumy::gpr" 
+        "alumy::address_sorting" "alumy::upb" "alumy::absl_base"
+        "alumy::absl_strings" "alumy::absl_synchronization" "alumy::absl_time"
+        "alumy::absl_status" "alumy::absl_statusor" "alumy::protobuf"
+        "alumy::re2" "alumy::qpcpp"
+    )
+    
+    foreach(_target ${_all_possible_targets})
+        if(TARGET ${_target})
+            get_target_property(_location ${_target} IMPORTED_LOCATION)
+            message(STATUS "  ${_target} -> ${_location}")
+        endif()
+    endforeach()
+    
+    message(STATUS "System libraries:")
+    if(TARGET Threads::Threads)
+        message(STATUS "  Threads::Threads")
     endif()
+    if(TARGET OpenSSL::SSL)
+        message(STATUS "  OpenSSL::SSL, OpenSSL::Crypto")
+    endif()
+    if(TARGET ZLIB::ZLIB)
+        message(STATUS "  ZLIB::ZLIB")
+    endif()
+    if(TARGET protobuf::libprotobuf)
+        message(STATUS "  protobuf::libprotobuf")
+    endif()
+    if(TARGET gRPC::grpc++)
+        message(STATUS "  gRPC::grpc++, gRPC::grpc")
+    endif()
+    
     message(STATUS "========================")
-endfunction()
-
-# Verify if all targets are available
-function(alumy_verify_targets)
-    set(_missing_targets)
-    
-    if(DEFINED ALUMY_DISCOVERED_TARGETS)
-        foreach(_target ${ALUMY_DISCOVERED_TARGETS})
-            if(NOT TARGET ${_target})
-                list(APPEND _missing_targets ${_target})
-            endif()
-        endforeach()
-    endif()
-    
-    if(_missing_targets)
-        message(WARNING "The following targets were not properly created: ${_missing_targets}")
-        return()
-    endif()
-    
-    message(STATUS "All alumy targets verified successfully")
 endfunction()
 
 #############################################################################
 # Final configuration
 #############################################################################
 
-# Verify configuration
-alumy_verify_targets()
-
-# Set some useful variables for user use
+# Set version variables
 set(ALUMY_VERSION "@PROJECT_VERSION@")
 set(ALUMY_VERSION_MAJOR "@PROJECT_VERSION_MAJOR@")
 set(ALUMY_VERSION_MINOR "@PROJECT_VERSION_MINOR@")
 set(ALUMY_VERSION_PATCH "@PROJECT_VERSION_PATCH@")
 
 message(STATUS "Alumy library configuration completed - version ${ALUMY_VERSION}")
-message(STATUS "Use target_link_alumy(your_target) to quickly link all dependencies")
-message(STATUS "Use alumy_print_discovered_libraries() to view all available libraries")
+message(STATUS "Use target_link_alumy(your_target) for essential dependencies")
+message(STATUS "Use alumy_print_available_targets() to view available targets")
+message(STATUS "")
+message(STATUS "Link helpers: alumy_link_libraries | alumy_link_by_cmake | alumy_link_direct")
+message(STATUS "Usage: alumy_link_libraries(target \"openssl;zlib;protobuf;grpc;qt;threads\")")
 
 # Mark package as found
 set(alumy_FOUND TRUE)
