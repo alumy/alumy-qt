@@ -296,14 +296,22 @@ endmacro()
 macro(link_alumy_dependencies target_name)
     set(QPCPP_INSTALL_DIR ${CMAKE_BINARY_DIR}/qpcpp-install)
     
-    add_library(qpcpp STATIC IMPORTED)
+    add_library(qpcpp STATIC IMPORTED GLOBAL)
     set_target_properties(qpcpp PROPERTIES
         IMPORTED_LOCATION ${QPCPP_INSTALL_DIR}/lib/libqpcpp.a
         INTERFACE_INCLUDE_DIRECTORIES "${QPCPP_INSTALL_DIR}/include"
     )
     add_dependencies(qpcpp qpcpp-external)
 
-    target_link_libraries(${target_name} INTERFACE 
+    # Determine appropriate link scope based on target type
+    get_target_property(_target_type ${target_name} TYPE)
+    if(_target_type STREQUAL "INTERFACE_LIBRARY")
+        set(_link_scope INTERFACE)
+    else()
+        set(_link_scope PUBLIC)
+    endif()
+
+    target_link_libraries(${target_name} ${_link_scope}
         spdlog::spdlog 
         qpcpp 
         log4qt 
@@ -339,7 +347,7 @@ macro(link_alumy_dependencies target_name)
         IMPORTED_LOCATION ${GRPC_INSTALL_DIR}/lib/libupb.a
     )
     
-    target_link_libraries(${target_name} INTERFACE grpc++ grpc gpr address_sorting upb)
+    target_link_libraries(${target_name} ${_link_scope} grpc++ grpc gpr address_sorting upb)
     
     # OpenSSL libraries - always use bundled version
     set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
@@ -356,7 +364,7 @@ macro(link_alumy_dependencies target_name)
         INTERFACE_INCLUDE_DIRECTORIES ${OPENSSL_INSTALL_DIR}/include
     )
     
-    target_link_libraries(${target_name} INTERFACE ssl crypto)
+    target_link_libraries(${target_name} ${_link_scope} ssl crypto)
     add_dependencies(ssl openssl-external)
     add_dependencies(crypto openssl-external)
     
@@ -370,5 +378,3 @@ macro(link_alumy_dependencies target_name)
     add_dependencies(address_sorting grpc-external)
     add_dependencies(upb grpc-external)
 endmacro()
-
-

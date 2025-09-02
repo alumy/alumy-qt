@@ -93,12 +93,6 @@ add_custom_target(get_git_hash
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include/alumy/git_hash.h
 )
 
-#####################################################################
-# global definitions
-#####################################################################
-add_definitions(-D__STDC_FORMAT_MACROS)
-add_definitions(-DAL_USE_DEFAULT_CONFIG)
-
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
     link_libraries(rt)
 endif()
@@ -141,9 +135,19 @@ include_directories(
 )
 
 #####################################################################
+# global definitions
+#####################################################################
+add_definitions(-D__STDC_FORMAT_MACROS)
+add_definitions(-DAL_USE_DEFAULT_CONFIG)
+
+#####################################################################
 # compile definitions
 #####################################################################
-add_compile_definitions(AL_USE_DEFAULT_CONFIG)
+
+#####################################################################
+# target definitions
+#####################################################################
+set(target_definitions AL_USE_DEFAULT_CONFIG)
 
 #####################################################################
 # link libraries
@@ -227,6 +231,8 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
         	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         	$<INSTALL_INTERFACE:include>
     	)
+    	
+    	target_compile_definitions(${PROJECT_NAME} PUBLIC ${target_definitions})
 
     	add_dependencies(${PROJECT_NAME} get_git_hash)
     	add_dependencies(${PROJECT_NAME} get_svn_revision)
@@ -255,6 +261,8 @@ if(BUILD_STATIC_LIBS)
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
     )
+    
+    target_compile_definitions("${PROJECT_NAME}-static" PUBLIC ${target_definitions})
     
     add_dependencies("${PROJECT_NAME}-static" get_git_hash)
     add_dependencies("${PROJECT_NAME}-static" get_svn_revision)
