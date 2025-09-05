@@ -43,6 +43,14 @@ alumy_try_find_local_config(re2 re2)
 alumy_try_find_local_config(Protobuf protobuf)
 alumy_try_find_local_config(gRPC gRPC)
 alumy_try_find_local_config(c-ares c-ares)
+alumy_try_find_local_config(Boost boost)
+
+# Set Boost variables for downstream projects to find headers
+set(BOOST_ROOT "${ALUMY_PREFIX_DIR}" CACHE PATH "Boost root directory")
+set(BOOST_INCLUDEDIR "${ALUMY_INCLUDE_DIR}" CACHE PATH "Boost include directory")
+set(BOOST_LIBRARYDIR "${ALUMY_LIB_DIR}" CACHE PATH "Boost library directory")
+set(Boost_NO_SYSTEM_PATHS ON CACHE BOOL "Do not search system paths for Boost")
+set(Boost_USE_STATIC_LIBS ON CACHE BOOL "Use static Boost libraries")
 
 # Ensure alumy::alumy propagates usage requirements via INTERFACE link libs
 function(_alumy_append_if_target tgt var)
@@ -72,6 +80,13 @@ endforeach()
 
 # c-ares
 _alumy_append_if_target(c-ares::cares _alumy_usage_libs)
+
+# Boost components commonly used
+foreach(_boost
+    Boost::system Boost::filesystem Boost::thread Boost::chrono Boost::date_time
+    Boost::regex Boost::serialization Boost::iostreams Boost::program_options)
+    _alumy_append_if_target(${_boost} _alumy_usage_libs)
+endforeach()
 
 # qpcpp static lib (imported by this config, if present)
 _alumy_append_if_target(qpcpp _alumy_usage_libs)
@@ -197,6 +212,8 @@ function(alumy_map_cmake_targets lib_name output_var)
         set(_targets "qpcpp")
     elseif(lib_name STREQUAL "qt")
         set(_targets "Qt${QT_VERSION_MAJOR}::Core;Qt${QT_VERSION_MAJOR}::Widgets;Qt${QT_VERSION_MAJOR}::Network;Qt${QT_VERSION_MAJOR}::SerialPort;Qt${QT_VERSION_MAJOR}::Multimedia;Qt${QT_VERSION_MAJOR}::Concurrent")
+    elseif(lib_name STREQUAL "boost")
+        set(_targets "Boost::system;Boost::filesystem;Boost::thread;Boost::chrono;Boost::date_time;Boost::regex;Boost::serialization;Boost::iostreams;Boost::program_options")
     endif()
     set(${output_var} "${_targets}" PARENT_SCOPE)
 endfunction()
@@ -221,6 +238,9 @@ function(alumy_map_pkg_names lib_name output_var)
         else()
             set(_pkg "Qt5Core Qt5Widgets Qt5Network Qt5SerialPort Qt5Multimedia Qt5Concurrent")
         endif()
+    elseif(lib_name STREQUAL "boost")
+        # Boost typically doesn't provide pkg-config files, but some distros might
+        set(_pkg "boost")
     endif()
     set(${output_var} "${_pkg}" PARENT_SCOPE)
 endfunction()
@@ -260,6 +280,9 @@ function(alumy_map_direct_spec lib_name out_libs out_header)
     elseif(lib_name STREQUAL "qt")
         set(_libs "")
         set(_hdr "QtCore/qobject.h")
+    elseif(lib_name STREQUAL "boost")
+        set(_libs "boost_system;boost_filesystem;boost_thread;boost_chrono;boost_date_time;boost_regex;boost_serialization;boost_iostreams;boost_program_options")
+        set(_hdr "boost/version.hpp")
     else()
         set(_libs "${lib_name}")
         set(_hdr "${lib_name}.h")
@@ -487,7 +510,7 @@ function(target_link_alumy target_name)
     # Order matters for static linking: dependents first, dependencies later
     # grpc depends on: gpr, upb, absl, re2, cares, zlib, openssl
     # protobuf depends on: zlib
-    set(_libs "qt;threads;protobuf;grpc;gpr;address_sorting;upb;re2;absl;cares;openssl;zlib;qpcpp")
+    set(_libs "qt;boost;threads;protobuf;grpc;gpr;address_sorting;upb;re2;absl;cares;openssl;zlib;qpcpp")
     
     # Smart per-library linking (CMake → PkgConfig → Direct)
     alumy_link_libraries(${target_name} "${_libs}")
