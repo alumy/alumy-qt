@@ -54,10 +54,10 @@ macro(configure_alumy_dependencies)
             COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/include ${QPCPP_INSTALL_DIR}/include
             COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/src ${QPCPP_INSTALL_DIR}/include
             COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/ports/posix-qv ${QPCPP_INSTALL_DIR}/include/ports/posix-qv
-        LOG_DOWNLOAD ON
-        LOG_CONFIGURE ON
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
         LOG_BUILD OFF
-        LOG_INSTALL ON
+        LOG_INSTALL OFF
         USES_TERMINAL_BUILD ON
         USES_TERMINAL_INSTALL ON
     )
@@ -115,10 +115,10 @@ macro(configure_alumy_dependencies)
             ${OPENSSL_INSTALL_DIR}/lib64/libssl.a
             ${OPENSSL_INSTALL_DIR}/lib64/libcrypto.a
         INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install_sw
-        LOG_DOWNLOAD ON
-        LOG_CONFIGURE ON
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
         LOG_BUILD OFF
-        LOG_INSTALL ON
+        LOG_INSTALL OFF
         USES_TERMINAL_BUILD ON
         USES_TERMINAL_INSTALL ON
     )
@@ -202,16 +202,58 @@ macro(configure_alumy_dependencies)
             ${GRPC_INSTALL_DIR}/lib/libz.a
             ${GRPC_INSTALL_DIR}/bin/grpc_cpp_plugin
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
-        LOG_DOWNLOAD ON
-        LOG_CONFIGURE ON
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
         LOG_BUILD OFF
-        LOG_INSTALL ON
+        LOG_INSTALL OFF
         USES_TERMINAL_BUILD ON
         USES_TERMINAL_INSTALL ON
         DEPENDS openssl-external
     )
 
     list(APPEND CMAKE_PREFIX_PATH ${GRPC_INSTALL_DIR})
+
+    set(BOOST_INSTALL_DIR ${CMAKE_BINARY_DIR}/boost-install)
+
+    set(BOOST_B2_OPTIONS variant=release link=static runtime-link=static threading=multi cxxstd=11)
+
+    include(ProcessorCount)
+    ProcessorCount(N_CORES)
+    if(NOT N_CORES EQUAL 0)
+        set(BOOST_PARALLEL_JOBS ${N_CORES})
+    else()
+        set(BOOST_PARALLEL_JOBS 4)
+    endif()
+
+    ExternalProject_Add(boost-external
+        GIT_REPOSITORY https://github.com/boostorg/boost.git
+        GIT_TAG boost-1.75.0
+        GIT_SHALLOW ON
+        GIT_SUBMODULES_RECURSE ON
+        INSTALL_DIR ${BOOST_INSTALL_DIR}
+        CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./bootstrap.sh --prefix=<INSTALL_DIR>
+        BUILD_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./b2 -j${BOOST_PARALLEL_JOBS} ${BOOST_B2_OPTIONS} --prefix=<INSTALL_DIR> --with-system --with-filesystem --with-thread --with-chrono --with-date_time install
+        BUILD_BYPRODUCTS
+            ${BOOST_INSTALL_DIR}/lib/libboost_system.a
+            ${BOOST_INSTALL_DIR}/lib/libboost_filesystem.a
+            ${BOOST_INSTALL_DIR}/lib/libboost_thread.a
+            ${BOOST_INSTALL_DIR}/lib/libboost_chrono.a
+            ${BOOST_INSTALL_DIR}/lib/libboost_date_time.a
+        INSTALL_COMMAND ""
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+    )
+
+    list(APPEND CMAKE_PREFIX_PATH ${BOOST_INSTALL_DIR})
+    set(BOOST_ROOT ${BOOST_INSTALL_DIR} CACHE PATH "" FORCE)
+    set(BOOST_INCLUDEDIR ${BOOST_INSTALL_DIR}/include CACHE PATH "" FORCE)
+    set(BOOST_LIBRARYDIR ${BOOST_INSTALL_DIR}/lib CACHE PATH "" FORCE)
+    set(Boost_NO_SYSTEM_PATHS ON CACHE BOOL "" FORCE)
+    set(Boost_USE_STATIC_LIBS ON CACHE BOOL "" FORCE)
 
     if(DEFINED _ALUMY_ORIGINAL_BUILD_SHARED_LIBS)
         set(BUILD_SHARED_LIBS ${_ALUMY_ORIGINAL_BUILD_SHARED_LIBS} CACHE BOOL "" FORCE)
@@ -239,6 +281,14 @@ macro(install_alumy_openssl)
     set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
     
     install(DIRECTORY ${OPENSSL_INSTALL_DIR}/
+        DESTINATION "."
+        USE_SOURCE_PERMISSIONS)
+endmacro()
+
+macro(install_alumy_boost)
+    set(BOOST_INSTALL_DIR ${CMAKE_BINARY_DIR}/boost-install)
+
+    install(DIRECTORY ${BOOST_INSTALL_DIR}/
         DESTINATION "."
         USE_SOURCE_PERMISSIONS)
 endmacro()
@@ -296,15 +346,21 @@ macro(install_alumy_dependencies)
     install_qpcpp()
     install_alumy_grpc()
     install_alumy_openssl()
+    install_alumy_boost()
     install_alumy_fetchcontent_dependencies()
 endmacro()
 
 macro(add_alumy_dependencies target)
-    add_dependencies(${target} qpcpp-external grpc-external openssl-external)
+    add_dependencies(${target} qpcpp-external grpc-external openssl-external boost-external)
 endmacro()
 
 macro(link_alumy_dependencies target)
-    target_link_libraries(${target} PUBLIC 
+    target_link_libraries(${target} PUBLIC
+        boost_system
+        boost_filesystem
+        boost_thread
+        boost_chrono
+        boost_date_time
         log4qt 
         SndFile::sndfile
         spdlog
