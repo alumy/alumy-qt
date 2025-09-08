@@ -295,6 +295,14 @@ function(alumy_init_library_header_mapping)
     set(ALUMY_BOOST_HEADERS_iostreams "boost/iostreams/filtering_stream.hpp" CACHE INTERNAL "")
     set(ALUMY_BOOST_HEADERS_program_options "boost/program_options.hpp" CACHE INTERNAL "")
     
+    # Header-only Boost libraries (commonly used)
+    set(ALUMY_BOOST_HEADERS_ublas "boost/numeric/ublas/matrix.hpp" CACHE INTERNAL "")
+    set(ALUMY_BOOST_HEADERS_math "boost/math/special_functions.hpp" CACHE INTERNAL "")
+    set(ALUMY_BOOST_HEADERS_algorithm "boost/algorithm/string.hpp" CACHE INTERNAL "")
+    set(ALUMY_BOOST_HEADERS_format "boost/format.hpp" CACHE INTERNAL "")
+    set(ALUMY_BOOST_HEADERS_foreach "boost/foreach.hpp" CACHE INTERNAL "")
+    set(ALUMY_BOOST_HEADERS_smart_ptr "boost/smart_ptr.hpp" CACHE INTERNAL "")
+    
     # Add more libraries here as needed
     # set(ALUMY_QT_HEADERS_core "QtCore/qobject.h" CACHE INTERNAL "")
     # set(ALUMY_OPENSSL_HEADERS_ssl "openssl/ssl.h" CACHE INTERNAL "")
@@ -371,6 +379,8 @@ function(alumy_map_direct_spec lib_name out_libs out_header)
             string(REGEX REPLACE "^boost_" "" _comp "${_lib}")
             list(APPEND _components "${_comp}")
         endforeach()
+        # Add commonly used header-only components
+        list(APPEND _components "ublas" "math" "algorithm" "format" "foreach" "smart_ptr")
         # Get headers for these components
         alumy_get_library_component_headers("boost" "${_components}" _hdr)
     else()
