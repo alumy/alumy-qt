@@ -44,6 +44,8 @@ alumy_try_find_local_config(Protobuf protobuf)
 alumy_try_find_local_config(gRPC gRPC)
 alumy_try_find_local_config(c-ares c-ares)
 alumy_try_find_local_config(Boost boost)
+alumy_try_find_local_config(Boost Boost-1.75.0)
+alumy_try_find_local_config(boost_headers boost_headers-1.75.0)
 
 # Set Boost variables for downstream projects to find headers
 set(BOOST_ROOT "${ALUMY_PREFIX_DIR}" CACHE PATH "Boost root directory")
@@ -60,9 +62,11 @@ if(NOT TARGET Boost::headers AND EXISTS "${ALUMY_INCLUDE_DIR}/boost")
         INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${ALUMY_INCLUDE_DIR}"
     )
     message(STATUS "Created Boost::headers target with include directory: ${ALUMY_INCLUDE_DIR}")
+elseif(TARGET Boost::headers)
+    message(STATUS "Using existing Boost::headers target")
 endif()
 
-# Create specific Boost component targets commonly needed
+# Create specific Boost component targets commonly needed (compiled libraries)
 foreach(_boost_component system filesystem thread chrono date_time regex serialization iostreams program_options)
     if(NOT TARGET Boost::${_boost_component})
         # Try to find the library file
@@ -86,6 +90,30 @@ foreach(_boost_component system filesystem thread chrono date_time regex seriali
             endif()
             message(STATUS "Created Boost::${_boost_component} target")
         endif()
+    endif()
+endforeach()
+
+# Create header-only Boost component targets
+foreach(_boost_header_component algorithm format foreach smart_ptr ublas math container)
+    if(NOT TARGET Boost::${_boost_header_component})
+        if(EXISTS "${ALUMY_INCLUDE_DIR}/boost")
+            add_library(Boost::${_boost_header_component} INTERFACE IMPORTED)
+            set_target_properties(Boost::${_boost_header_component} PROPERTIES
+                INTERFACE_INCLUDE_DIRECTORIES "${ALUMY_INCLUDE_DIR}"
+                INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${ALUMY_INCLUDE_DIR}"
+            )
+            # Link to headers target for consistency
+            if(TARGET Boost::headers)
+                set_target_properties(Boost::${_boost_header_component} PROPERTIES
+                    INTERFACE_LINK_LIBRARIES "Boost::headers"
+                )
+            endif()
+            message(STATUS "Created Boost::${_boost_header_component} header-only target")
+        else()
+            message(STATUS "Boost headers not found at ${ALUMY_INCLUDE_DIR}/boost, skipping ${_boost_header_component}")
+        endif()
+    else()
+        message(STATUS "Boost::${_boost_header_component} target already exists")
     endif()
 endforeach()
 
@@ -121,7 +149,8 @@ _alumy_append_if_target(c-ares::cares _alumy_usage_libs)
 # Boost components commonly used
 foreach(_boost
     Boost::headers Boost::system Boost::filesystem Boost::thread Boost::chrono Boost::date_time
-    Boost::regex Boost::serialization Boost::iostreams Boost::program_options)
+    Boost::regex Boost::serialization Boost::iostreams Boost::program_options
+    Boost::algorithm Boost::format Boost::foreach Boost::smart_ptr Boost::ublas Boost::math Boost::container)
     _alumy_append_if_target(${_boost} _alumy_usage_libs)
 endforeach()
 
@@ -250,7 +279,7 @@ function(alumy_map_cmake_targets lib_name output_var)
     elseif(lib_name STREQUAL "qt")
         set(_targets "Qt${QT_VERSION_MAJOR}::Core;Qt${QT_VERSION_MAJOR}::Widgets;Qt${QT_VERSION_MAJOR}::Network;Qt${QT_VERSION_MAJOR}::SerialPort;Qt${QT_VERSION_MAJOR}::Multimedia;Qt${QT_VERSION_MAJOR}::Concurrent")
     elseif(lib_name STREQUAL "boost")
-        set(_targets "Boost::headers;Boost::system;Boost::filesystem;Boost::thread;Boost::chrono;Boost::date_time;Boost::regex;Boost::serialization;Boost::iostreams;Boost::program_options")
+        set(_targets "Boost::headers;Boost::system;Boost::filesystem;Boost::thread;Boost::chrono;Boost::date_time;Boost::regex;Boost::serialization;Boost::iostreams;Boost::program_options;Boost::algorithm;Boost::format;Boost::foreach;Boost::smart_ptr;Boost::ublas;Boost::math;Boost::container")
     endif()
     set(${output_var} "${_targets}" PARENT_SCOPE)
 endfunction()
@@ -617,6 +646,12 @@ function(target_link_alumy target_name)
     set(_link_scope PRIVATE)
     if(_target_type STREQUAL "INTERFACE_LIBRARY")
         set(_link_scope INTERFACE)
+    endif()
+    
+    # Force include Boost headers directory if it exists
+    if(EXISTS "${ALUMY_INCLUDE_DIR}/boost")
+        target_include_directories(${target_name} ${_link_scope} "${ALUMY_INCLUDE_DIR}")
+        message(STATUS "Added Boost include directory ${ALUMY_INCLUDE_DIR} to ${target_name}")
     endif()
     
     if(TARGET Boost::headers)
