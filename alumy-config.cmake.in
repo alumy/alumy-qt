@@ -43,9 +43,16 @@ alumy_try_find_local_config(re2 re2)
 alumy_try_find_local_config(Protobuf protobuf)
 alumy_try_find_local_config(gRPC gRPC)
 alumy_try_find_local_config(c-ares c-ares)
-alumy_try_find_local_config(Boost boost)
+
+# Use Boost's native cmake package configuration
 alumy_try_find_local_config(Boost Boost-1.75.0)
 alumy_try_find_local_config(boost_headers boost_headers-1.75.0)
+
+# Find specific Boost components using their native cmake configs
+set(_boost_components system filesystem thread chrono date_time regex serialization iostreams program_options)
+foreach(_comp ${_boost_components})
+    alumy_try_find_local_config(boost_${_comp} boost_${_comp}-1.75.0)
+endforeach()
 
 # Set Boost variables for downstream projects to find headers
 set(BOOST_ROOT "${ALUMY_PREFIX_DIR}" CACHE PATH "Boost root directory")
@@ -54,68 +61,23 @@ set(BOOST_LIBRARYDIR "${ALUMY_LIB_DIR}" CACHE PATH "Boost library directory")
 set(Boost_NO_SYSTEM_PATHS ON CACHE BOOL "Do not search system paths for Boost")
 set(Boost_USE_STATIC_LIBS ON CACHE BOOL "Use static Boost libraries")
 
-# Create imported target for Boost headers if not already available
+# Create fallback Boost::headers target if native config didn't work
 if(NOT TARGET Boost::headers AND EXISTS "${ALUMY_INCLUDE_DIR}/boost")
     add_library(Boost::headers INTERFACE IMPORTED)
     set_target_properties(Boost::headers PROPERTIES
         INTERFACE_INCLUDE_DIRECTORIES "${ALUMY_INCLUDE_DIR}"
         INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${ALUMY_INCLUDE_DIR}"
+        INTERFACE_COMPILE_DEFINITIONS "BOOST_ALL_NO_LIB"
     )
-    message(STATUS "Created Boost::headers target with include directory: ${ALUMY_INCLUDE_DIR}")
-elseif(TARGET Boost::headers)
-    message(STATUS "Using existing Boost::headers target")
+    message(STATUS "Created fallback Boost::headers target")
 endif()
 
-# Create specific Boost component targets commonly needed (compiled libraries)
-foreach(_boost_component system filesystem thread chrono date_time regex serialization iostreams program_options)
-    if(NOT TARGET Boost::${_boost_component})
-        # Try to find the library file
-        find_library(_boost_${_boost_component}_lib
-            NAMES boost_${_boost_component} libboost_${_boost_component}
-            PATHS ${ALUMY_LIB_DIR_CANDIDATES}
-            NO_DEFAULT_PATH
-        )
-        if(_boost_${_boost_component}_lib)
-            add_library(Boost::${_boost_component} STATIC IMPORTED)
-            set_target_properties(Boost::${_boost_component} PROPERTIES
-                IMPORTED_LOCATION "${_boost_${_boost_component}_lib}"
-                INTERFACE_INCLUDE_DIRECTORIES "${ALUMY_INCLUDE_DIR}"
-                INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${ALUMY_INCLUDE_DIR}"
-            )
-            # Link to headers target for consistency
-            if(TARGET Boost::headers)
-                set_target_properties(Boost::${_boost_component} PROPERTIES
-                    INTERFACE_LINK_LIBRARIES "Boost::headers"
-                )
-            endif()
-            message(STATUS "Created Boost::${_boost_component} target")
-        endif()
-    endif()
-endforeach()
+# Create Boost::boost alias for compatibility
+if(TARGET Boost::headers AND NOT TARGET Boost::boost)
+    add_library(Boost::boost ALIAS Boost::headers)
+endif()
 
-# Create header-only Boost component targets
-foreach(_boost_header_component algorithm format foreach smart_ptr ublas math container)
-    if(NOT TARGET Boost::${_boost_header_component})
-        if(EXISTS "${ALUMY_INCLUDE_DIR}/boost")
-            add_library(Boost::${_boost_header_component} INTERFACE IMPORTED)
-            set_target_properties(Boost::${_boost_header_component} PROPERTIES
-                INTERFACE_INCLUDE_DIRECTORIES "${ALUMY_INCLUDE_DIR}"
-                INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${ALUMY_INCLUDE_DIR}"
-            )
-            # Link to headers target for consistency
-            if(TARGET Boost::headers)
-                set_target_properties(Boost::${_boost_header_component} PROPERTIES
-                    INTERFACE_LINK_LIBRARIES "Boost::headers"
-                )
-            endif()
-            message(STATUS "Created Boost::${_boost_header_component} header-only target")
-        else()
-            message(STATUS "Boost headers not found at ${ALUMY_INCLUDE_DIR}/boost, skipping ${_boost_header_component}")
-        endif()
-    else()
-        message(STATUS "Boost::${_boost_header_component} target already exists")
-    endif()
-endforeach()
+message(STATUS "Boost configuration completed using native cmake packages")
 
 # Ensure alumy::alumy propagates usage requirements via INTERFACE link libs
 function(_alumy_append_if_target tgt var)
@@ -146,12 +108,11 @@ endforeach()
 # c-ares
 _alumy_append_if_target(c-ares::cares _alumy_usage_libs)
 
-# Boost components commonly used
-foreach(_boost
-    Boost::headers Boost::system Boost::filesystem Boost::thread Boost::chrono Boost::date_time
-    Boost::regex Boost::serialization Boost::iostreams Boost::program_options
-    Boost::algorithm Boost::format Boost::foreach Boost::smart_ptr Boost::ublas Boost::math Boost::container)
-    _alumy_append_if_target(${_boost} _alumy_usage_libs)
+# Boost components - link the main headers target and available component targets
+_alumy_append_if_target(Boost::headers _alumy_usage_libs)
+_alumy_append_if_target(Boost::boost _alumy_usage_libs)
+foreach(_boost_comp system filesystem thread chrono date_time regex serialization iostreams program_options)
+    _alumy_append_if_target(Boost::${_boost_comp} _alumy_usage_libs)
 endforeach()
 
 # qpcpp static lib (imported by this config, if present)
@@ -274,12 +235,14 @@ function(alumy_map_cmake_targets lib_name output_var)
         set(_targets "re2::re2")
     elseif(lib_name STREQUAL "absl")
         set(_targets "absl::base;absl::strings;absl::synchronization;absl::time;absl::status;absl::statusor;absl::hash;absl::cord;absl::span;absl::variant;absl::optional;absl::inlined_vector;absl::flat_hash_map;absl::str_format;absl::random_random")
+    elseif(lib_name STREQUAL "cares")
+        set(_targets "c-ares::cares")
     elseif(lib_name STREQUAL "qpcpp")
         set(_targets "qpcpp")
     elseif(lib_name STREQUAL "qt")
         set(_targets "Qt${QT_VERSION_MAJOR}::Core;Qt${QT_VERSION_MAJOR}::Widgets;Qt${QT_VERSION_MAJOR}::Network;Qt${QT_VERSION_MAJOR}::SerialPort;Qt${QT_VERSION_MAJOR}::Multimedia;Qt${QT_VERSION_MAJOR}::Concurrent")
     elseif(lib_name STREQUAL "boost")
-        set(_targets "Boost::headers;Boost::system;Boost::filesystem;Boost::thread;Boost::chrono;Boost::date_time;Boost::regex;Boost::serialization;Boost::iostreams;Boost::program_options;Boost::algorithm;Boost::format;Boost::foreach;Boost::smart_ptr;Boost::ublas;Boost::math;Boost::container")
+        set(_targets "Boost::headers;Boost::system;Boost::filesystem;Boost::thread;Boost::chrono;Boost::date_time;Boost::regex;Boost::serialization;Boost::iostreams;Boost::program_options")
     endif()
     set(${output_var} "${_targets}" PARENT_SCOPE)
 endfunction()
@@ -636,43 +599,32 @@ function(target_link_alumy target_name)
         message(FATAL_ERROR "Target ${target_name} does not exist")
     endif()
     
-    # Order matters for static linking: dependents first, dependencies later
-    # grpc depends on: gpr, upb, absl, re2, cares, zlib, openssl
-    # protobuf depends on: zlib
-    set(_libs "qt;boost;threads;protobuf;grpc;gpr;address_sorting;upb;re2;absl;cares;openssl;zlib;qpcpp")
-    
-    # Always ensure Boost headers are available for downstream projects
     get_target_property(_target_type ${target_name} TYPE)
     set(_link_scope PRIVATE)
     if(_target_type STREQUAL "INTERFACE_LIBRARY")
         set(_link_scope INTERFACE)
     endif()
     
-    # Force include Boost headers directory if it exists
-    if(EXISTS "${ALUMY_INCLUDE_DIR}/boost")
+    # ALWAYS ensure Boost headers are available - this is the key fix
+    if(TARGET Boost::headers)
+        target_link_libraries(${target_name} ${_link_scope} Boost::headers)
+        message(STATUS "Linked Boost::headers to ${target_name}")
+    elseif(EXISTS "${ALUMY_INCLUDE_DIR}/boost")
+        # Fallback: directly add include directory
         target_include_directories(${target_name} ${_link_scope} "${ALUMY_INCLUDE_DIR}")
         message(STATUS "Added Boost include directory ${ALUMY_INCLUDE_DIR} to ${target_name}")
     endif()
     
-    if(TARGET Boost::headers)
-        target_link_libraries(${target_name} ${_link_scope} Boost::headers)
-        message(STATUS "Linked Boost::headers to ${target_name}")
-    endif()
-    
-    # Smart per-library linking (CMake → PkgConfig → Direct)
+    # Link common libraries
+    set(_libs "qt;boost;threads;protobuf;grpc;absl;cares;openssl;zlib;qpcpp")
     alumy_link_libraries(${target_name} "${_libs}")
     
     # Link main alumy target if present
     if(TARGET alumy::alumy)
-        get_target_property(_target_type ${target_name} TYPE)
-        set(_link_scope PRIVATE)
-        if(_target_type STREQUAL "INTERFACE_LIBRARY")
-            set(_link_scope INTERFACE)
-        endif()
         target_link_libraries(${target_name} ${_link_scope} alumy::alumy)
     endif()
     
-    message(STATUS "Completed target_link_alumy for ${target_name} with: ${_libs}")
+    message(STATUS "Completed target_link_alumy for ${target_name}")
 endfunction()
 
 #############################################################################
