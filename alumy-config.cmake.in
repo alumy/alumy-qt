@@ -52,6 +52,43 @@ set(BOOST_LIBRARYDIR "${ALUMY_LIB_DIR}" CACHE PATH "Boost library directory")
 set(Boost_NO_SYSTEM_PATHS ON CACHE BOOL "Do not search system paths for Boost")
 set(Boost_USE_STATIC_LIBS ON CACHE BOOL "Use static Boost libraries")
 
+# Create imported target for Boost headers if not already available
+if(NOT TARGET Boost::headers AND EXISTS "${ALUMY_INCLUDE_DIR}/boost")
+    add_library(Boost::headers INTERFACE IMPORTED)
+    set_target_properties(Boost::headers PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${ALUMY_INCLUDE_DIR}"
+        INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${ALUMY_INCLUDE_DIR}"
+    )
+    message(STATUS "Created Boost::headers target with include directory: ${ALUMY_INCLUDE_DIR}")
+endif()
+
+# Create specific Boost component targets commonly needed
+foreach(_boost_component system filesystem thread chrono date_time regex serialization iostreams program_options)
+    if(NOT TARGET Boost::${_boost_component})
+        # Try to find the library file
+        find_library(_boost_${_boost_component}_lib
+            NAMES boost_${_boost_component} libboost_${_boost_component}
+            PATHS ${ALUMY_LIB_DIR_CANDIDATES}
+            NO_DEFAULT_PATH
+        )
+        if(_boost_${_boost_component}_lib)
+            add_library(Boost::${_boost_component} STATIC IMPORTED)
+            set_target_properties(Boost::${_boost_component} PROPERTIES
+                IMPORTED_LOCATION "${_boost_${_boost_component}_lib}"
+                INTERFACE_INCLUDE_DIRECTORIES "${ALUMY_INCLUDE_DIR}"
+                INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${ALUMY_INCLUDE_DIR}"
+            )
+            # Link to headers target for consistency
+            if(TARGET Boost::headers)
+                set_target_properties(Boost::${_boost_component} PROPERTIES
+                    INTERFACE_LINK_LIBRARIES "Boost::headers"
+                )
+            endif()
+            message(STATUS "Created Boost::${_boost_component} target")
+        endif()
+    endif()
+endforeach()
+
 # Ensure alumy::alumy propagates usage requirements via INTERFACE link libs
 function(_alumy_append_if_target tgt var)
     if(TARGET ${tgt})
@@ -83,7 +120,7 @@ _alumy_append_if_target(c-ares::cares _alumy_usage_libs)
 
 # Boost components commonly used
 foreach(_boost
-    Boost::system Boost::filesystem Boost::thread Boost::chrono Boost::date_time
+    Boost::headers Boost::system Boost::filesystem Boost::thread Boost::chrono Boost::date_time
     Boost::regex Boost::serialization Boost::iostreams Boost::program_options)
     _alumy_append_if_target(${_boost} _alumy_usage_libs)
 endforeach()
@@ -213,7 +250,7 @@ function(alumy_map_cmake_targets lib_name output_var)
     elseif(lib_name STREQUAL "qt")
         set(_targets "Qt${QT_VERSION_MAJOR}::Core;Qt${QT_VERSION_MAJOR}::Widgets;Qt${QT_VERSION_MAJOR}::Network;Qt${QT_VERSION_MAJOR}::SerialPort;Qt${QT_VERSION_MAJOR}::Multimedia;Qt${QT_VERSION_MAJOR}::Concurrent")
     elseif(lib_name STREQUAL "boost")
-        set(_targets "Boost::system;Boost::filesystem;Boost::thread;Boost::chrono;Boost::date_time;Boost::regex;Boost::serialization;Boost::iostreams;Boost::program_options")
+        set(_targets "Boost::headers;Boost::system;Boost::filesystem;Boost::thread;Boost::chrono;Boost::date_time;Boost::regex;Boost::serialization;Boost::iostreams;Boost::program_options")
     endif()
     set(${output_var} "${_targets}" PARENT_SCOPE)
 endfunction()
@@ -243,6 +280,52 @@ function(alumy_map_pkg_names lib_name output_var)
         set(_pkg "boost")
     endif()
     set(${output_var} "${_pkg}" PARENT_SCOPE)
+endfunction()
+
+# Library component header mapping - easily extensible
+function(alumy_init_library_header_mapping)
+    # Boost component headers
+    set(ALUMY_BOOST_HEADERS_system "boost/system/error_code.hpp" CACHE INTERNAL "")
+    set(ALUMY_BOOST_HEADERS_filesystem "boost/filesystem.hpp" CACHE INTERNAL "")
+    set(ALUMY_BOOST_HEADERS_thread "boost/thread.hpp" CACHE INTERNAL "")
+    set(ALUMY_BOOST_HEADERS_chrono "boost/chrono.hpp" CACHE INTERNAL "")
+    set(ALUMY_BOOST_HEADERS_date_time "boost/date_time.hpp" CACHE INTERNAL "")
+    set(ALUMY_BOOST_HEADERS_regex "boost/regex.hpp" CACHE INTERNAL "")
+    set(ALUMY_BOOST_HEADERS_serialization "boost/serialization/serialization.hpp" CACHE INTERNAL "")
+    set(ALUMY_BOOST_HEADERS_iostreams "boost/iostreams/filtering_stream.hpp" CACHE INTERNAL "")
+    set(ALUMY_BOOST_HEADERS_program_options "boost/program_options.hpp" CACHE INTERNAL "")
+    
+    # Add more libraries here as needed
+    # set(ALUMY_QT_HEADERS_core "QtCore/qobject.h" CACHE INTERNAL "")
+    # set(ALUMY_OPENSSL_HEADERS_ssl "openssl/ssl.h" CACHE INTERNAL "")
+endfunction()
+
+# Generic function to get representative headers for library components
+function(alumy_get_library_component_headers lib_name component_list out_headers)
+    alumy_init_library_header_mapping()
+    set(_headers "")
+    
+    if(lib_name STREQUAL "boost")
+        list(APPEND _headers "boost/version.hpp")  # Always include version header
+        foreach(_comp ${component_list})
+            string(TOUPPER "${lib_name}" _lib_upper)
+            set(_var_name "ALUMY_${_lib_upper}_HEADERS_${_comp}")
+            if(DEFINED ${_var_name})
+                list(APPEND _headers "${${_var_name}}")
+            else()
+                # Fallback: try a generic pattern
+                list(APPEND _headers "boost/${_comp}.hpp")
+                message(STATUS "Using fallback header pattern for Boost component: ${_comp}")
+            endif()
+        endforeach()
+    else()
+        # For other libraries, use a generic pattern
+        foreach(_comp ${component_list})
+            list(APPEND _headers "${lib_name}/${_comp}.h")
+        endforeach()
+    endif()
+    
+    set(${out_headers} "${_headers}" PARENT_SCOPE)
 endfunction()
 
 # Map canonical lib -> direct lib files (names) and a representative header
@@ -282,7 +365,14 @@ function(alumy_map_direct_spec lib_name out_libs out_header)
         set(_hdr "QtCore/qobject.h")
     elseif(lib_name STREQUAL "boost")
         set(_libs "boost_system;boost_filesystem;boost_thread;boost_chrono;boost_date_time;boost_regex;boost_serialization;boost_iostreams;boost_program_options")
-        set(_hdr "boost/version.hpp")
+        # Extract component names from library names  
+        set(_components "")
+        foreach(_lib ${_libs})
+            string(REGEX REPLACE "^boost_" "" _comp "${_lib}")
+            list(APPEND _components "${_comp}")
+        endforeach()
+        # Get headers for these components
+        alumy_get_library_component_headers("boost" "${_components}" _hdr)
     else()
         set(_libs "${lib_name}")
         set(_hdr "${lib_name}.h")
@@ -511,6 +601,18 @@ function(target_link_alumy target_name)
     # grpc depends on: gpr, upb, absl, re2, cares, zlib, openssl
     # protobuf depends on: zlib
     set(_libs "qt;boost;threads;protobuf;grpc;gpr;address_sorting;upb;re2;absl;cares;openssl;zlib;qpcpp")
+    
+    # Always ensure Boost headers are available for downstream projects
+    get_target_property(_target_type ${target_name} TYPE)
+    set(_link_scope PRIVATE)
+    if(_target_type STREQUAL "INTERFACE_LIBRARY")
+        set(_link_scope INTERFACE)
+    endif()
+    
+    if(TARGET Boost::headers)
+        target_link_libraries(${target_name} ${_link_scope} Boost::headers)
+        message(STATUS "Linked Boost::headers to ${target_name}")
+    endif()
     
     # Smart per-library linking (CMake → PkgConfig → Direct)
     alumy_link_libraries(${target_name} "${_libs}")
