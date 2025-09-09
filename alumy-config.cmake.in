@@ -36,30 +36,45 @@ function(alumy_try_find_local_config pkg_name subdir)
     find_package(${pkg_name} CONFIG QUIET PATHS ${_paths} NO_DEFAULT_PATH)
 endfunction()
 
-# Prefer local package configs for common deps providing CMake targets
-alumy_try_find_local_config(absl absl)
-alumy_try_find_local_config(absl abseil-cpp)
-alumy_try_find_local_config(re2 re2)
-alumy_try_find_local_config(Protobuf protobuf)
-alumy_try_find_local_config(gRPC gRPC)
-alumy_try_find_local_config(c-ares c-ares)
+# Use standard CMake find_package for dependencies with proper linking
+find_package(absl REQUIRED 
+    PATHS ${ALUMY_LIB_DIR_CANDIDATES} 
+    PATH_SUFFIXES cmake/absl 
+    NO_DEFAULT_PATH)
 
-# Use Boost's native cmake package configuration
-alumy_try_find_local_config(Boost Boost-1.75.0)
-alumy_try_find_local_config(boost_headers boost_headers-1.75.0)
+find_package(re2 REQUIRED
+    PATHS ${ALUMY_LIB_DIR_CANDIDATES}
+    PATH_SUFFIXES cmake/re2
+    NO_DEFAULT_PATH)
 
-# Find specific Boost components using their native cmake configs
-set(_boost_components system filesystem thread chrono date_time regex serialization iostreams program_options)
-foreach(_comp ${_boost_components})
-    alumy_try_find_local_config(boost_${_comp} boost_${_comp}-1.75.0)
-endforeach()
+find_package(Protobuf REQUIRED
+    PATHS ${ALUMY_LIB_DIR_CANDIDATES}
+    PATH_SUFFIXES cmake/protobuf
+    NO_DEFAULT_PATH)
 
-# Set Boost variables for downstream projects to find headers
-set(BOOST_ROOT "${ALUMY_PREFIX_DIR}" CACHE PATH "Boost root directory")
-set(BOOST_INCLUDEDIR "${ALUMY_INCLUDE_DIR}" CACHE PATH "Boost include directory")
-set(BOOST_LIBRARYDIR "${ALUMY_LIB_DIR}" CACHE PATH "Boost library directory")
-set(Boost_NO_SYSTEM_PATHS ON CACHE BOOL "Do not search system paths for Boost")
-set(Boost_USE_STATIC_LIBS ON CACHE BOOL "Use static Boost libraries")
+find_package(c-ares REQUIRED
+    PATHS ${ALUMY_LIB_DIR_CANDIDATES}
+    PATH_SUFFIXES cmake/c-ares
+    NO_DEFAULT_PATH)
+
+find_package(gRPC REQUIRED
+    PATHS ${ALUMY_LIB_DIR_CANDIDATES}
+    PATH_SUFFIXES cmake/grpc
+    NO_DEFAULT_PATH)
+
+# Use standard Boost CMake find_package
+set(BOOST_ROOT "${ALUMY_PREFIX_DIR}")
+set(Boost_NO_SYSTEM_PATHS ON)
+set(Boost_USE_STATIC_LIBS ON)
+set(Boost_USE_STATIC_RUNTIME ON)
+
+# Find Boost using standard CMake mechanism
+find_package(Boost 1.75 REQUIRED 
+    COMPONENTS system filesystem thread chrono date_time
+    PATHS ${ALUMY_LIB_DIR_CANDIDATES}
+    PATH_SUFFIXES cmake/Boost-1.75.0
+    NO_DEFAULT_PATH
+)
 
 # Create fallback Boost::headers target if native config didn't work
 if(NOT TARGET Boost::headers AND EXISTS "${ALUMY_INCLUDE_DIR}/boost")
@@ -77,7 +92,51 @@ if(TARGET Boost::headers AND NOT TARGET Boost::boost)
     add_library(Boost::boost ALIAS Boost::headers)
 endif()
 
-message(STATUS "Boost configuration completed using native cmake packages")
+# Create aliases for legacy library names to maintain compatibility
+
+# Boost aliases
+if(TARGET Boost::system AND NOT TARGET boost_system)
+    add_library(boost_system ALIAS Boost::system)
+endif()
+if(TARGET Boost::filesystem AND NOT TARGET boost_filesystem)
+    add_library(boost_filesystem ALIAS Boost::filesystem)
+endif()
+if(TARGET Boost::thread AND NOT TARGET boost_thread)
+    add_library(boost_thread ALIAS Boost::thread)
+endif()
+if(TARGET Boost::chrono AND NOT TARGET boost_chrono)
+    add_library(boost_chrono ALIAS Boost::chrono)
+endif()
+if(TARGET Boost::date_time AND NOT TARGET boost_date_time)
+    add_library(boost_date_time ALIAS Boost::date_time)
+endif()
+
+# gRPC aliases
+if(TARGET gRPC::grpc++ AND NOT TARGET grpc++)
+    add_library(grpc++ ALIAS gRPC::grpc++)
+endif()
+if(TARGET gRPC::grpc AND NOT TARGET grpc)
+    add_library(grpc ALIAS gRPC::grpc)
+endif()
+if(TARGET gRPC::gpr AND NOT TARGET gpr)
+    add_library(gpr ALIAS gRPC::gpr)
+endif()
+if(TARGET gRPC::address_sorting AND NOT TARGET address_sorting)
+    add_library(address_sorting ALIAS gRPC::address_sorting)
+endif()
+if(TARGET gRPC::upb AND NOT TARGET upb)
+    add_library(upb ALIAS gRPC::upb)
+endif()
+
+# OpenSSL aliases (if needed)
+if(TARGET OpenSSL::SSL AND NOT TARGET ssl)
+    add_library(ssl ALIAS OpenSSL::SSL)
+endif()
+if(TARGET OpenSSL::Crypto AND NOT TARGET crypto)
+    add_library(crypto ALIAS OpenSSL::Crypto)
+endif()
+
+message(STATUS "Boost configuration completed using CMake find_package")
 
 # Ensure alumy::alumy propagates usage requirements via INTERFACE link libs
 function(_alumy_append_if_target tgt var)
@@ -108,10 +167,10 @@ endforeach()
 # c-ares
 _alumy_append_if_target(c-ares::cares _alumy_usage_libs)
 
-# Boost components - link the main headers target and available component targets
+# Boost components - link found targets only
 _alumy_append_if_target(Boost::headers _alumy_usage_libs)
 _alumy_append_if_target(Boost::boost _alumy_usage_libs)
-foreach(_boost_comp system filesystem thread chrono date_time regex serialization iostreams program_options)
+foreach(_boost_comp system filesystem thread chrono date_time)
     _alumy_append_if_target(Boost::${_boost_comp} _alumy_usage_libs)
 endforeach()
 
@@ -242,7 +301,7 @@ function(alumy_map_cmake_targets lib_name output_var)
     elseif(lib_name STREQUAL "qt")
         set(_targets "Qt${QT_VERSION_MAJOR}::Core;Qt${QT_VERSION_MAJOR}::Widgets;Qt${QT_VERSION_MAJOR}::Network;Qt${QT_VERSION_MAJOR}::SerialPort;Qt${QT_VERSION_MAJOR}::Multimedia;Qt${QT_VERSION_MAJOR}::Concurrent")
     elseif(lib_name STREQUAL "boost")
-        set(_targets "Boost::headers;Boost::system;Boost::filesystem;Boost::thread;Boost::chrono;Boost::date_time;Boost::regex;Boost::serialization;Boost::iostreams;Boost::program_options")
+        set(_targets "Boost::headers;Boost::system;Boost::filesystem;Boost::thread;Boost::chrono;Boost::date_time")
     endif()
     set(${output_var} "${_targets}" PARENT_SCOPE)
 endfunction()
