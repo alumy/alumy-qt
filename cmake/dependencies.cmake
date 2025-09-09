@@ -93,6 +93,10 @@ macro(configure_alumy_dependencies)
         )
 
         FetchContent_MakeAvailable(libsndfile)
+
+        if(TARGET sndfile)
+            target_compile_options(sndfile PRIVATE -Wno-format-truncation)
+        endif()
     endif()
 
     set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
