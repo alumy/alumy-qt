@@ -30,7 +30,6 @@ macro(configure_alumy_dependencies)
         -DCMAKE_CXX_STANDARD=11
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
         -DBUILD_SHARED_LIBS=OFF
-        -DQPCPP_CXX_STANDARD=11
         -DQPCPP_CFG_KERNEL=qv
         -DQPCPP_CFG_PORT=posix
         -DQPCPP_CFG_GUI=OFF
