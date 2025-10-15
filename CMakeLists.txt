@@ -120,10 +120,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #####################################################################
 # Qt Components
 #####################################################################
-set(QT_COMPONENTS Widgets Network Core SerialPort Multimedia Concurrent)
+set(QT_COMPONENTS Widgets Network Core SerialPort Multimedia Concurrent PrintSupport Gui)
 
 find_package(QT NAMES Qt6 Qt5 COMPONENTS ${QT_COMPONENTS} REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS ${QT_COMPONENTS} REQUIRED)
+
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Svg OpenGL QUIET)
+
+if(QT_VERSION_MAJOR EQUAL 6)
+    find_package(Qt${QT_VERSION_MAJOR} COMPONENTS OpenGLWidgets QUIET)
+endif()
 
 add_compile_options(-Wall)
 
