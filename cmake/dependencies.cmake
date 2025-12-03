@@ -240,8 +240,9 @@ macro(configure_alumy_dependencies)
     endif()
 
     file(WRITE ${CMAKE_BINARY_DIR}/user-config.jam 
-        "using gcc : : ${CMAKE_CXX_COMPILER} ;\n"
+        "using gcc : cross : ${CMAKE_CXX_COMPILER} ;\n"
     )
+    set(BOOST_TOOLSET "toolset=gcc-cross")
 
     ExternalProject_Add(boost-external
         GIT_REPOSITORY https://github.com/boostorg/boost.git
@@ -250,8 +251,8 @@ macro(configure_alumy_dependencies)
         GIT_SUBMODULES_RECURSE ON
         INSTALL_DIR ${BOOST_INSTALL_DIR}
         CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./bootstrap.sh --prefix=<INSTALL_DIR>
-        BUILD_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./b2 -j${BOOST_PARALLEL_JOBS} ${BOOST_B2_OPTIONS} --user-config=${CMAKE_BINARY_DIR}/user-config.jam --prefix=<INSTALL_DIR> headers
-            COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./b2 -j${BOOST_PARALLEL_JOBS} ${BOOST_B2_OPTIONS} --user-config=${CMAKE_BINARY_DIR}/user-config.jam --prefix=<INSTALL_DIR> --with-system --with-filesystem --with-thread --with-chrono --with-date_time install
+        BUILD_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./b2 -j${BOOST_PARALLEL_JOBS} ${BOOST_TOOLSET} ${BOOST_B2_OPTIONS} --user-config=${CMAKE_BINARY_DIR}/user-config.jam --prefix=<INSTALL_DIR> headers
+            COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./b2 -j${BOOST_PARALLEL_JOBS} ${BOOST_TOOLSET} ${BOOST_B2_OPTIONS} --user-config=${CMAKE_BINARY_DIR}/user-config.jam --prefix=<INSTALL_DIR> --with-system --with-filesystem --with-thread --with-chrono --with-date_time install
         BUILD_BYPRODUCTS
             ${BOOST_INSTALL_DIR}/lib/libboost_system.a
             ${BOOST_INSTALL_DIR}/lib/libboost_filesystem.a
