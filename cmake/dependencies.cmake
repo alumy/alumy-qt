@@ -78,6 +78,8 @@ macro(configure_alumy_dependencies)
             GIT_REPOSITORY https://github.com/MEONMedical/Log4Qt.git
             GIT_TAG v1.5.1
             GIT_SHALLOW ON
+            PATCH_COMMAND sed -i "s/add_subdirectory(tests)/#add_subdirectory(tests)/" CMakeLists.txt
+                COMMAND sed -i "s/add_subdirectory(examples)/#add_subdirectory(examples)/" CMakeLists.txt
         )
         FetchContent_MakeAvailable(log4qt)
     endif()
