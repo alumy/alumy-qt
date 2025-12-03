@@ -68,8 +68,6 @@ macro(configure_alumy_dependencies)
         set(BUILD_WITH_DB_LOGGING OFF CACHE BOOL "" FORCE)
         set(BUILD_WITH_TELNET_LOGGING ON CACHE BOOL "" FORCE)
         set(BUILD_WITH_DOCS OFF CACHE BOOL "" FORCE)
-        set(LOG4QT_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-        set(LOG4QT_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 
         FetchContent_Declare(log4qt
             GIT_REPOSITORY https://github.com/MEONMedical/Log4Qt.git
