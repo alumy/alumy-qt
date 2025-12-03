@@ -2,15 +2,13 @@ include(FetchContent)
 include(ExternalProject)
 
 macro(configure_alumy_dependencies)
-    # Only configure dependencies if they haven't been configured already
     if(NOT TARGET spdlog AND NOT TARGET spdlog::spdlog)
         set(SPDLOG_ENABLE_PCH ON CACHE BOOL "" FORCE)
         set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "" FORCE)
         set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "" FORCE)
         set(SPDLOG_BUILD_BENCH OFF CACHE BOOL "" FORCE)
         set(SPDLOG_INSTALL ON CACHE BOOL "" FORCE)
-        
-        # Save current BUILD_SHARED_LIBS value
+
         set(_ALUMY_ORIGINAL_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
         set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
@@ -25,8 +23,8 @@ macro(configure_alumy_dependencies)
     set(QPCPP_INSTALL_DIR ${CMAKE_BINARY_DIR}/qpcpp-install)
     
     set(QPCPP_CMAKE_ARGS
-        -CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+        -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
         -DCMAKE_INSTALL_PREFIX=${QPCPP_INSTALL_DIR}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_CXX_STANDARD=11
@@ -103,19 +101,24 @@ macro(configure_alumy_dependencies)
     set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
     
     message(STATUS "Configuring bundled OpenSSL build")
-    
-    ExternalProject_Add(openssl-external
-        GIT_REPOSITORY https://github.com/openssl/openssl.git
-        GIT_TAG openssl-3.0.17
-        GIT_SHALLOW ON
-        INSTALL_DIR ${OPENSSL_INSTALL_DIR}
-        CONFIGURE_COMMAND <SOURCE_DIR>/config 
+
+    set(OPENSSL_CONFIGURE_COMMAND 
+        ${CMAKE_COMMAND} -E env CC=${CMAKE_C_COMPILER}
+        <SOURCE_DIR>/config 
             --prefix=<INSTALL_DIR>
             --openssldir=<INSTALL_DIR>/ssl
             --libdir=lib
             no-shared
             no-tests
             -DOPENSSL_USE_NODELETE
+    )
+    
+    ExternalProject_Add(openssl-external
+        GIT_REPOSITORY https://github.com/openssl/openssl.git
+        GIT_TAG openssl-3.0.17
+        GIT_SHALLOW ON
+        INSTALL_DIR ${OPENSSL_INSTALL_DIR}
+        CONFIGURE_COMMAND ${OPENSSL_CONFIGURE_COMMAND}
         BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
         BUILD_BYPRODUCTS
             ${OPENSSL_INSTALL_DIR}/lib/libssl.a
@@ -134,7 +137,8 @@ macro(configure_alumy_dependencies)
     set(GRPC_INSTALL_DIR ${CMAKE_BINARY_DIR}/grpc-install)
 
     set(GRPC_CMAKE_ARGS
-        ${CROSS_COMPILE_CMAKE_ARGS}
+        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+        -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
         -DCMAKE_INSTALL_PREFIX=${GRPC_INSTALL_DIR}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_CXX_STANDARD=17
@@ -170,12 +174,6 @@ macro(configure_alumy_dependencies)
         -DCARES_SHARED=OFF
         -DCARES_BUILD_TESTS=OFF
         -DCARES_BUILD_TOOLS=OFF
-        -DgRPC_BUILD_GRPC_RUBY_PLUGIN=OFF
-        -DgRPC_BUILD_GRPC_PYTHON_PLUGIN=OFF
-        -DgRPC_BUILD_GRPC_PHP_PLUGIN=OFF
-        -DgRPC_BUILD_GRPC_OBJECTIVE_C_PLUGIN=OFF
-        -DgRPC_BUILD_GRPC_NODE_PLUGIN=OFF
-        -DgRPC_BUILD_GRPC_CSHARP_PLUGIN=OFF
         -DOPENSSL_ROOT_DIR=${OPENSSL_INSTALL_DIR}
         -DOPENSSL_INCLUDE_DIR=${OPENSSL_INSTALL_DIR}/include
         -DOPENSSL_CRYPTO_LIBRARY=${OPENSSL_INSTALL_DIR}/lib/libcrypto.a
@@ -225,6 +223,10 @@ macro(configure_alumy_dependencies)
         set(BOOST_PARALLEL_JOBS 4)
     endif()
 
+    file(WRITE ${CMAKE_BINARY_DIR}/user-config.jam 
+        "using gcc : : ${CMAKE_CXX_COMPILER} ;\n"
+    )
+
     ExternalProject_Add(boost-external
         GIT_REPOSITORY https://github.com/boostorg/boost.git
         GIT_TAG boost-1.75.0
@@ -232,8 +234,8 @@ macro(configure_alumy_dependencies)
         GIT_SUBMODULES_RECURSE ON
         INSTALL_DIR ${BOOST_INSTALL_DIR}
         CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./bootstrap.sh --prefix=<INSTALL_DIR>
-        BUILD_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./b2 -j${BOOST_PARALLEL_JOBS} ${BOOST_B2_OPTIONS} --prefix=<INSTALL_DIR> headers
-            COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./b2 -j${BOOST_PARALLEL_JOBS} ${BOOST_B2_OPTIONS} --prefix=<INSTALL_DIR> --with-system --with-filesystem --with-thread --with-chrono --with-date_time install
+        BUILD_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./b2 -j${BOOST_PARALLEL_JOBS} ${BOOST_B2_OPTIONS} --user-config=${CMAKE_BINARY_DIR}/user-config.jam --prefix=<INSTALL_DIR> headers
+            COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./b2 -j${BOOST_PARALLEL_JOBS} ${BOOST_B2_OPTIONS} --user-config=${CMAKE_BINARY_DIR}/user-config.jam --prefix=<INSTALL_DIR> --with-system --with-filesystem --with-thread --with-chrono --with-date_time install
         BUILD_BYPRODUCTS
             ${BOOST_INSTALL_DIR}/lib/libboost_system.a
             ${BOOST_INSTALL_DIR}/lib/libboost_filesystem.a
