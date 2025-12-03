@@ -9,6 +9,7 @@ BUILD_TYPE="MinSizeRel"
 UNIT_TEST="OFF"
 INSTALL_PREFIX="${SCRIPT_DIR}/release"
 CMAKE_PREFIX_PATH=""
+CMAKE_SYSROOT=""
 
 # Architecture to toolchain mapping
 declare -A TOOLCHAIN_MAP=(
@@ -19,9 +20,15 @@ declare -A TOOLCHAIN_MAP=(
 
 # Architecture to Qt CMAKE_PREFIX_PATH mapping
 declare -A QT_PREFIX_MAP=(
-	["aarch64"]="/opt/Qt5.12.12/5.12.12/aarch64"
+	["aarch64"]="/opt/Qt5.12.12/5.12.12/t507_aarch64"
 	["x86_64"]="/opt/Qt5.12.12/5.12.12/gcc_64"
 	["amd64"]="/opt/Qt5.12.12/5.12.12/gcc_64"
+)
+
+declare -A SYSROOT_MAP=(
+	["aarch64"]="/opt/t507-aarch64-linux-gnu/aarch64-buildroot-linux-gnu/sysroot/"
+	["x86_64"]=""
+	["amd64"]=""
 )
 
 show_help() {
@@ -93,6 +100,11 @@ if [[ -n "${QT_PREFIX_MAP[$ARCH]}" ]]; then
 	CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH:+${CMAKE_PREFIX_PATH}:}${QT_PREFIX_MAP[$ARCH]}"
 fi
 
+# Set CMAKE_SYSROOT based on architecture
+if [[ -n "${SYSROOT_MAP[$ARCH]}" ]]; then
+	CMAKE_SYSROOT="${CMAKE_SYSROOT:+${CMAKE_SYSROOT}:}${SYSROOT_MAP[$ARCH]}"
+fi
+
 # Find cmake
 CMAKE=$(find_cmake)
 if [[ ! -x "$CMAKE" ]]; then
@@ -112,6 +124,7 @@ cd "$BUILD_DIR"
 	-G "Unix Makefiles" \
 	-DCMAKE_TOOLCHAIN_FILE="${TOOLCHAIN_MAP[$ARCH]}" \
 	-DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" \
+	-DCMAKE_SYSROOT="${CMAKE_SYSROOT}" \
 	-DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
 	-DUNIT_TEST="$UNIT_TEST" \
 	-DBUILD_STATIC_LIBS=ON \
