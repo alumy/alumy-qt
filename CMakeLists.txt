@@ -51,6 +51,9 @@ if(UNIT_TEST EQUAL 1)
 endif()
 
 include(GNUInstallDirs)
+
+set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/${CMAKE_SYSTEM_PROCESSOR}")
+
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/message.cmake)
 
 find_program(CCACHE_FOUND ccache)

@@ -29,7 +29,7 @@ fi
 mkdir build && cd build
 
 if [ -z $INSTALL_PREFIX ]; then
-	INSTALL_PREFIX=$ROOTDIR/build/release
+	INSTALL_PREFIX=$ROOTDIR/release
 fi
 
 # add options '-LAH' if you want see all variables
