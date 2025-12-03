@@ -36,10 +36,10 @@ macro(configure_alumy_dependencies)
         -DQPCPP_CFG_UNIT_TEST=OFF
         -DQPCPP_CFG_VERBOSE=OFF
     )
-    if(CCACHE_FOUND)
+    if(CCACHE_PROGRAM)
         list(APPEND QPCPP_CMAKE_ARGS
-            -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_FOUND}
-            -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_FOUND})
+            -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_PROGRAM}
+            -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_PROGRAM})
     endif()
     
     ExternalProject_Add(qpcpp-external
@@ -122,8 +122,8 @@ macro(configure_alumy_dependencies)
 
     message(STATUS "OpenSSL target: ${OPENSSL_TARGET} (CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR})")
 
-    if(CCACHE_FOUND)
-        set(OPENSSL_CC "${CCACHE_FOUND} ${CMAKE_C_COMPILER}")
+    if(CCACHE_PROGRAM)
+        set(OPENSSL_CC "${CCACHE_PROGRAM} ${CMAKE_C_COMPILER}")
     else()
         set(OPENSSL_CC "${CMAKE_C_COMPILER}")
     endif()
@@ -205,10 +205,10 @@ macro(configure_alumy_dependencies)
         -DOPENSSL_CRYPTO_LIBRARY=${OPENSSL_INSTALL_DIR}/lib/libcrypto.a
         -DOPENSSL_SSL_LIBRARY=${OPENSSL_INSTALL_DIR}/lib/libssl.a
     )
-    if(CCACHE_FOUND)
+    if(CCACHE_PROGRAM)
         list(APPEND GRPC_CMAKE_ARGS
-            -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_FOUND}
-            -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_FOUND})
+            -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_PROGRAM}
+            -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_PROGRAM})
     endif()
     
     ExternalProject_Add(grpc-external
@@ -254,9 +254,9 @@ macro(configure_alumy_dependencies)
         set(BOOST_PARALLEL_JOBS 4)
     endif()
 
-    if(CCACHE_FOUND)
+    if(CCACHE_PROGRAM)
         file(WRITE ${CMAKE_BINARY_DIR}/user-config.jam 
-            "using gcc : cross : ${CCACHE_FOUND} ${CMAKE_CXX_COMPILER} ;\n")
+            "using gcc : cross : ${CCACHE_PROGRAM} ${CMAKE_CXX_COMPILER} ;\n")
     else()
         file(WRITE ${CMAKE_BINARY_DIR}/user-config.jam 
             "using gcc : cross : ${CMAKE_CXX_COMPILER} ;\n")
