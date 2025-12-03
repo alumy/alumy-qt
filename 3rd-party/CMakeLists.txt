@@ -5,7 +5,9 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/dependencies.cmake)
 set(QTSINGLEAPP_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/qt-solutions/qtsingleapplication/src)
 set(QWT_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/qwt/src)
 
-# QWT Core source files (always included)
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS OpenGL QUIET)
+set(QWT_HAS_OPENGL ${Qt${QT_VERSION_MAJOR}OpenGL_FOUND})
+
 set(QWT_CORE_SOURCES
     ${QWT_SRC_DIR}/qwt.cpp
     ${QWT_SRC_DIR}/qwt_abstract_scale_draw.cpp
@@ -53,7 +55,6 @@ set(QWT_CORE_SOURCES
     ${QWT_SRC_DIR}/qwt_widget_overlay.cpp
 )
 
-# QWT Plot source files
 set(QWT_PLOT_SOURCES
     ${QWT_SRC_DIR}/qwt_curve_fitter.cpp
     ${QWT_SRC_DIR}/qwt_spline_curve_fitter.cpp
@@ -106,7 +107,6 @@ set(QWT_PLOT_SOURCES
     ${QWT_SRC_DIR}/qwt_scale_widget.cpp
 )
 
-# QWT Polar source files
 set(QWT_POLAR_SOURCES
     ${QWT_SRC_DIR}/qwt_polar_canvas.cpp
     ${QWT_SRC_DIR}/qwt_polar_curve.cpp
@@ -124,7 +124,6 @@ set(QWT_POLAR_SOURCES
     ${QWT_SRC_DIR}/qwt_polar_spectrogram.cpp
 )
 
-# QWT Widgets source files
 set(QWT_WIDGETS_SOURCES
     ${QWT_SRC_DIR}/qwt_abstract_slider.cpp
     ${QWT_SRC_DIR}/qwt_abstract_scale.cpp
@@ -141,25 +140,24 @@ set(QWT_WIDGETS_SOURCES
     ${QWT_SRC_DIR}/qwt_wheel.cpp
 )
 
-# QWT SVG source files (conditional)
 set(QWT_SVG_SOURCES
     ${QWT_SRC_DIR}/qwt_plot_svgitem.cpp
 )
 
-# QWT OpenGL source files (conditional, Qt version dependent)
 set(QWT_OPENGL_SOURCES)
-if(QT_VERSION_MAJOR EQUAL 5)
-    list(APPEND QWT_OPENGL_SOURCES
-        ${QWT_SRC_DIR}/qwt_plot_glcanvas.cpp
-        ${QWT_SRC_DIR}/qwt_plot_opengl_canvas.cpp
-    )
-elseif(QT_VERSION_MAJOR EQUAL 6)
-    list(APPEND QWT_OPENGL_SOURCES
-        ${QWT_SRC_DIR}/qwt_plot_opengl_canvas.cpp
-    )
+if(QWT_HAS_OPENGL)
+    if(QT_VERSION_MAJOR EQUAL 5)
+        list(APPEND QWT_OPENGL_SOURCES
+            ${QWT_SRC_DIR}/qwt_plot_glcanvas.cpp
+            ${QWT_SRC_DIR}/qwt_plot_opengl_canvas.cpp
+        )
+    elseif(QT_VERSION_MAJOR EQUAL 6)
+        list(APPEND QWT_OPENGL_SOURCES
+            ${QWT_SRC_DIR}/qwt_plot_opengl_canvas.cpp
+        )
+    endif()
 endif()
 
-# Combine all QWT sources
 set(QWT_ALL_SOURCES
     ${QWT_CORE_SOURCES}
     ${QWT_PLOT_SOURCES}
@@ -169,7 +167,6 @@ set(QWT_ALL_SOURCES
     ${QWT_OPENGL_SOURCES}
 )
 
-# QWT Core header files (always included)
 set(QWT_CORE_HEADERS
     ${QWT_SRC_DIR}/qwt.h
     ${QWT_SRC_DIR}/qwt_abstract_scale_draw.h
@@ -217,7 +214,6 @@ set(QWT_CORE_HEADERS
     ${QWT_SRC_DIR}/qwt_widget_overlay.h
 )
 
-# QWT Plot header files
 set(QWT_PLOT_HEADERS
     ${QWT_SRC_DIR}/qwt_axis.h
     ${QWT_SRC_DIR}/qwt_axis_id.h
@@ -293,7 +289,6 @@ set(QWT_POLAR_HEADERS
     ${QWT_SRC_DIR}/qwt_polar_spectrogram.h
 )
 
-# QWT Widgets header files
 set(QWT_WIDGETS_HEADERS
     ${QWT_SRC_DIR}/qwt_abstract_slider.h
     ${QWT_SRC_DIR}/qwt_abstract_scale.h
@@ -310,25 +305,24 @@ set(QWT_WIDGETS_HEADERS
     ${QWT_SRC_DIR}/qwt_wheel.h
 )
 
-# QWT SVG header files
 set(QWT_SVG_HEADERS
     ${QWT_SRC_DIR}/qwt_plot_svgitem.h
 )
 
-# QWT OpenGL header files (conditional)
 set(QWT_OPENGL_HEADERS)
-if(QT_VERSION_MAJOR EQUAL 5)
-    list(APPEND QWT_OPENGL_HEADERS
-        ${QWT_SRC_DIR}/qwt_plot_glcanvas.h
-        ${QWT_SRC_DIR}/qwt_plot_opengl_canvas.h
-    )
-elseif(QT_VERSION_MAJOR EQUAL 6)
-    list(APPEND QWT_OPENGL_HEADERS
-        ${QWT_SRC_DIR}/qwt_plot_opengl_canvas.h
-    )
+if(QWT_HAS_OPENGL)
+    if(QT_VERSION_MAJOR EQUAL 5)
+        list(APPEND QWT_OPENGL_HEADERS
+            ${QWT_SRC_DIR}/qwt_plot_glcanvas.h
+            ${QWT_SRC_DIR}/qwt_plot_opengl_canvas.h
+        )
+    elseif(QT_VERSION_MAJOR EQUAL 6)
+        list(APPEND QWT_OPENGL_HEADERS
+            ${QWT_SRC_DIR}/qwt_plot_opengl_canvas.h
+        )
+    endif()
 endif()
 
-# Combine all QWT headers
 set(QWT_ALL_HEADERS
     ${QWT_CORE_HEADERS}
     ${QWT_PLOT_HEADERS}
@@ -362,7 +356,6 @@ target_link_libraries(${target} PUBLIC
     Qt${QT_VERSION_MAJOR}::Widgets
 )
 
-# Add Qt5/6 specific dependencies for QWT
 if(QT_VERSION_MAJOR GREATER 4)
     target_link_libraries(${target} PUBLIC
         Qt${QT_VERSION_MAJOR}::PrintSupport
@@ -370,7 +363,6 @@ if(QT_VERSION_MAJOR GREATER 4)
     )
 endif()
 
-# Add SVG support if available
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Svg QUIET)
 if(Qt${QT_VERSION_MAJOR}Svg_FOUND)
     target_link_libraries(${target} PUBLIC Qt${QT_VERSION_MAJOR}::Svg)
@@ -379,13 +371,10 @@ else()
     target_compile_definitions(${target} PUBLIC QWT_NO_SVG)
 endif()
 
-# Add OpenGL support if available
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS OpenGL QUIET)
-if(Qt${QT_VERSION_MAJOR}OpenGL_FOUND)
+if(QWT_HAS_OPENGL)
     target_link_libraries(${target} PUBLIC Qt${QT_VERSION_MAJOR}::OpenGL)
     target_compile_definitions(${target} PUBLIC QWT_OPENGL)
-    
-    # For Qt6, also try to find OpenGLWidgets
+
     if(QT_VERSION_MAJOR EQUAL 6)
         find_package(Qt${QT_VERSION_MAJOR} COMPONENTS OpenGLWidgets QUIET)
         if(Qt${QT_VERSION_MAJOR}OpenGLWidgets_FOUND)
@@ -396,7 +385,6 @@ else()
     target_compile_definitions(${target} PUBLIC QWT_NO_OPENGL)
 endif()
 
-# QWT specific compile definitions
 target_compile_definitions(${target} PUBLIC
     QWT_MOC_INCLUDE=1
     QWT_DLL
