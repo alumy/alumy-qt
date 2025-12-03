@@ -29,6 +29,8 @@ macro(configure_alumy_dependencies)
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_CXX_STANDARD=11
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_FOUND}
+        -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_FOUND}
         -DBUILD_SHARED_LIBS=OFF
         -DQPCPP_CFG_KERNEL=qv
         -DQPCPP_CFG_PORT=posix
@@ -118,7 +120,7 @@ macro(configure_alumy_dependencies)
     message(STATUS "OpenSSL target: ${OPENSSL_TARGET} (CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR})")
 
     set(OPENSSL_CONFIGURE_COMMAND 
-        ${CMAKE_COMMAND} -E env CC=${CMAKE_C_COMPILER}
+        ${CMAKE_COMMAND} -E env "CC=${CCACHE_FOUND} ${CMAKE_C_COMPILER}"
         <SOURCE_DIR>/Configure
             ${OPENSSL_TARGET}
             --prefix=<INSTALL_DIR>
@@ -159,6 +161,8 @@ macro(configure_alumy_dependencies)
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_CXX_STANDARD=17
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_FOUND}
+        -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_FOUND}
         -DBUILD_SHARED_LIBS=OFF
         -DgRPC_BUILD_TESTS=OFF
         -DgRPC_BUILD_CSHARP_EXT=OFF
@@ -240,7 +244,7 @@ macro(configure_alumy_dependencies)
     endif()
 
     file(WRITE ${CMAKE_BINARY_DIR}/user-config.jam 
-        "using gcc : cross : ${CMAKE_CXX_COMPILER} ;\n"
+        "using gcc : cross : ${CCACHE_FOUND} ${CMAKE_CXX_COMPILER} ;\n"
     )
     set(BOOST_TOOLSET "toolset=gcc-cross")
 
