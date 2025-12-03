@@ -1,14 +1,14 @@
 #!/bin/bash
 set -e
 
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Default values
 ARCH=""
 BUILD_TYPE="MinSizeRel"
 UNIT_TEST="OFF"
-INSTALL_PREFIX=""
+INSTALL_PREFIX="${SCRIPT_DIR}/release"
 CMAKE_PREFIX_PATH=""
-
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Architecture to toolchain mapping
 declare -A TOOLCHAIN_MAP=(
@@ -100,9 +100,6 @@ if [[ ! -x "$CMAKE" ]]; then
 	exit 1
 fi
 echo "Using cmake: $CMAKE"
-
-# Set default install prefix
-: "${INSTALL_PREFIX:=${SCRIPT_DIR}/release}"
 
 # Prepare build directory
 BUILD_DIR="${SCRIPT_DIR}/build"
