@@ -68,6 +68,8 @@ macro(configure_alumy_dependencies)
         set(BUILD_WITH_DB_LOGGING OFF CACHE BOOL "" FORCE)
         set(BUILD_WITH_TELNET_LOGGING ON CACHE BOOL "" FORCE)
         set(BUILD_WITH_DOCS OFF CACHE BOOL "" FORCE)
+        set(LOG4QT_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+        set(LOG4QT_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 
         FetchContent_Declare(log4qt
             GIT_REPOSITORY https://github.com/MEONMedical/Log4Qt.git
@@ -102,9 +104,25 @@ macro(configure_alumy_dependencies)
     
     message(STATUS "Configuring bundled OpenSSL build")
 
+    # Determine OpenSSL target based on CMAKE_SYSTEM_PROCESSOR
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
+        set(OPENSSL_TARGET "linux-aarch64")
+    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
+        set(OPENSSL_TARGET "linux-armv4")
+    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64")
+        set(OPENSSL_TARGET "linux-x86_64")
+    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i.86")
+        set(OPENSSL_TARGET "linux-x86")
+    else()
+        set(OPENSSL_TARGET "linux-generic64")
+    endif()
+
+    message(STATUS "OpenSSL target: ${OPENSSL_TARGET} (CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR})")
+
     set(OPENSSL_CONFIGURE_COMMAND 
         ${CMAKE_COMMAND} -E env CC=${CMAKE_C_COMPILER}
-        <SOURCE_DIR>/config 
+        <SOURCE_DIR>/Configure
+            ${OPENSSL_TARGET}
             --prefix=<INSTALL_DIR>
             --openssldir=<INSTALL_DIR>/ssl
             --libdir=lib
