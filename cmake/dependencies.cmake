@@ -29,8 +29,6 @@ macro(configure_alumy_dependencies)
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_CXX_STANDARD=11
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
-        -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_FOUND}
-        -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_FOUND}
         -DBUILD_SHARED_LIBS=OFF
         -DQPCPP_CFG_KERNEL=qv
         -DQPCPP_CFG_PORT=posix
@@ -38,6 +36,11 @@ macro(configure_alumy_dependencies)
         -DQPCPP_CFG_UNIT_TEST=OFF
         -DQPCPP_CFG_VERBOSE=OFF
     )
+    if(CCACHE_FOUND)
+        list(APPEND QPCPP_CMAKE_ARGS
+            -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_FOUND}
+            -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_FOUND})
+    endif()
     
     ExternalProject_Add(qpcpp-external
         GIT_REPOSITORY https://github.com/QuantumLeaps/qpcpp.git
@@ -119,8 +122,13 @@ macro(configure_alumy_dependencies)
 
     message(STATUS "OpenSSL target: ${OPENSSL_TARGET} (CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR})")
 
+    if(CCACHE_FOUND)
+        set(OPENSSL_CC "${CCACHE_FOUND} ${CMAKE_C_COMPILER}")
+    else()
+        set(OPENSSL_CC "${CMAKE_C_COMPILER}")
+    endif()
     set(OPENSSL_CONFIGURE_COMMAND 
-        ${CMAKE_COMMAND} -E env "CC=${CCACHE_FOUND} ${CMAKE_C_COMPILER}"
+        ${CMAKE_COMMAND} -E env "CC=${OPENSSL_CC}"
         <SOURCE_DIR>/Configure
             ${OPENSSL_TARGET}
             --prefix=<INSTALL_DIR>
@@ -161,8 +169,6 @@ macro(configure_alumy_dependencies)
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_CXX_STANDARD=17
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
-        -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_FOUND}
-        -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_FOUND}
         -DBUILD_SHARED_LIBS=OFF
         -DgRPC_BUILD_TESTS=OFF
         -DgRPC_BUILD_CSHARP_EXT=OFF
@@ -199,6 +205,11 @@ macro(configure_alumy_dependencies)
         -DOPENSSL_CRYPTO_LIBRARY=${OPENSSL_INSTALL_DIR}/lib/libcrypto.a
         -DOPENSSL_SSL_LIBRARY=${OPENSSL_INSTALL_DIR}/lib/libssl.a
     )
+    if(CCACHE_FOUND)
+        list(APPEND GRPC_CMAKE_ARGS
+            -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_FOUND}
+            -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_FOUND})
+    endif()
     
     ExternalProject_Add(grpc-external
         GIT_REPOSITORY https://github.com/grpc/grpc.git
@@ -243,9 +254,13 @@ macro(configure_alumy_dependencies)
         set(BOOST_PARALLEL_JOBS 4)
     endif()
 
-    file(WRITE ${CMAKE_BINARY_DIR}/user-config.jam 
-        "using gcc : cross : ${CCACHE_FOUND} ${CMAKE_CXX_COMPILER} ;\n"
-    )
+    if(CCACHE_FOUND)
+        file(WRITE ${CMAKE_BINARY_DIR}/user-config.jam 
+            "using gcc : cross : ${CCACHE_FOUND} ${CMAKE_CXX_COMPILER} ;\n")
+    else()
+        file(WRITE ${CMAKE_BINARY_DIR}/user-config.jam 
+            "using gcc : cross : ${CMAKE_CXX_COMPILER} ;\n")
+    endif()
     set(BOOST_TOOLSET "toolset=gcc-cross")
 
     ExternalProject_Add(boost-external

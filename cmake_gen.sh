@@ -19,7 +19,7 @@ declare -A TOOLCHAIN_MAP=(
 
 # Architecture to Qt CMAKE_PREFIX_PATH mapping
 declare -A QT_PREFIX_MAP=(
-	["aarch64"]="/opt/Qt5.12.12/5.12.12/t507_aarch64"
+	["aarch64"]="/opt/Qt5.12.12/5.12.12/aarch64"
 	["x86_64"]="/opt/Qt5.12.12/5.12.12/gcc_64"
 	["amd64"]="/opt/Qt5.12.12/5.12.12/gcc_64"
 )
