@@ -1,15 +1,6 @@
 include(FetchContent)
 include(ExternalProject)
 
-# Cross-compilation toolchain args for ExternalProject
-if(CMAKE_TOOLCHAIN_FILE)
-    set(CROSS_COMPILE_CMAKE_ARGS
-        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
-    )
-else()
-    set(CROSS_COMPILE_CMAKE_ARGS "")
-endif()
-
 macro(configure_alumy_dependencies)
     # Only configure dependencies if they haven't been configured already
     if(NOT TARGET spdlog AND NOT TARGET spdlog::spdlog)
@@ -34,7 +25,8 @@ macro(configure_alumy_dependencies)
     set(QPCPP_INSTALL_DIR ${CMAKE_BINARY_DIR}/qpcpp-install)
     
     set(QPCPP_CMAKE_ARGS
-        ${CROSS_COMPILE_CMAKE_ARGS}
+        -CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
         -DCMAKE_INSTALL_PREFIX=${QPCPP_INSTALL_DIR}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_CXX_STANDARD=11
