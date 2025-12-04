@@ -12,11 +12,3 @@ else()
     set(CCACHE_CC "${CMAKE_C_COMPILER}")
     set(CCACHE_CXX "${CMAKE_CXX_COMPILER}")
 endif()
-
-macro(append_ccache_launcher_args CMAKE_ARGS_VAR)
-    if(CCACHE_PROGRAM)
-        list(APPEND ${CMAKE_ARGS_VAR}
-            -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_PROGRAM}
-            -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_PROGRAM})
-    endif()
-endmacro()

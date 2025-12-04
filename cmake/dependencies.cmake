@@ -12,6 +12,8 @@ macro(configure_alumy_dependencies)
         -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
         -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
+        -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
         -DCMAKE_CXX_STANDARD=11
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
         -DBUILD_SHARED_LIBS=OFF
@@ -22,7 +24,6 @@ macro(configure_alumy_dependencies)
         -DSPDLOG_BUILD_EXAMPLE=OFF
         -DSPDLOG_INSTALL=ON
     )
-    append_ccache_launcher_args(SPDLOG_CMAKE_ARGS)
 
     ExternalProject_Add(spdlog-external
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
@@ -47,6 +48,8 @@ macro(configure_alumy_dependencies)
         -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
         -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
+        -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
         -DCMAKE_CXX_STANDARD=11
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
         -DBUILD_SHARED_LIBS=OFF
@@ -56,7 +59,6 @@ macro(configure_alumy_dependencies)
         -DQPCPP_CFG_UNIT_TEST=OFF
         -DQPCPP_CFG_VERBOSE=OFF
     )
-    append_ccache_launcher_args(QPCPP_CMAKE_ARGS)
     
     ExternalProject_Add(qpcpp-external
         GIT_REPOSITORY https://github.com/QuantumLeaps/qpcpp.git
@@ -88,6 +90,8 @@ macro(configure_alumy_dependencies)
         -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
         -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
+        -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
         -DCMAKE_CXX_STANDARD=11
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
         -DBUILD_SHARED_LIBS=OFF
@@ -96,7 +100,6 @@ macro(configure_alumy_dependencies)
         -DBUILD_WITH_TELNET_LOGGING=ON
         -DBUILD_WITH_DOCS=OFF
     )
-    append_ccache_launcher_args(LOG4QT_CMAKE_ARGS)
 
     ExternalProject_Add(log4qt-external
         GIT_REPOSITORY https://github.com/MEONMedical/Log4Qt.git
@@ -123,6 +126,8 @@ macro(configure_alumy_dependencies)
         -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
         -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
+        -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
         -DCMAKE_C_STANDARD=11
         -DCMAKE_C_STANDARD_REQUIRED=ON
         -DBUILD_SHARED_LIBS=OFF
@@ -133,7 +138,6 @@ macro(configure_alumy_dependencies)
         -DENABLE_MPEG=OFF
         -DINSTALL_MANPAGES=OFF
     )
-    append_ccache_launcher_args(LIBSNDFILE_CMAKE_ARGS)
 
     ExternalProject_Add(libsndfile-external
         GIT_REPOSITORY https://github.com/libsndfile/libsndfile.git
@@ -158,6 +162,8 @@ macro(configure_alumy_dependencies)
         -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
         -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
+        -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
         -DCMAKE_CXX_STANDARD=11
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
         -DBUILD_SHARED_LIBS=OFF
@@ -168,7 +174,6 @@ macro(configure_alumy_dependencies)
         -DYAML_BUILD_SHARED_LIBS=OFF
         -DYAML_CPP_INSTALL=ON
     )
-    append_ccache_launcher_args(YAMLCPP_CMAKE_ARGS)
 
     ExternalProject_Add(yaml-cpp-external
         GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
@@ -242,6 +247,8 @@ macro(configure_alumy_dependencies)
         -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
         -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
+        -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
         -DCMAKE_CXX_STANDARD=17
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
         -DBUILD_SHARED_LIBS=OFF
@@ -280,7 +287,6 @@ macro(configure_alumy_dependencies)
         -DOPENSSL_CRYPTO_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libcrypto.a
         -DOPENSSL_SSL_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libssl.a
     )
-    append_ccache_launcher_args(GRPC_CMAKE_ARGS)
     
     ExternalProject_Add(grpc-external
         GIT_REPOSITORY https://github.com/grpc/grpc.git
@@ -362,6 +368,8 @@ macro(configure_alumy_dependencies)
         -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
         -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
+        -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
         -DCMAKE_C_STANDARD=11
         -DCMAKE_C_STANDARD_REQUIRED=ON
         -DBUILD_SHARED_LIBS=OFF
@@ -377,7 +385,6 @@ macro(configure_alumy_dependencies)
         -DOPENSSL_CRYPTO_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libcrypto.a
         -DOPENSSL_SSL_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libssl.a
     )
-    append_ccache_launcher_args(LIBCOAP_CMAKE_ARGS)
 
     ExternalProject_Add(libcoap-external
         GIT_REPOSITORY https://github.com/obgm/libcoap.git
