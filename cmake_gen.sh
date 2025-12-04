@@ -25,6 +25,13 @@ declare -A QT_PREFIX_MAP=(
 	["amd64"]="/opt/Qt5.12.12/5.12.12/gcc_64"
 )
 
+# Architecture to Qt5_DIR mapping (bypass CMAKE_FIND_ROOT_PATH_MODE_PACKAGE)
+declare -A QT5_DIR_MAP=(
+	["aarch64"]="/opt/Qt5.12.12/5.12.12/t507_aarch64/lib/cmake/Qt5"
+	["x86_64"]="/opt/Qt5.12.12/5.12.12/gcc_64/lib/cmake/Qt5"
+	["amd64"]="/opt/Qt5.12.12/5.12.12/gcc_64/lib/cmake/Qt5"
+)
+
 declare -A SYSROOT_MAP=(
 	["aarch64"]="/opt/t507-aarch64-linux-gnu/aarch64-buildroot-linux-gnu/sysroot/"
 	["x86_64"]=""
@@ -124,6 +131,8 @@ CMAKE_ARGS=(
 	-G "Unix Makefiles"
 	-DCMAKE_TOOLCHAIN_FILE="${TOOLCHAIN_MAP[$ARCH]}"
 	-DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}"
+	-DCMAKE_FIND_ROOT_PATH="${CMAKE_SYSROOT};${QT_PREFIX_MAP[$ARCH]}"
+	-DQt5_DIR="${QT5_DIR_MAP[$ARCH]}"
 	-DCMAKE_BUILD_TYPE="$BUILD_TYPE"
 	-DUNIT_TEST="$UNIT_TEST"
 	-DBUILD_STATIC_LIBS=ON

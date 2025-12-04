@@ -1,5 +1,6 @@
 include(ExternalProject)
 include(${CMAKE_CURRENT_LIST_DIR}/ccache.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/qmake.cmake)
 
 macro(configure_alumy_dependencies)
     # Unified external dependencies install directory
@@ -522,14 +523,13 @@ macro(configure_alumy_dependencies)
         DEPENDS libite-external libuev-external libconfuse-external
     )
 
-    # Qwt - Qt Widgets for Technical Applications
     ExternalProject_Add(qwt-external
         GIT_REPOSITORY https://github.com/opencor/qwt.git
         GIT_TAG v6.2.0
         GIT_SHALLOW ON
         INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
-        CONFIGURE_COMMAND ${QMAKE_EXECUTABLE} <SOURCE_DIR>/qwt.pro 
-            "QMAKE_INSTALL_PREFIX=<INSTALL_DIR>"
+        PATCH_COMMAND sed -i [[s|^QWT_INSTALL_PREFIX.*|QWT_INSTALL_PREFIX = <INSTALL_DIR>|]] <SOURCE_DIR>/qwtconfig.pri
+        CONFIGURE_COMMAND ${QMAKE} <SOURCE_DIR>/qwt.pro 
             "QMAKE_CC=${CCACHE_CC}"
             "QMAKE_CXX=${CCACHE_CXX}"
             "QMAKE_LINK=${CMAKE_CXX_COMPILER}"
