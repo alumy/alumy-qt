@@ -449,7 +449,6 @@ macro(configure_alumy_dependencies)
         GIT_TAG v2.6.1
         GIT_SHALLOW ON
         INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
-        PATCH_COMMAND sed -i "s/ln -s /ln -sf /g" <SOURCE_DIR>/src/Makefile.am
         CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
             COMMAND ${CMAKE_COMMAND} -E env "CC=${LIBITE_CC}" "PKG_CONFIG_PATH=${EXTERNAL_INSTALL_DIR}/lib/pkgconfig"
                 <SOURCE_DIR>/configure
@@ -458,6 +457,7 @@ macro(configure_alumy_dependencies)
                     --host=${AUTOTOOLS_HOST_TRIPLET}
                     --enable-static
                     --disable-shared
+                    --without-symlink
         BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
         BUILD_BYPRODUCTS
             ${EXTERNAL_INSTALL_DIR}/lib/libite.a
@@ -547,7 +547,7 @@ macro(configure_alumy_dependencies)
         GIT_TAG 3.5
         GIT_SHALLOW ON
         INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
-        PATCH_COMMAND sed -i 's/confdir[[:space:]]*=[[:space:]]*\/$(sysconfdir)/confdir             = $(prefix)\/$(sysconfdir)/g' <SOURCE_DIR>/Makefile.am
+        PATCH_COMMAND patch --forward --fuzz=3 -p0 -d <SOURCE_DIR> -i ${CMAKE_SOURCE_DIR}/cmake/patches/watchdogd-confdir.patch || true
         CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
             COMMAND ${CMAKE_COMMAND} -E env 
                 "CC=${WATCHDOGD_CC}"
