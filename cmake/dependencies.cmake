@@ -547,8 +547,8 @@ macro(configure_alumy_dependencies)
         GIT_TAG 3.5
         GIT_SHALLOW ON
         INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
-        CONFIGURE_COMMAND sed -i [=[s/confdir[[:space:]]*=[[:space:]]*\$(sysconfdir)/confdir             = \$(prefix)\/\$(sysconfdir)/g]=] <SOURCE_DIR>/Makefile.am
-            COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
+        PATCH_COMMAND sed -i [=[s/confdir[[:space:]]*=[[:space:]]*\$(sysconfdir)/confdir             = \$(prefix)\/\$(sysconfdir)/g]=] <SOURCE_DIR>/Makefile.am
+        CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
             COMMAND ${CMAKE_COMMAND} -E env 
                 "CC=${WATCHDOGD_CC}"
                 "CPPFLAGS=-I${EXTERNAL_INSTALL_DIR}/include"
