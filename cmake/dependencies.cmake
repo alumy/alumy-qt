@@ -1,4 +1,5 @@
 include(ExternalProject)
+include(${CMAKE_CURRENT_LIST_DIR}/ccache.cmake)
 
 macro(configure_alumy_dependencies)
     # Unified external dependencies install directory
@@ -21,11 +22,7 @@ macro(configure_alumy_dependencies)
         -DSPDLOG_BUILD_EXAMPLE=OFF
         -DSPDLOG_INSTALL=ON
     )
-    if(CCACHE_PROGRAM)
-        list(APPEND SPDLOG_CMAKE_ARGS
-            -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_PROGRAM}
-            -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_PROGRAM})
-    endif()
+    append_ccache_launcher_args(SPDLOG_CMAKE_ARGS)
 
     ExternalProject_Add(spdlog-external
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
@@ -59,11 +56,7 @@ macro(configure_alumy_dependencies)
         -DQPCPP_CFG_UNIT_TEST=OFF
         -DQPCPP_CFG_VERBOSE=OFF
     )
-    if(CCACHE_PROGRAM)
-        list(APPEND QPCPP_CMAKE_ARGS
-            -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_PROGRAM}
-            -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_PROGRAM})
-    endif()
+    append_ccache_launcher_args(QPCPP_CMAKE_ARGS)
     
     ExternalProject_Add(qpcpp-external
         GIT_REPOSITORY https://github.com/QuantumLeaps/qpcpp.git
@@ -103,11 +96,7 @@ macro(configure_alumy_dependencies)
         -DBUILD_WITH_TELNET_LOGGING=ON
         -DBUILD_WITH_DOCS=OFF
     )
-    if(CCACHE_PROGRAM)
-        list(APPEND LOG4QT_CMAKE_ARGS
-            -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_PROGRAM}
-            -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_PROGRAM})
-    endif()
+    append_ccache_launcher_args(LOG4QT_CMAKE_ARGS)
 
     ExternalProject_Add(log4qt-external
         GIT_REPOSITORY https://github.com/MEONMedical/Log4Qt.git
@@ -144,11 +133,7 @@ macro(configure_alumy_dependencies)
         -DENABLE_MPEG=OFF
         -DINSTALL_MANPAGES=OFF
     )
-    if(CCACHE_PROGRAM)
-        list(APPEND LIBSNDFILE_CMAKE_ARGS
-            -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_PROGRAM}
-            -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_PROGRAM})
-    endif()
+    append_ccache_launcher_args(LIBSNDFILE_CMAKE_ARGS)
 
     ExternalProject_Add(libsndfile-external
         GIT_REPOSITORY https://github.com/libsndfile/libsndfile.git
@@ -183,11 +168,7 @@ macro(configure_alumy_dependencies)
         -DYAML_BUILD_SHARED_LIBS=OFF
         -DYAML_CPP_INSTALL=ON
     )
-    if(CCACHE_PROGRAM)
-        list(APPEND YAMLCPP_CMAKE_ARGS
-            -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_PROGRAM}
-            -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_PROGRAM})
-    endif()
+    append_ccache_launcher_args(YAMLCPP_CMAKE_ARGS)
 
     ExternalProject_Add(yaml-cpp-external
         GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
@@ -224,13 +205,8 @@ macro(configure_alumy_dependencies)
 
     message(STATUS "OpenSSL target: ${OPENSSL_TARGET} (CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR})")
 
-    if(CCACHE_PROGRAM)
-        set(OPENSSL_CC "${CCACHE_PROGRAM} ${CMAKE_C_COMPILER}")
-    else()
-        set(OPENSSL_CC "${CMAKE_C_COMPILER}")
-    endif()
     set(OPENSSL_CONFIGURE_COMMAND 
-        ${CMAKE_COMMAND} -E env "CC=${OPENSSL_CC}"
+        ${CMAKE_COMMAND} -E env "CC=${CCACHE_CC}"
         <SOURCE_DIR>/Configure
             ${OPENSSL_TARGET}
             --prefix=<INSTALL_DIR>
@@ -304,11 +280,7 @@ macro(configure_alumy_dependencies)
         -DOPENSSL_CRYPTO_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libcrypto.a
         -DOPENSSL_SSL_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libssl.a
     )
-    if(CCACHE_PROGRAM)
-        list(APPEND GRPC_CMAKE_ARGS
-            -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_PROGRAM}
-            -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_PROGRAM})
-    endif()
+    append_ccache_launcher_args(GRPC_CMAKE_ARGS)
     
     ExternalProject_Add(grpc-external
         GIT_REPOSITORY https://github.com/grpc/grpc.git
@@ -350,13 +322,8 @@ macro(configure_alumy_dependencies)
         set(BOOST_PARALLEL_JOBS 4)
     endif()
 
-    if(CCACHE_PROGRAM)
-        file(WRITE ${CMAKE_BINARY_DIR}/user-config.jam 
-            "using gcc : cross : ${CCACHE_PROGRAM} ${CMAKE_CXX_COMPILER} ;\n")
-    else()
-        file(WRITE ${CMAKE_BINARY_DIR}/user-config.jam 
-            "using gcc : cross : ${CMAKE_CXX_COMPILER} ;\n")
-    endif()
+    file(WRITE ${CMAKE_BINARY_DIR}/user-config.jam 
+        "using gcc : cross : ${CCACHE_CXX} ;\n")
     set(BOOST_TOOLSET "toolset=gcc-cross")
 
     ExternalProject_Add(boost-external
@@ -410,11 +377,7 @@ macro(configure_alumy_dependencies)
         -DOPENSSL_CRYPTO_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libcrypto.a
         -DOPENSSL_SSL_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libssl.a
     )
-    if(CCACHE_PROGRAM)
-        list(APPEND LIBCOAP_CMAKE_ARGS
-            -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_PROGRAM}
-            -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_PROGRAM})
-    endif()
+    append_ccache_launcher_args(LIBCOAP_CMAKE_ARGS)
 
     ExternalProject_Add(libcoap-external
         GIT_REPOSITORY https://github.com/obgm/libcoap.git
@@ -438,19 +401,13 @@ macro(configure_alumy_dependencies)
     message(STATUS "Autotools host triplet: ${AUTOTOOLS_HOST_TRIPLET}")
 
     # libite (dependency of watchdogd)
-    if(CCACHE_PROGRAM)
-        set(LIBITE_CC "${CCACHE_PROGRAM} ${CMAKE_C_COMPILER}")
-    else()
-        set(LIBITE_CC "${CMAKE_C_COMPILER}")
-    endif()
-
     ExternalProject_Add(libite-external
         GIT_REPOSITORY https://github.com/troglobit/libite.git
         GIT_TAG v2.6.1
         GIT_SHALLOW ON
         INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
         CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
-            COMMAND ${CMAKE_COMMAND} -E env "CC=${LIBITE_CC}" "PKG_CONFIG_PATH=${EXTERNAL_INSTALL_DIR}/lib/pkgconfig"
+            COMMAND ${CMAKE_COMMAND} -E env "CC=${CCACHE_CC}" "PKG_CONFIG_PATH=${EXTERNAL_INSTALL_DIR}/lib/pkgconfig"
                 <SOURCE_DIR>/configure
                     --prefix=<INSTALL_DIR>
                     --build=${AUTOTOOLS_BUILD_TRIPLET}
@@ -471,19 +428,13 @@ macro(configure_alumy_dependencies)
     )
 
     # libuEv (dependency of watchdogd)
-    if(CCACHE_PROGRAM)
-        set(LIBUEV_CC "${CCACHE_PROGRAM} ${CMAKE_C_COMPILER}")
-    else()
-        set(LIBUEV_CC "${CMAKE_C_COMPILER}")
-    endif()
-
     ExternalProject_Add(libuev-external
         GIT_REPOSITORY https://github.com/troglobit/libuev.git
         GIT_TAG v2.4.1
         GIT_SHALLOW ON
         INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
         CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
-            COMMAND ${CMAKE_COMMAND} -E env "CC=${LIBUEV_CC}" "PKG_CONFIG_PATH=${EXTERNAL_INSTALL_DIR}/lib/pkgconfig"
+            COMMAND ${CMAKE_COMMAND} -E env "CC=${CCACHE_CC}" "PKG_CONFIG_PATH=${EXTERNAL_INSTALL_DIR}/lib/pkgconfig"
                 <SOURCE_DIR>/configure
                     --prefix=<INSTALL_DIR>
                     --build=${AUTOTOOLS_BUILD_TRIPLET}
@@ -503,19 +454,13 @@ macro(configure_alumy_dependencies)
     )
 
     # libConfuse (dependency of watchdogd)
-    if(CCACHE_PROGRAM)
-        set(LIBCONFUSE_CC "${CCACHE_PROGRAM} ${CMAKE_C_COMPILER}")
-    else()
-        set(LIBCONFUSE_CC "${CMAKE_C_COMPILER}")
-    endif()
-
     ExternalProject_Add(libconfuse-external
         GIT_REPOSITORY https://github.com/libconfuse/libconfuse.git
         GIT_TAG v3.3
         GIT_SHALLOW ON
         INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
         CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
-            COMMAND ${CMAKE_COMMAND} -E env "CC=${LIBCONFUSE_CC}" "PKG_CONFIG_PATH=${EXTERNAL_INSTALL_DIR}/lib/pkgconfig"
+            COMMAND ${CMAKE_COMMAND} -E env "CC=${CCACHE_CC}" "PKG_CONFIG_PATH=${EXTERNAL_INSTALL_DIR}/lib/pkgconfig"
                 <SOURCE_DIR>/configure
                     --prefix=<INSTALL_DIR>
                     --build=${AUTOTOOLS_BUILD_TRIPLET}
@@ -536,12 +481,6 @@ macro(configure_alumy_dependencies)
     )
 
     # watchdogd
-    if(CCACHE_PROGRAM)
-        set(WATCHDOGD_CC "${CCACHE_PROGRAM} ${CMAKE_C_COMPILER}")
-    else()
-        set(WATCHDOGD_CC "${CMAKE_C_COMPILER}")
-    endif()
-
     ExternalProject_Add(watchdogd-external
         GIT_REPOSITORY https://github.com/troglobit/watchdogd.git
         GIT_TAG 3.5
@@ -550,7 +489,7 @@ macro(configure_alumy_dependencies)
         PATCH_COMMAND patch --forward --fuzz=3 -p0 -d <SOURCE_DIR> -i ${CMAKE_SOURCE_DIR}/cmake/patches/watchdogd-confdir.patch || true
         CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
             COMMAND ${CMAKE_COMMAND} -E env 
-                "CC=${WATCHDOGD_CC}"
+                "CC=${CCACHE_CC}"
                 "CPPFLAGS=-I${EXTERNAL_INSTALL_DIR}/include"
                 "LDFLAGS=-L${EXTERNAL_INSTALL_DIR}/lib"
                 "PKG_CONFIG_PATH=${EXTERNAL_INSTALL_DIR}/lib/pkgconfig"
@@ -574,6 +513,34 @@ macro(configure_alumy_dependencies)
         USES_TERMINAL_BUILD ON
         USES_TERMINAL_INSTALL ON
         DEPENDS libite-external libuev-external libconfuse-external
+    )
+
+    # Qwt - Qt Widgets for Technical Applications
+    ExternalProject_Add(qwt-external
+        GIT_REPOSITORY https://github.com/opencor/qwt.git
+        GIT_TAG v6.2.0
+        GIT_SHALLOW ON
+        INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
+        CONFIGURE_COMMAND ${QMAKE_EXECUTABLE} <SOURCE_DIR>/qwt.pro 
+            "QMAKE_INSTALL_PREFIX=<INSTALL_DIR>"
+            "QMAKE_CC=${CCACHE_CC}"
+            "QMAKE_CXX=${CCACHE_CXX}"
+            "QMAKE_LINK=${CMAKE_CXX_COMPILER}"
+            "QMAKE_AR=${CMAKE_AR} cqs"
+            "QWT_CONFIG+=QwtStatic"
+            "QWT_CONFIG-=QwtShared"
+            "QWT_CONFIG-=QwtExamples"
+            "QWT_CONFIG-=QwtDesigner"
+        BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
+        BUILD_BYPRODUCTS
+            ${EXTERNAL_INSTALL_DIR}/lib/libqwt.a
+        INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
     )
 endmacro()
 
@@ -600,6 +567,7 @@ macro(add_alumy_dependencies target)
         libuev-external
         libconfuse-external
         watchdogd-external
+        qwt-external
     )
 endmacro()
 
@@ -627,6 +595,7 @@ macro(link_alumy_dependencies target)
         spdlog
         yaml-cpp
         qpcpp
+        qwt
         grpc++
         grpc
         gpr

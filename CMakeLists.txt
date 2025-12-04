@@ -55,13 +55,7 @@ include(GNUInstallDirs)
 set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/${CMAKE_SYSTEM_PROCESSOR}")
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/message.cmake)
-
-find_program(CCACHE_PROGRAM ccache)
-
-if(CCACHE_PROGRAM)
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ${CCACHE_PROGRAM})
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ${CCACHE_PROGRAM})
-endif(CCACHE_PROGRAM)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ccache.cmake)
 
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/include/alumy/version.h.in
