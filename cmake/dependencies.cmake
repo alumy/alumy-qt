@@ -1,13 +1,15 @@
 include(ExternalProject)
 
 macro(configure_alumy_dependencies)
-    # spdlog
-    set(SPDLOG_INSTALL_DIR ${CMAKE_BINARY_DIR}/spdlog-install)
+    # Unified external dependencies install directory
+    set(EXTERNAL_INSTALL_DIR ${CMAKE_BINARY_DIR}/external-install)
+    list(APPEND CMAKE_PREFIX_PATH ${EXTERNAL_INSTALL_DIR})
 
+    # spdlog
     set(SPDLOG_CMAKE_ARGS
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
         -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
-        -DCMAKE_INSTALL_PREFIX=${SPDLOG_INSTALL_DIR}
+        -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_CXX_STANDARD=11
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
@@ -32,7 +34,7 @@ macro(configure_alumy_dependencies)
         CMAKE_ARGS ${SPDLOG_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS
-            ${SPDLOG_INSTALL_DIR}/lib/libspdlog.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libspdlog.a
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -42,15 +44,11 @@ macro(configure_alumy_dependencies)
         USES_TERMINAL_INSTALL ON
     )
 
-    list(APPEND CMAKE_PREFIX_PATH ${SPDLOG_INSTALL_DIR})
-
     # qpcpp
-    set(QPCPP_INSTALL_DIR ${CMAKE_BINARY_DIR}/qpcpp-install)
-    
     set(QPCPP_CMAKE_ARGS
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
         -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
-        -DCMAKE_INSTALL_PREFIX=${QPCPP_INSTALL_DIR}
+        -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_CXX_STANDARD=11
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
@@ -76,13 +74,13 @@ macro(configure_alumy_dependencies)
         CMAKE_ARGS ${QPCPP_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS 
-            ${QPCPP_INSTALL_DIR}/lib/libqpcpp.a
-        INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${QPCPP_INSTALL_DIR}/lib
-            COMMAND ${CMAKE_COMMAND} -E make_directory ${QPCPP_INSTALL_DIR}/include
-            COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/libqpcpp.a ${QPCPP_INSTALL_DIR}/lib/
-            COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/include ${QPCPP_INSTALL_DIR}/include
-            COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/src ${QPCPP_INSTALL_DIR}/include
-            COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/ports/posix-qv ${QPCPP_INSTALL_DIR}/include/ports/posix-qv
+            ${EXTERNAL_INSTALL_DIR}/lib/libqpcpp.a
+        INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${EXTERNAL_INSTALL_DIR}/lib
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${EXTERNAL_INSTALL_DIR}/include
+            COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/libqpcpp.a ${EXTERNAL_INSTALL_DIR}/lib/
+            COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/include ${EXTERNAL_INSTALL_DIR}/include
+            COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/src ${EXTERNAL_INSTALL_DIR}/include
+            COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/ports/posix-qv ${EXTERNAL_INSTALL_DIR}/include/ports/posix-qv
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
@@ -91,15 +89,11 @@ macro(configure_alumy_dependencies)
         USES_TERMINAL_INSTALL ON
     )
 
-    list(APPEND CMAKE_PREFIX_PATH ${QPCPP_INSTALL_DIR})
-
     # log4qt
-    set(LOG4QT_INSTALL_DIR ${CMAKE_BINARY_DIR}/log4qt-install)
-
     set(LOG4QT_CMAKE_ARGS
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
         -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
-        -DCMAKE_INSTALL_PREFIX=${LOG4QT_INSTALL_DIR}
+        -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_CXX_STANDARD=11
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
@@ -124,7 +118,7 @@ macro(configure_alumy_dependencies)
         CMAKE_ARGS ${LOG4QT_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS
-            ${LOG4QT_INSTALL_DIR}/lib/liblog4qt.a
+            ${EXTERNAL_INSTALL_DIR}/lib/liblog4qt.a
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -134,15 +128,11 @@ macro(configure_alumy_dependencies)
         USES_TERMINAL_INSTALL ON
     )
 
-    list(APPEND CMAKE_PREFIX_PATH ${LOG4QT_INSTALL_DIR})
-
     # libsndfile
-    set(LIBSNDFILE_INSTALL_DIR ${CMAKE_BINARY_DIR}/libsndfile-install)
-
     set(LIBSNDFILE_CMAKE_ARGS
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
         -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
-        -DCMAKE_INSTALL_PREFIX=${LIBSNDFILE_INSTALL_DIR}
+        -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_C_STANDARD=11
         -DCMAKE_C_STANDARD_REQUIRED=ON
@@ -167,7 +157,7 @@ macro(configure_alumy_dependencies)
         CMAKE_ARGS ${LIBSNDFILE_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS
-            ${LIBSNDFILE_INSTALL_DIR}/lib/libsndfile.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libsndfile.a
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -177,15 +167,11 @@ macro(configure_alumy_dependencies)
         USES_TERMINAL_INSTALL ON
     )
 
-    list(APPEND CMAKE_PREFIX_PATH ${LIBSNDFILE_INSTALL_DIR})
-
     # yaml-cpp
-    set(YAMLCPP_INSTALL_DIR ${CMAKE_BINARY_DIR}/yaml-cpp-install)
-
     set(YAMLCPP_CMAKE_ARGS
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
         -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
-        -DCMAKE_INSTALL_PREFIX=${YAMLCPP_INSTALL_DIR}
+        -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_CXX_STANDARD=11
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
@@ -210,7 +196,7 @@ macro(configure_alumy_dependencies)
         CMAKE_ARGS ${YAMLCPP_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS
-            ${YAMLCPP_INSTALL_DIR}/lib/libyaml-cpp.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libyaml-cpp.a
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -220,11 +206,7 @@ macro(configure_alumy_dependencies)
         USES_TERMINAL_INSTALL ON
     )
 
-    list(APPEND CMAKE_PREFIX_PATH ${YAMLCPP_INSTALL_DIR})
-
     # OpenSSL
-    set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
-    
     message(STATUS "Configuring bundled OpenSSL build")
 
     # Determine OpenSSL target based on CMAKE_SYSTEM_PROCESSOR
@@ -263,12 +245,12 @@ macro(configure_alumy_dependencies)
         GIT_REPOSITORY https://github.com/openssl/openssl.git
         GIT_TAG openssl-3.0.17
         GIT_SHALLOW ON
-        INSTALL_DIR ${OPENSSL_INSTALL_DIR}
+        INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
         CONFIGURE_COMMAND ${OPENSSL_CONFIGURE_COMMAND}
         BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
         BUILD_BYPRODUCTS
-            ${OPENSSL_INSTALL_DIR}/lib/libssl.a
-            ${OPENSSL_INSTALL_DIR}/lib/libcrypto.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libssl.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libcrypto.a
         INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install_sw
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -277,16 +259,12 @@ macro(configure_alumy_dependencies)
         USES_TERMINAL_BUILD ON
         USES_TERMINAL_INSTALL ON
     )
-    
-    list(APPEND CMAKE_PREFIX_PATH ${OPENSSL_INSTALL_DIR})
 
     # gRPC
-    set(GRPC_INSTALL_DIR ${CMAKE_BINARY_DIR}/grpc-install)
-
     set(GRPC_CMAKE_ARGS
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
         -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
-        -DCMAKE_INSTALL_PREFIX=${GRPC_INSTALL_DIR}
+        -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_CXX_STANDARD=17
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
@@ -321,10 +299,10 @@ macro(configure_alumy_dependencies)
         -DCARES_SHARED=OFF
         -DCARES_BUILD_TESTS=OFF
         -DCARES_BUILD_TOOLS=OFF
-        -DOPENSSL_ROOT_DIR=${OPENSSL_INSTALL_DIR}
-        -DOPENSSL_INCLUDE_DIR=${OPENSSL_INSTALL_DIR}/include
-        -DOPENSSL_CRYPTO_LIBRARY=${OPENSSL_INSTALL_DIR}/lib/libcrypto.a
-        -DOPENSSL_SSL_LIBRARY=${OPENSSL_INSTALL_DIR}/lib/libssl.a
+        -DOPENSSL_ROOT_DIR=${EXTERNAL_INSTALL_DIR}
+        -DOPENSSL_INCLUDE_DIR=${EXTERNAL_INSTALL_DIR}/include
+        -DOPENSSL_CRYPTO_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libcrypto.a
+        -DOPENSSL_SSL_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libssl.a
     )
     if(CCACHE_PROGRAM)
         list(APPEND GRPC_CMAKE_ARGS
@@ -340,17 +318,17 @@ macro(configure_alumy_dependencies)
         CMAKE_ARGS ${GRPC_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS 
-            ${GRPC_INSTALL_DIR}/lib/libgrpc++.a
-            ${GRPC_INSTALL_DIR}/lib/libgrpc.a
-            ${GRPC_INSTALL_DIR}/lib/libgpr.a
-            ${GRPC_INSTALL_DIR}/lib/libaddress_sorting.a
-            ${GRPC_INSTALL_DIR}/lib/libupb.a
-            ${GRPC_INSTALL_DIR}/lib/libabsl_*.a
-            ${GRPC_INSTALL_DIR}/lib/libprotobuf.a
-            ${GRPC_INSTALL_DIR}/lib/libre2.a
-            ${GRPC_INSTALL_DIR}/lib/libcares.a
-            ${GRPC_INSTALL_DIR}/lib/libz.a
-            ${GRPC_INSTALL_DIR}/bin/grpc_cpp_plugin
+            ${EXTERNAL_INSTALL_DIR}/lib/libgrpc++.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libgrpc.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libgpr.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libaddress_sorting.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libupb.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libabsl_*.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libprotobuf.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libre2.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libcares.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libz.a
+            ${EXTERNAL_INSTALL_DIR}/bin/grpc_cpp_plugin
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -361,11 +339,7 @@ macro(configure_alumy_dependencies)
         DEPENDS openssl-external
     )
 
-    list(APPEND CMAKE_PREFIX_PATH ${GRPC_INSTALL_DIR})
-
     # Boost
-    set(BOOST_INSTALL_DIR ${CMAKE_BINARY_DIR}/boost-install)
-
     set(BOOST_B2_OPTIONS variant=release link=static runtime-link=static threading=multi cxxstd=11)
 
     include(ProcessorCount)
@@ -390,16 +364,16 @@ macro(configure_alumy_dependencies)
         GIT_TAG boost-1.75.0
         GIT_SHALLOW ON
         GIT_SUBMODULES_RECURSE ON
-        INSTALL_DIR ${BOOST_INSTALL_DIR}
+        INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
         CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./bootstrap.sh --prefix=<INSTALL_DIR>
         BUILD_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./b2 -j${BOOST_PARALLEL_JOBS} ${BOOST_TOOLSET} ${BOOST_B2_OPTIONS} --user-config=${CMAKE_BINARY_DIR}/user-config.jam --prefix=<INSTALL_DIR> headers
             COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./b2 -j${BOOST_PARALLEL_JOBS} ${BOOST_TOOLSET} ${BOOST_B2_OPTIONS} --user-config=${CMAKE_BINARY_DIR}/user-config.jam --prefix=<INSTALL_DIR> --with-system --with-filesystem --with-thread --with-chrono --with-date_time install
         BUILD_BYPRODUCTS
-            ${BOOST_INSTALL_DIR}/lib/libboost_system.a
-            ${BOOST_INSTALL_DIR}/lib/libboost_filesystem.a
-            ${BOOST_INSTALL_DIR}/lib/libboost_thread.a
-            ${BOOST_INSTALL_DIR}/lib/libboost_chrono.a
-            ${BOOST_INSTALL_DIR}/lib/libboost_date_time.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libboost_system.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libboost_filesystem.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libboost_thread.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libboost_chrono.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libboost_date_time.a
         INSTALL_COMMAND ""
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -409,20 +383,17 @@ macro(configure_alumy_dependencies)
         USES_TERMINAL_INSTALL ON
     )
 
-    list(APPEND CMAKE_PREFIX_PATH ${BOOST_INSTALL_DIR})
-    set(BOOST_ROOT ${BOOST_INSTALL_DIR} CACHE PATH "" FORCE)
-    set(BOOST_INCLUDEDIR ${BOOST_INSTALL_DIR}/include CACHE PATH "" FORCE)
-    set(BOOST_LIBRARYDIR ${BOOST_INSTALL_DIR}/lib CACHE PATH "" FORCE)
+    set(BOOST_ROOT ${EXTERNAL_INSTALL_DIR} CACHE PATH "" FORCE)
+    set(BOOST_INCLUDEDIR ${EXTERNAL_INSTALL_DIR}/include CACHE PATH "" FORCE)
+    set(BOOST_LIBRARYDIR ${EXTERNAL_INSTALL_DIR}/lib CACHE PATH "" FORCE)
     set(Boost_NO_SYSTEM_PATHS ON CACHE BOOL "" FORCE)
     set(Boost_USE_STATIC_LIBS ON CACHE BOOL "" FORCE)
 
     # libcoap
-    set(LIBCOAP_INSTALL_DIR ${CMAKE_BINARY_DIR}/libcoap-install)
-
     set(LIBCOAP_CMAKE_ARGS
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
         -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
-        -DCMAKE_INSTALL_PREFIX=${LIBCOAP_INSTALL_DIR}
+        -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_C_STANDARD=11
         -DCMAKE_C_STANDARD_REQUIRED=ON
@@ -434,10 +405,10 @@ macro(configure_alumy_dependencies)
         -DENABLE_EXAMPLES=OFF
         -DENABLE_DOCS=OFF
         -DENABLE_TESTS=OFF
-        -DOPENSSL_ROOT_DIR=${OPENSSL_INSTALL_DIR}
-        -DOPENSSL_INCLUDE_DIR=${OPENSSL_INSTALL_DIR}/include
-        -DOPENSSL_CRYPTO_LIBRARY=${OPENSSL_INSTALL_DIR}/lib/libcrypto.a
-        -DOPENSSL_SSL_LIBRARY=${OPENSSL_INSTALL_DIR}/lib/libssl.a
+        -DOPENSSL_ROOT_DIR=${EXTERNAL_INSTALL_DIR}
+        -DOPENSSL_INCLUDE_DIR=${EXTERNAL_INSTALL_DIR}/include
+        -DOPENSSL_CRYPTO_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libcrypto.a
+        -DOPENSSL_SSL_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libssl.a
     )
     if(CCACHE_PROGRAM)
         list(APPEND LIBCOAP_CMAKE_ARGS
@@ -452,7 +423,7 @@ macro(configure_alumy_dependencies)
         CMAKE_ARGS ${LIBCOAP_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS
-            ${LIBCOAP_INSTALL_DIR}/lib/libcoap-3-openssl.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libcoap-3-openssl.a
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -463,27 +434,10 @@ macro(configure_alumy_dependencies)
         DEPENDS openssl-external
     )
 
-    list(APPEND CMAKE_PREFIX_PATH ${LIBCOAP_INSTALL_DIR})
-
-    # Detect build system triplet for autotools cross-compilation
-    execute_process(
-        COMMAND gcc -dumpmachine
-        OUTPUT_VARIABLE AUTOTOOLS_BUILD_TRIPLET
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    if(NOT AUTOTOOLS_BUILD_TRIPLET)
-        set(AUTOTOOLS_BUILD_TRIPLET "x86_64-linux-gnu")
-    endif()
-
-    # Get host triplet for cross-compilation (CMAKE_C_COMPILER_TARGET should be set in toolchain file)
-    set(AUTOTOOLS_HOST_TRIPLET ${CMAKE_C_COMPILER_TARGET})
-
     message(STATUS "Autotools build triplet: ${AUTOTOOLS_BUILD_TRIPLET}")
     message(STATUS "Autotools host triplet: ${AUTOTOOLS_HOST_TRIPLET}")
 
     # libite (dependency of watchdogd)
-    set(LIBITE_INSTALL_DIR ${CMAKE_BINARY_DIR}/libite-install)
-
     if(CCACHE_PROGRAM)
         set(LIBITE_CC "${CCACHE_PROGRAM} ${CMAKE_C_COMPILER}")
     else()
@@ -494,9 +448,10 @@ macro(configure_alumy_dependencies)
         GIT_REPOSITORY https://github.com/troglobit/libite.git
         GIT_TAG v2.6.1
         GIT_SHALLOW ON
-        INSTALL_DIR ${LIBITE_INSTALL_DIR}
+        INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
+        PATCH_COMMAND sed -i "s/ln -s /ln -sf /g" <SOURCE_DIR>/src/Makefile.am
         CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
-            COMMAND ${CMAKE_COMMAND} -E env "CC=${LIBITE_CC}" "PKG_CONFIG_PATH=${LIBITE_INSTALL_DIR}/lib/pkgconfig"
+            COMMAND ${CMAKE_COMMAND} -E env "CC=${LIBITE_CC}" "PKG_CONFIG_PATH=${EXTERNAL_INSTALL_DIR}/lib/pkgconfig"
                 <SOURCE_DIR>/configure
                     --prefix=<INSTALL_DIR>
                     --build=${AUTOTOOLS_BUILD_TRIPLET}
@@ -505,7 +460,7 @@ macro(configure_alumy_dependencies)
                     --disable-shared
         BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
         BUILD_BYPRODUCTS
-            ${LIBITE_INSTALL_DIR}/lib/libite.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libite.a
         INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -515,11 +470,7 @@ macro(configure_alumy_dependencies)
         USES_TERMINAL_INSTALL ON
     )
 
-    list(APPEND CMAKE_PREFIX_PATH ${LIBITE_INSTALL_DIR})
-
     # libuEv (dependency of watchdogd)
-    set(LIBUEV_INSTALL_DIR ${CMAKE_BINARY_DIR}/libuev-install)
-
     if(CCACHE_PROGRAM)
         set(LIBUEV_CC "${CCACHE_PROGRAM} ${CMAKE_C_COMPILER}")
     else()
@@ -530,9 +481,9 @@ macro(configure_alumy_dependencies)
         GIT_REPOSITORY https://github.com/troglobit/libuev.git
         GIT_TAG v2.4.1
         GIT_SHALLOW ON
-        INSTALL_DIR ${LIBUEV_INSTALL_DIR}
+        INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
         CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
-            COMMAND ${CMAKE_COMMAND} -E env "CC=${LIBUEV_CC}" "PKG_CONFIG_PATH=${LIBUEV_INSTALL_DIR}/lib/pkgconfig"
+            COMMAND ${CMAKE_COMMAND} -E env "CC=${LIBUEV_CC}" "PKG_CONFIG_PATH=${EXTERNAL_INSTALL_DIR}/lib/pkgconfig"
                 <SOURCE_DIR>/configure
                     --prefix=<INSTALL_DIR>
                     --build=${AUTOTOOLS_BUILD_TRIPLET}
@@ -541,7 +492,7 @@ macro(configure_alumy_dependencies)
                     --disable-shared
         BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
         BUILD_BYPRODUCTS
-            ${LIBUEV_INSTALL_DIR}/lib/libuev.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libuev.a
         INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -551,11 +502,7 @@ macro(configure_alumy_dependencies)
         USES_TERMINAL_INSTALL ON
     )
 
-    list(APPEND CMAKE_PREFIX_PATH ${LIBUEV_INSTALL_DIR})
-
     # libConfuse (dependency of watchdogd)
-    set(LIBCONFUSE_INSTALL_DIR ${CMAKE_BINARY_DIR}/libconfuse-install)
-
     if(CCACHE_PROGRAM)
         set(LIBCONFUSE_CC "${CCACHE_PROGRAM} ${CMAKE_C_COMPILER}")
     else()
@@ -566,9 +513,9 @@ macro(configure_alumy_dependencies)
         GIT_REPOSITORY https://github.com/libconfuse/libconfuse.git
         GIT_TAG v3.3
         GIT_SHALLOW ON
-        INSTALL_DIR ${LIBCONFUSE_INSTALL_DIR}
+        INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
         CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
-            COMMAND ${CMAKE_COMMAND} -E env "CC=${LIBCONFUSE_CC}" "PKG_CONFIG_PATH=${LIBCONFUSE_INSTALL_DIR}/lib/pkgconfig"
+            COMMAND ${CMAKE_COMMAND} -E env "CC=${LIBCONFUSE_CC}" "PKG_CONFIG_PATH=${EXTERNAL_INSTALL_DIR}/lib/pkgconfig"
                 <SOURCE_DIR>/configure
                     --prefix=<INSTALL_DIR>
                     --build=${AUTOTOOLS_BUILD_TRIPLET}
@@ -578,7 +525,7 @@ macro(configure_alumy_dependencies)
                     --disable-examples
         BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
         BUILD_BYPRODUCTS
-            ${LIBCONFUSE_INSTALL_DIR}/lib/libconfuse.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libconfuse.a
         INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -588,11 +535,7 @@ macro(configure_alumy_dependencies)
         USES_TERMINAL_INSTALL ON
     )
 
-    list(APPEND CMAKE_PREFIX_PATH ${LIBCONFUSE_INSTALL_DIR})
-
     # watchdogd
-    set(WATCHDOGD_INSTALL_DIR ${CMAKE_BINARY_DIR}/watchdogd-install)
-
     if(CCACHE_PROGRAM)
         set(WATCHDOGD_CC "${CCACHE_PROGRAM} ${CMAKE_C_COMPILER}")
     else()
@@ -601,24 +544,25 @@ macro(configure_alumy_dependencies)
 
     ExternalProject_Add(watchdogd-external
         GIT_REPOSITORY https://github.com/troglobit/watchdogd.git
-        GIT_TAG v4.1
+        GIT_TAG 3.5
         GIT_SHALLOW ON
-        INSTALL_DIR ${WATCHDOGD_INSTALL_DIR}
+        INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
         CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
             COMMAND ${CMAKE_COMMAND} -E env 
                 "CC=${WATCHDOGD_CC}"
-                "PKG_CONFIG_PATH=${LIBITE_INSTALL_DIR}/lib/pkgconfig:${LIBUEV_INSTALL_DIR}/lib/pkgconfig:${LIBCONFUSE_INSTALL_DIR}/lib/pkgconfig"
-                "CFLAGS=-I${LIBITE_INSTALL_DIR}/include -I${LIBUEV_INSTALL_DIR}/include -I${LIBCONFUSE_INSTALL_DIR}/include"
-                "LDFLAGS=-L${LIBITE_INSTALL_DIR}/lib -L${LIBUEV_INSTALL_DIR}/lib -L${LIBCONFUSE_INSTALL_DIR}/lib"
+                "CPPFLAGS=-I${EXTERNAL_INSTALL_DIR}/include"
+                "LDFLAGS=-L${EXTERNAL_INSTALL_DIR}/lib"
+                "PKG_CONFIG_PATH=${EXTERNAL_INSTALL_DIR}/lib/pkgconfig"
                 <SOURCE_DIR>/configure
                     --prefix=<INSTALL_DIR>
                     --build=${AUTOTOOLS_BUILD_TRIPLET}
                     --host=${AUTOTOOLS_HOST_TRIPLET}
                     --enable-static
                     --disable-shared
+                    --with-systemd=no
         BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
         BUILD_BYPRODUCTS
-            ${WATCHDOGD_INSTALL_DIR}/lib/libwdog.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libwdog.a
         INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -628,128 +572,14 @@ macro(configure_alumy_dependencies)
         USES_TERMINAL_INSTALL ON
         DEPENDS libite-external libuev-external libconfuse-external
     )
-
-    list(APPEND CMAKE_PREFIX_PATH ${WATCHDOGD_INSTALL_DIR})
-endmacro()
-
-macro(install_alumy_spdlog)
-    set(SPDLOG_INSTALL_DIR ${CMAKE_BINARY_DIR}/spdlog-install)
-
-    install(DIRECTORY ${SPDLOG_INSTALL_DIR}/
-        DESTINATION "."
-        USE_SOURCE_PERMISSIONS)
-endmacro()
-
-macro(install_alumy_qpcpp)
-    set(QPCPP_INSTALL_DIR ${CMAKE_BINARY_DIR}/qpcpp-install)
-
-    install(DIRECTORY ${QPCPP_INSTALL_DIR}/
-        DESTINATION "."
-        USE_SOURCE_PERMISSIONS)
-endmacro()
-
-macro(install_alumy_log4qt)
-    set(LOG4QT_INSTALL_DIR ${CMAKE_BINARY_DIR}/log4qt-install)
-
-    install(DIRECTORY ${LOG4QT_INSTALL_DIR}/
-        DESTINATION "."
-        USE_SOURCE_PERMISSIONS)
-endmacro()
-
-macro(install_alumy_libsndfile)
-    set(LIBSNDFILE_INSTALL_DIR ${CMAKE_BINARY_DIR}/libsndfile-install)
-
-    install(DIRECTORY ${LIBSNDFILE_INSTALL_DIR}/
-        DESTINATION "."
-        USE_SOURCE_PERMISSIONS)
-endmacro()
-
-macro(install_alumy_yamlcpp)
-    set(YAMLCPP_INSTALL_DIR ${CMAKE_BINARY_DIR}/yaml-cpp-install)
-
-    install(DIRECTORY ${YAMLCPP_INSTALL_DIR}/
-        DESTINATION "."
-        USE_SOURCE_PERMISSIONS)
-endmacro()
-
-macro(install_alumy_grpc)
-    set(GRPC_INSTALL_DIR ${CMAKE_BINARY_DIR}/grpc-install)
-
-    install(DIRECTORY ${GRPC_INSTALL_DIR}/
-        DESTINATION "."
-        USE_SOURCE_PERMISSIONS)
-endmacro()
-
-macro(install_alumy_openssl)
-    set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
-    
-    install(DIRECTORY ${OPENSSL_INSTALL_DIR}/
-        DESTINATION "."
-        USE_SOURCE_PERMISSIONS)
-endmacro()
-
-macro(install_alumy_boost)
-    set(BOOST_INSTALL_DIR ${CMAKE_BINARY_DIR}/boost-install)
-
-    install(DIRECTORY ${BOOST_INSTALL_DIR}/
-        DESTINATION "."
-        USE_SOURCE_PERMISSIONS)
-endmacro()
-
-macro(install_alumy_libcoap)
-    set(LIBCOAP_INSTALL_DIR ${CMAKE_BINARY_DIR}/libcoap-install)
-
-    install(DIRECTORY ${LIBCOAP_INSTALL_DIR}/
-        DESTINATION "."
-        USE_SOURCE_PERMISSIONS)
-endmacro()
-
-macro(install_alumy_libite)
-    set(LIBITE_INSTALL_DIR ${CMAKE_BINARY_DIR}/libite-install)
-
-    install(DIRECTORY ${LIBITE_INSTALL_DIR}/
-        DESTINATION "."
-        USE_SOURCE_PERMISSIONS)
-endmacro()
-
-macro(install_alumy_libuev)
-    set(LIBUEV_INSTALL_DIR ${CMAKE_BINARY_DIR}/libuev-install)
-
-    install(DIRECTORY ${LIBUEV_INSTALL_DIR}/
-        DESTINATION "."
-        USE_SOURCE_PERMISSIONS)
-endmacro()
-
-macro(install_alumy_libconfuse)
-    set(LIBCONFUSE_INSTALL_DIR ${CMAKE_BINARY_DIR}/libconfuse-install)
-
-    install(DIRECTORY ${LIBCONFUSE_INSTALL_DIR}/
-        DESTINATION "."
-        USE_SOURCE_PERMISSIONS)
-endmacro()
-
-macro(install_alumy_watchdogd)
-    set(WATCHDOGD_INSTALL_DIR ${CMAKE_BINARY_DIR}/watchdogd-install)
-
-    install(DIRECTORY ${WATCHDOGD_INSTALL_DIR}/
-        DESTINATION "."
-        USE_SOURCE_PERMISSIONS)
 endmacro()
 
 macro(install_alumy_dependencies)
-    install_alumy_spdlog()
-    install_alumy_qpcpp()
-    install_alumy_log4qt()
-    install_alumy_libsndfile()
-    install_alumy_yamlcpp()
-    install_alumy_grpc()
-    install_alumy_openssl()
-    install_alumy_boost()
-    install_alumy_libcoap()
-    install_alumy_libite()
-    install_alumy_libuev()
-    install_alumy_libconfuse()
-    install_alumy_watchdogd()
+    set(EXTERNAL_INSTALL_DIR ${CMAKE_BINARY_DIR}/external-install)
+
+    install(DIRECTORY ${EXTERNAL_INSTALL_DIR}/
+        DESTINATION "."
+        USE_SOURCE_PERMISSIONS)
 endmacro()
 
 macro(add_alumy_dependencies target)
@@ -771,51 +601,15 @@ macro(add_alumy_dependencies target)
 endmacro()
 
 macro(link_alumy_dependencies target)
-    set(SPDLOG_INSTALL_DIR ${CMAKE_BINARY_DIR}/spdlog-install)
-    set(QPCPP_INSTALL_DIR ${CMAKE_BINARY_DIR}/qpcpp-install)
-    set(LOG4QT_INSTALL_DIR ${CMAKE_BINARY_DIR}/log4qt-install)
-    set(LIBSNDFILE_INSTALL_DIR ${CMAKE_BINARY_DIR}/libsndfile-install)
-    set(YAMLCPP_INSTALL_DIR ${CMAKE_BINARY_DIR}/yaml-cpp-install)
-    set(GRPC_INSTALL_DIR ${CMAKE_BINARY_DIR}/grpc-install)
-    set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
-    set(BOOST_INSTALL_DIR ${CMAKE_BINARY_DIR}/boost-install)
-    set(LIBCOAP_INSTALL_DIR ${CMAKE_BINARY_DIR}/libcoap-install)
-    set(LIBITE_INSTALL_DIR ${CMAKE_BINARY_DIR}/libite-install)
-    set(LIBUEV_INSTALL_DIR ${CMAKE_BINARY_DIR}/libuev-install)
-    set(LIBCONFUSE_INSTALL_DIR ${CMAKE_BINARY_DIR}/libconfuse-install)
-    set(WATCHDOGD_INSTALL_DIR ${CMAKE_BINARY_DIR}/watchdogd-install)
+    set(EXTERNAL_INSTALL_DIR ${CMAKE_BINARY_DIR}/external-install)
 
     target_include_directories(${target} PUBLIC
-        $<BUILD_INTERFACE:${SPDLOG_INSTALL_DIR}/include>
-        $<BUILD_INTERFACE:${QPCPP_INSTALL_DIR}/include>
-        $<BUILD_INTERFACE:${LOG4QT_INSTALL_DIR}/include>
-        $<BUILD_INTERFACE:${LIBSNDFILE_INSTALL_DIR}/include>
-        $<BUILD_INTERFACE:${YAMLCPP_INSTALL_DIR}/include>
-        $<BUILD_INTERFACE:${GRPC_INSTALL_DIR}/include>
-        $<BUILD_INTERFACE:${OPENSSL_INSTALL_DIR}/include>
-        $<BUILD_INTERFACE:${BOOST_INSTALL_DIR}/include>
-        $<BUILD_INTERFACE:${LIBCOAP_INSTALL_DIR}/include>
-        $<BUILD_INTERFACE:${LIBITE_INSTALL_DIR}/include>
-        $<BUILD_INTERFACE:${LIBUEV_INSTALL_DIR}/include>
-        $<BUILD_INTERFACE:${LIBCONFUSE_INSTALL_DIR}/include>
-        $<BUILD_INTERFACE:${WATCHDOGD_INSTALL_DIR}/include>
+        $<BUILD_INTERFACE:${EXTERNAL_INSTALL_DIR}/include>
         $<INSTALL_INTERFACE:include>
     )
 
     target_link_directories(${target} PUBLIC
-        $<BUILD_INTERFACE:${SPDLOG_INSTALL_DIR}/lib>
-        $<BUILD_INTERFACE:${QPCPP_INSTALL_DIR}/lib>
-        $<BUILD_INTERFACE:${LOG4QT_INSTALL_DIR}/lib>
-        $<BUILD_INTERFACE:${LIBSNDFILE_INSTALL_DIR}/lib>
-        $<BUILD_INTERFACE:${YAMLCPP_INSTALL_DIR}/lib>
-        $<BUILD_INTERFACE:${GRPC_INSTALL_DIR}/lib>
-        $<BUILD_INTERFACE:${OPENSSL_INSTALL_DIR}/lib>
-        $<BUILD_INTERFACE:${BOOST_INSTALL_DIR}/lib>
-        $<BUILD_INTERFACE:${LIBCOAP_INSTALL_DIR}/lib>
-        $<BUILD_INTERFACE:${LIBITE_INSTALL_DIR}/lib>
-        $<BUILD_INTERFACE:${LIBUEV_INSTALL_DIR}/lib>
-        $<BUILD_INTERFACE:${LIBCONFUSE_INSTALL_DIR}/lib>
-        $<BUILD_INTERFACE:${WATCHDOGD_INSTALL_DIR}/lib>
+        $<BUILD_INTERFACE:${EXTERNAL_INSTALL_DIR}/lib>
         $<INSTALL_INTERFACE:lib>
     )
 

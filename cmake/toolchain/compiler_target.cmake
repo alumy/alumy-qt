@@ -6,7 +6,7 @@ function(compiler_target COMPILER TARGET)
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
     if(_result EQUAL 0)
-        set(${TARGET} "${_target}" PARENT_SCOPE)
+        set(${TARGET} "${_target}" CACHE INTERNAL "Compiler target triplet" FORCE)
     else()
         message(FATAL_ERROR "Failed to run ${COMPILER} -dumpmachine")
     endif()

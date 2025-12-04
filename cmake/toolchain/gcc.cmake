@@ -9,4 +9,4 @@ set(CMAKE_CXX_COMPILER "g++")
 # set(CMAKE_CXX_COMPILER_WORKS 1)
 # set(CMAKE_ASM_COMPILER_WORKS 1)
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/compiler.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/compiler.cmake)
