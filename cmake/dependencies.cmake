@@ -16,6 +16,7 @@ macro(configure_alumy_dependencies)
         -DSPDLOG_BUILD_SHARED=OFF
         -DSPDLOG_BUILD_TESTS=OFF
         -DSPDLOG_BUILD_BENCH=OFF
+        -DSPDLOG_BUILD_EXAMPLE=OFF
         -DSPDLOG_INSTALL=ON
     )
     if(CCACHE_PROGRAM)
