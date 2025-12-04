@@ -242,10 +242,58 @@ macro(configure_alumy_dependencies)
         USES_TERMINAL_INSTALL ON
     )
 
-    # gRPC
+    # Find host protoc (required for cross-compilation)
+    find_program(PROTOC_EXECUTABLE protoc REQUIRED)
+    message(STATUS "Found host protoc: ${PROTOC_EXECUTABLE}")
+
+    # Protobuf (standalone build - libraries only, use host protoc)
+    set(PROTOBUF_CMAKE_ARGS
+        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+        -DCMAKE_PREFIX_PATH=${EXTERNAL_INSTALL_DIR}
+        -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
+        -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
+        -DCMAKE_CXX_STANDARD=11
+        -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DBUILD_SHARED_LIBS=OFF
+        -Dprotobuf_BUILD_TESTS=OFF
+        -Dprotobuf_BUILD_EXAMPLES=OFF
+        -Dprotobuf_BUILD_CONFORMANCE=OFF
+        -Dprotobuf_BUILD_LIBPROTOC=OFF
+        -Dprotobuf_BUILD_PROTOC_BINARIES=OFF
+        -Dprotobuf_BUILD_SHARED_LIBS=OFF
+        -Dprotobuf_WITH_ZLIB=OFF
+        -Dprotobuf_MSVC_STATIC_RUNTIME=OFF
+    )
+
+    ExternalProject_Add(protobuf-external
+        GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
+        GIT_TAG v3.21.12
+        GIT_SHALLOW ON
+        CMAKE_ARGS ${PROTOBUF_CMAKE_ARGS}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_BYPRODUCTS
+            ${EXTERNAL_INSTALL_DIR}/lib/libprotobuf.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libprotobuf-lite.a
+        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+            COMMAND ${CMAKE_COMMAND} -E copy ${PROTOC_EXECUTABLE} ${EXTERNAL_INSTALL_DIR}/bin/protoc
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+    )
+
+    # Find host grpc_cpp_plugin (required for cross-compilation)
+    find_program(GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin REQUIRED)
+    message(STATUS "Found host grpc_cpp_plugin: ${GRPC_CPP_PLUGIN_EXECUTABLE}")
+
+    # gRPC (using standalone protobuf, host protoc and grpc_cpp_plugin)
     set(GRPC_CMAKE_ARGS
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
-        -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+        -DCMAKE_PREFIX_PATH=${EXTERNAL_INSTALL_DIR}
         -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
@@ -263,21 +311,17 @@ macro(configure_alumy_dependencies)
         -DgRPC_BUILD_GRPC_RUBY_PLUGIN=OFF
         -DgRPC_ABSL_PROVIDER=module
         -DgRPC_CARES_PROVIDER=module
-        -DgRPC_PROTOBUF_PROVIDER=module
+        -DgRPC_PROTOBUF_PROVIDER=package
         -DgRPC_RE2_PROVIDER=module
         -DgRPC_SSL_PROVIDER=package
         -DgRPC_ZLIB_PROVIDER=module
         -DgRPC_BENCHMARK_PROVIDER=none
-        -DgRPC_BUILD_GRPC_CPP_PLUGIN=ON
-        -DgRPC_BUILD_CODEGEN=ON
+        -DgRPC_BUILD_GRPC_CPP_PLUGIN=OFF
+        -DgRPC_BUILD_CODEGEN=OFF
         -DgRPC_INSTALL=ON
         -DgRPC_BACKWARDS_COMPATIBILITY_MODE=OFF
         -DABSL_PROPAGATE_CXX_STD=ON
         -DABSL_ENABLE_INSTALL=ON
-        -Dprotobuf_BUILD_TESTS=OFF
-        -Dprotobuf_BUILD_EXAMPLES=OFF
-        -Dprotobuf_WITH_ZLIB=OFF
-        -Dprotobuf_BUILD_SHARED_LIBS=OFF
         -DRE2_BUILD_TESTING=OFF
         -DCARES_STATIC=ON
         -DCARES_SHARED=OFF
@@ -287,6 +331,9 @@ macro(configure_alumy_dependencies)
         -DOPENSSL_INCLUDE_DIR=${EXTERNAL_INSTALL_DIR}/include
         -DOPENSSL_CRYPTO_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libcrypto.a
         -DOPENSSL_SSL_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libssl.a
+        -DProtobuf_DIR=${EXTERNAL_INSTALL_DIR}/lib/cmake/protobuf
+        -DProtobuf_PROTOC_EXECUTABLE=${PROTOC_EXECUTABLE}
+        -D_gRPC_CPP_PLUGIN=${GRPC_CPP_PLUGIN_EXECUTABLE}
     )
     
     ExternalProject_Add(grpc-external
@@ -303,19 +350,19 @@ macro(configure_alumy_dependencies)
             ${EXTERNAL_INSTALL_DIR}/lib/libaddress_sorting.a
             ${EXTERNAL_INSTALL_DIR}/lib/libupb.a
             ${EXTERNAL_INSTALL_DIR}/lib/libabsl_*.a
-            ${EXTERNAL_INSTALL_DIR}/lib/libprotobuf.a
             ${EXTERNAL_INSTALL_DIR}/lib/libre2.a
             ${EXTERNAL_INSTALL_DIR}/lib/libcares.a
             ${EXTERNAL_INSTALL_DIR}/lib/libz.a
             ${EXTERNAL_INSTALL_DIR}/bin/grpc_cpp_plugin
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+            COMMAND ${CMAKE_COMMAND} -E copy ${GRPC_CPP_PLUGIN_EXECUTABLE} ${EXTERNAL_INSTALL_DIR}/bin/grpc_cpp_plugin
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
         LOG_INSTALL OFF
         USES_TERMINAL_BUILD ON
         USES_TERMINAL_INSTALL ON
-        DEPENDS openssl-external
+        DEPENDS openssl-external protobuf-external
     )
 
     # Boost
@@ -567,6 +614,7 @@ macro(add_alumy_dependencies target)
         log4qt-external 
         libsndfile-external 
         yaml-cpp-external 
+        protobuf-external
         grpc-external 
         openssl-external 
         boost-external 
@@ -609,6 +657,7 @@ macro(link_alumy_dependencies target)
         gpr
         address_sorting
         upb
+        protobuf
         coap-3-openssl
         wdog
         ite
