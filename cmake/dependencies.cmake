@@ -464,6 +464,172 @@ macro(configure_alumy_dependencies)
     )
 
     list(APPEND CMAKE_PREFIX_PATH ${LIBCOAP_INSTALL_DIR})
+
+    # Detect build system triplet for autotools cross-compilation
+    execute_process(
+        COMMAND gcc -dumpmachine
+        OUTPUT_VARIABLE AUTOTOOLS_BUILD_TRIPLET
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if(NOT AUTOTOOLS_BUILD_TRIPLET)
+        set(AUTOTOOLS_BUILD_TRIPLET "x86_64-linux-gnu")
+    endif()
+
+    # Get host triplet for cross-compilation (CMAKE_C_COMPILER_TARGET should be set in toolchain file)
+    set(AUTOTOOLS_HOST_TRIPLET ${CMAKE_C_COMPILER_TARGET})
+
+    message(STATUS "Autotools build triplet: ${AUTOTOOLS_BUILD_TRIPLET}")
+    message(STATUS "Autotools host triplet: ${AUTOTOOLS_HOST_TRIPLET}")
+
+    # libite (dependency of watchdogd)
+    set(LIBITE_INSTALL_DIR ${CMAKE_BINARY_DIR}/libite-install)
+
+    if(CCACHE_PROGRAM)
+        set(LIBITE_CC "${CCACHE_PROGRAM} ${CMAKE_C_COMPILER}")
+    else()
+        set(LIBITE_CC "${CMAKE_C_COMPILER}")
+    endif()
+
+    ExternalProject_Add(libite-external
+        GIT_REPOSITORY https://github.com/troglobit/libite.git
+        GIT_TAG v2.6.1
+        GIT_SHALLOW ON
+        INSTALL_DIR ${LIBITE_INSTALL_DIR}
+        CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
+            COMMAND ${CMAKE_COMMAND} -E env "CC=${LIBITE_CC}" "PKG_CONFIG_PATH=${LIBITE_INSTALL_DIR}/lib/pkgconfig"
+                <SOURCE_DIR>/configure
+                    --prefix=<INSTALL_DIR>
+                    --build=${AUTOTOOLS_BUILD_TRIPLET}
+                    --host=${AUTOTOOLS_HOST_TRIPLET}
+                    --enable-static
+                    --disable-shared
+        BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
+        BUILD_BYPRODUCTS
+            ${LIBITE_INSTALL_DIR}/lib/libite.a
+        INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+    )
+
+    list(APPEND CMAKE_PREFIX_PATH ${LIBITE_INSTALL_DIR})
+
+    # libuEv (dependency of watchdogd)
+    set(LIBUEV_INSTALL_DIR ${CMAKE_BINARY_DIR}/libuev-install)
+
+    if(CCACHE_PROGRAM)
+        set(LIBUEV_CC "${CCACHE_PROGRAM} ${CMAKE_C_COMPILER}")
+    else()
+        set(LIBUEV_CC "${CMAKE_C_COMPILER}")
+    endif()
+
+    ExternalProject_Add(libuev-external
+        GIT_REPOSITORY https://github.com/troglobit/libuev.git
+        GIT_TAG v2.4.1
+        GIT_SHALLOW ON
+        INSTALL_DIR ${LIBUEV_INSTALL_DIR}
+        CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
+            COMMAND ${CMAKE_COMMAND} -E env "CC=${LIBUEV_CC}" "PKG_CONFIG_PATH=${LIBUEV_INSTALL_DIR}/lib/pkgconfig"
+                <SOURCE_DIR>/configure
+                    --prefix=<INSTALL_DIR>
+                    --build=${AUTOTOOLS_BUILD_TRIPLET}
+                    --host=${AUTOTOOLS_HOST_TRIPLET}
+                    --enable-static
+                    --disable-shared
+        BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
+        BUILD_BYPRODUCTS
+            ${LIBUEV_INSTALL_DIR}/lib/libuev.a
+        INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+    )
+
+    list(APPEND CMAKE_PREFIX_PATH ${LIBUEV_INSTALL_DIR})
+
+    # libConfuse (dependency of watchdogd)
+    set(LIBCONFUSE_INSTALL_DIR ${CMAKE_BINARY_DIR}/libconfuse-install)
+
+    if(CCACHE_PROGRAM)
+        set(LIBCONFUSE_CC "${CCACHE_PROGRAM} ${CMAKE_C_COMPILER}")
+    else()
+        set(LIBCONFUSE_CC "${CMAKE_C_COMPILER}")
+    endif()
+
+    ExternalProject_Add(libconfuse-external
+        GIT_REPOSITORY https://github.com/libconfuse/libconfuse.git
+        GIT_TAG v3.3
+        GIT_SHALLOW ON
+        INSTALL_DIR ${LIBCONFUSE_INSTALL_DIR}
+        CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
+            COMMAND ${CMAKE_COMMAND} -E env "CC=${LIBCONFUSE_CC}" "PKG_CONFIG_PATH=${LIBCONFUSE_INSTALL_DIR}/lib/pkgconfig"
+                <SOURCE_DIR>/configure
+                    --prefix=<INSTALL_DIR>
+                    --build=${AUTOTOOLS_BUILD_TRIPLET}
+                    --host=${AUTOTOOLS_HOST_TRIPLET}
+                    --enable-static
+                    --disable-shared
+                    --disable-examples
+        BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
+        BUILD_BYPRODUCTS
+            ${LIBCONFUSE_INSTALL_DIR}/lib/libconfuse.a
+        INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+    )
+
+    list(APPEND CMAKE_PREFIX_PATH ${LIBCONFUSE_INSTALL_DIR})
+
+    # watchdogd
+    set(WATCHDOGD_INSTALL_DIR ${CMAKE_BINARY_DIR}/watchdogd-install)
+
+    if(CCACHE_PROGRAM)
+        set(WATCHDOGD_CC "${CCACHE_PROGRAM} ${CMAKE_C_COMPILER}")
+    else()
+        set(WATCHDOGD_CC "${CMAKE_C_COMPILER}")
+    endif()
+
+    ExternalProject_Add(watchdogd-external
+        GIT_REPOSITORY https://github.com/troglobit/watchdogd.git
+        GIT_TAG v4.1
+        GIT_SHALLOW ON
+        INSTALL_DIR ${WATCHDOGD_INSTALL_DIR}
+        CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
+            COMMAND ${CMAKE_COMMAND} -E env 
+                "CC=${WATCHDOGD_CC}"
+                "PKG_CONFIG_PATH=${LIBITE_INSTALL_DIR}/lib/pkgconfig:${LIBUEV_INSTALL_DIR}/lib/pkgconfig:${LIBCONFUSE_INSTALL_DIR}/lib/pkgconfig"
+                "CFLAGS=-I${LIBITE_INSTALL_DIR}/include -I${LIBUEV_INSTALL_DIR}/include -I${LIBCONFUSE_INSTALL_DIR}/include"
+                "LDFLAGS=-L${LIBITE_INSTALL_DIR}/lib -L${LIBUEV_INSTALL_DIR}/lib -L${LIBCONFUSE_INSTALL_DIR}/lib"
+                <SOURCE_DIR>/configure
+                    --prefix=<INSTALL_DIR>
+                    --build=${AUTOTOOLS_BUILD_TRIPLET}
+                    --host=${AUTOTOOLS_HOST_TRIPLET}
+                    --enable-static
+                    --disable-shared
+        BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
+        BUILD_BYPRODUCTS
+            ${WATCHDOGD_INSTALL_DIR}/lib/libwdog.a
+        INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+        DEPENDS libite-external libuev-external libconfuse-external
+    )
+
+    list(APPEND CMAKE_PREFIX_PATH ${WATCHDOGD_INSTALL_DIR})
 endmacro()
 
 macro(install_alumy_spdlog)
@@ -538,6 +704,38 @@ macro(install_alumy_libcoap)
         USE_SOURCE_PERMISSIONS)
 endmacro()
 
+macro(install_alumy_libite)
+    set(LIBITE_INSTALL_DIR ${CMAKE_BINARY_DIR}/libite-install)
+
+    install(DIRECTORY ${LIBITE_INSTALL_DIR}/
+        DESTINATION "."
+        USE_SOURCE_PERMISSIONS)
+endmacro()
+
+macro(install_alumy_libuev)
+    set(LIBUEV_INSTALL_DIR ${CMAKE_BINARY_DIR}/libuev-install)
+
+    install(DIRECTORY ${LIBUEV_INSTALL_DIR}/
+        DESTINATION "."
+        USE_SOURCE_PERMISSIONS)
+endmacro()
+
+macro(install_alumy_libconfuse)
+    set(LIBCONFUSE_INSTALL_DIR ${CMAKE_BINARY_DIR}/libconfuse-install)
+
+    install(DIRECTORY ${LIBCONFUSE_INSTALL_DIR}/
+        DESTINATION "."
+        USE_SOURCE_PERMISSIONS)
+endmacro()
+
+macro(install_alumy_watchdogd)
+    set(WATCHDOGD_INSTALL_DIR ${CMAKE_BINARY_DIR}/watchdogd-install)
+
+    install(DIRECTORY ${WATCHDOGD_INSTALL_DIR}/
+        DESTINATION "."
+        USE_SOURCE_PERMISSIONS)
+endmacro()
+
 macro(install_alumy_dependencies)
     install_alumy_spdlog()
     install_alumy_qpcpp()
@@ -548,6 +746,10 @@ macro(install_alumy_dependencies)
     install_alumy_openssl()
     install_alumy_boost()
     install_alumy_libcoap()
+    install_alumy_libite()
+    install_alumy_libuev()
+    install_alumy_libconfuse()
+    install_alumy_watchdogd()
 endmacro()
 
 macro(add_alumy_dependencies target)
@@ -561,6 +763,10 @@ macro(add_alumy_dependencies target)
         openssl-external 
         boost-external 
         libcoap-external
+        libite-external
+        libuev-external
+        libconfuse-external
+        watchdogd-external
     )
 endmacro()
 
@@ -574,6 +780,10 @@ macro(link_alumy_dependencies target)
     set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
     set(BOOST_INSTALL_DIR ${CMAKE_BINARY_DIR}/boost-install)
     set(LIBCOAP_INSTALL_DIR ${CMAKE_BINARY_DIR}/libcoap-install)
+    set(LIBITE_INSTALL_DIR ${CMAKE_BINARY_DIR}/libite-install)
+    set(LIBUEV_INSTALL_DIR ${CMAKE_BINARY_DIR}/libuev-install)
+    set(LIBCONFUSE_INSTALL_DIR ${CMAKE_BINARY_DIR}/libconfuse-install)
+    set(WATCHDOGD_INSTALL_DIR ${CMAKE_BINARY_DIR}/watchdogd-install)
 
     target_include_directories(${target} PUBLIC
         $<BUILD_INTERFACE:${SPDLOG_INSTALL_DIR}/include>
@@ -585,6 +795,10 @@ macro(link_alumy_dependencies target)
         $<BUILD_INTERFACE:${OPENSSL_INSTALL_DIR}/include>
         $<BUILD_INTERFACE:${BOOST_INSTALL_DIR}/include>
         $<BUILD_INTERFACE:${LIBCOAP_INSTALL_DIR}/include>
+        $<BUILD_INTERFACE:${LIBITE_INSTALL_DIR}/include>
+        $<BUILD_INTERFACE:${LIBUEV_INSTALL_DIR}/include>
+        $<BUILD_INTERFACE:${LIBCONFUSE_INSTALL_DIR}/include>
+        $<BUILD_INTERFACE:${WATCHDOGD_INSTALL_DIR}/include>
         $<INSTALL_INTERFACE:include>
     )
 
@@ -598,6 +812,10 @@ macro(link_alumy_dependencies target)
         $<BUILD_INTERFACE:${OPENSSL_INSTALL_DIR}/lib>
         $<BUILD_INTERFACE:${BOOST_INSTALL_DIR}/lib>
         $<BUILD_INTERFACE:${LIBCOAP_INSTALL_DIR}/lib>
+        $<BUILD_INTERFACE:${LIBITE_INSTALL_DIR}/lib>
+        $<BUILD_INTERFACE:${LIBUEV_INSTALL_DIR}/lib>
+        $<BUILD_INTERFACE:${LIBCONFUSE_INSTALL_DIR}/lib>
+        $<BUILD_INTERFACE:${WATCHDOGD_INSTALL_DIR}/lib>
         $<INSTALL_INTERFACE:lib>
     )
 
@@ -618,6 +836,10 @@ macro(link_alumy_dependencies target)
         address_sorting
         upb
         coap-3-openssl
+        wdog
+        ite
+        uev
+        confuse
         ssl 
         crypto
         pthread
