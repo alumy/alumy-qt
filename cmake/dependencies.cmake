@@ -277,7 +277,6 @@ macro(configure_alumy_dependencies)
             ${EXTERNAL_INSTALL_DIR}/lib/libprotobuf.a
             ${EXTERNAL_INSTALL_DIR}/lib/libprotobuf-lite.a
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
-            COMMAND ${CMAKE_COMMAND} -E copy ${PROTOC_EXECUTABLE} ${EXTERNAL_INSTALL_DIR}/bin/protoc
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
@@ -353,9 +352,7 @@ macro(configure_alumy_dependencies)
             ${EXTERNAL_INSTALL_DIR}/lib/libre2.a
             ${EXTERNAL_INSTALL_DIR}/lib/libcares.a
             ${EXTERNAL_INSTALL_DIR}/lib/libz.a
-            ${EXTERNAL_INSTALL_DIR}/bin/grpc_cpp_plugin
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
-            COMMAND ${CMAKE_COMMAND} -E copy ${GRPC_CPP_PLUGIN_EXECUTABLE} ${EXTERNAL_INSTALL_DIR}/bin/grpc_cpp_plugin
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
