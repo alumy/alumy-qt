@@ -296,6 +296,54 @@ macro(configure_alumy_dependencies)
     set(Boost_NO_SYSTEM_PATHS ON CACHE BOOL "" FORCE)
     set(Boost_USE_STATIC_LIBS ON CACHE BOOL "" FORCE)
 
+    set(LIBCOAP_INSTALL_DIR ${CMAKE_BINARY_DIR}/libcoap-install)
+
+    set(LIBCOAP_CMAKE_ARGS
+        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+        -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+        -DCMAKE_INSTALL_PREFIX=${LIBCOAP_INSTALL_DIR}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_C_STANDARD=11
+        -DCMAKE_C_STANDARD_REQUIRED=ON
+        -DBUILD_SHARED_LIBS=OFF
+        -DENABLE_DTLS=ON
+        -DENABLE_TCP=ON
+        -DENABLE_OSCORE=ON
+        -DDTLS_BACKEND=openssl
+        -DENABLE_EXAMPLES=OFF
+        -DENABLE_DOCS=OFF
+        -DENABLE_TESTS=OFF
+        -DOPENSSL_ROOT_DIR=${OPENSSL_INSTALL_DIR}
+        -DOPENSSL_INCLUDE_DIR=${OPENSSL_INSTALL_DIR}/include
+        -DOPENSSL_CRYPTO_LIBRARY=${OPENSSL_INSTALL_DIR}/lib/libcrypto.a
+        -DOPENSSL_SSL_LIBRARY=${OPENSSL_INSTALL_DIR}/lib/libssl.a
+    )
+    if(CCACHE_PROGRAM)
+        list(APPEND LIBCOAP_CMAKE_ARGS
+            -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_PROGRAM}
+            -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_PROGRAM})
+    endif()
+
+    ExternalProject_Add(libcoap-external
+        GIT_REPOSITORY https://github.com/obgm/libcoap.git
+        GIT_TAG v4.3.5
+        GIT_SHALLOW ON
+        CMAKE_ARGS ${LIBCOAP_CMAKE_ARGS}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_BYPRODUCTS
+            ${LIBCOAP_INSTALL_DIR}/lib/libcoap-3-openssl.a
+        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+        DEPENDS openssl-external
+    )
+
+    list(APPEND CMAKE_PREFIX_PATH ${LIBCOAP_INSTALL_DIR})
+
     if(DEFINED _ALUMY_ORIGINAL_BUILD_SHARED_LIBS)
         set(BUILD_SHARED_LIBS ${_ALUMY_ORIGINAL_BUILD_SHARED_LIBS} CACHE BOOL "" FORCE)
         unset(_ALUMY_ORIGINAL_BUILD_SHARED_LIBS)
@@ -330,6 +378,14 @@ macro(install_alumy_boost)
     set(BOOST_INSTALL_DIR ${CMAKE_BINARY_DIR}/boost-install)
 
     install(DIRECTORY ${BOOST_INSTALL_DIR}/
+        DESTINATION "."
+        USE_SOURCE_PERMISSIONS)
+endmacro()
+
+macro(install_alumy_libcoap)
+    set(LIBCOAP_INSTALL_DIR ${CMAKE_BINARY_DIR}/libcoap-install)
+
+    install(DIRECTORY ${LIBCOAP_INSTALL_DIR}/
         DESTINATION "."
         USE_SOURCE_PERMISSIONS)
 endmacro()
@@ -388,11 +444,12 @@ macro(install_alumy_dependencies)
     install_alumy_grpc()
     install_alumy_openssl()
     install_alumy_boost()
+    install_alumy_libcoap()
     install_alumy_fetchcontent_dependencies()
 endmacro()
 
 macro(add_alumy_dependencies target)
-    add_dependencies(${target} qpcpp-external grpc-external openssl-external boost-external)
+    add_dependencies(${target} qpcpp-external grpc-external openssl-external boost-external libcoap-external)
 endmacro()
 
 macro(link_alumy_dependencies target)
@@ -411,6 +468,7 @@ macro(link_alumy_dependencies target)
         gpr
         address_sorting
         upb
+        coap-3-openssl
         ssl 
         crypto
         pthread
