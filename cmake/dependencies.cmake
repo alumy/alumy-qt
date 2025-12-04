@@ -528,16 +528,16 @@ macro(configure_alumy_dependencies)
         GIT_TAG v6.2.0
         GIT_SHALLOW ON
         INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
-        PATCH_COMMAND sed -i [[s|^QWT_INSTALL_PREFIX.*|QWT_INSTALL_PREFIX = <INSTALL_DIR>|]] <SOURCE_DIR>/qwtconfig.pri
         CONFIGURE_COMMAND ${QMAKE} <SOURCE_DIR>/qwt.pro 
             "QMAKE_CC=${CCACHE_CC}"
             "QMAKE_CXX=${CCACHE_CXX}"
             "QMAKE_LINK=${CMAKE_CXX_COMPILER}"
             "QMAKE_AR=${CMAKE_AR} cqs"
             "QWT_CONFIG+=QwtStatic"
-            "QWT_CONFIG-=QwtShared"
+            "QWT_CONFIG-=QwtDll"
             "QWT_CONFIG-=QwtExamples"
             "QWT_CONFIG-=QwtDesigner"
+            "INSTALL_DIR=<INSTALL_DIR>"
         BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
         BUILD_BYPRODUCTS
             ${EXTERNAL_INSTALL_DIR}/lib/libqwt.a
