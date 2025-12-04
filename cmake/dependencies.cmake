@@ -554,9 +554,11 @@ macro(configure_alumy_dependencies)
                 "LDFLAGS=-L${EXTERNAL_INSTALL_DIR}/lib"
                 "PKG_CONFIG_PATH=${EXTERNAL_INSTALL_DIR}/lib/pkgconfig"
                 <SOURCE_DIR>/configure
-                    --prefix=<INSTALL_DIR>
                     --build=${AUTOTOOLS_BUILD_TRIPLET}
                     --host=${AUTOTOOLS_HOST_TRIPLET}
+                    --prefix=<INSTALL_DIR>
+                    --sysconfdir=/etc
+                    --localstatedir=/var
                     --enable-static
                     --disable-shared
                     --with-systemd=no
