@@ -105,6 +105,23 @@ macro(configure_alumy_dependencies)
         endif()
     endif()
 
+    if(NOT TARGET yaml-cpp AND NOT TARGET yaml-cpp::yaml-cpp)
+        set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+        set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+        set(YAML_CPP_BUILD_CONTRIB OFF CACHE BOOL "" FORCE)
+        set(YAML_CPP_FORMAT_SOURCE OFF CACHE BOOL "" FORCE)
+        set(YAML_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+        set(YAML_CPP_INSTALL ON CACHE BOOL "" FORCE)
+
+        FetchContent_Declare(yaml-cpp
+            GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+            GIT_TAG 0.8.0
+            GIT_SHALLOW ON
+        )
+
+        FetchContent_MakeAvailable(yaml-cpp)
+    endif()
+
     set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
     
     message(STATUS "Configuring bundled OpenSSL build")
@@ -437,6 +454,22 @@ macro(install_alumy_fetchcontent_dependencies)
             INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         )
     endif()
+
+    if(TARGET yaml-cpp)
+        install(TARGETS yaml-cpp
+            EXPORT alumy-targets
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+            INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        )
+        if(yaml-cpp_SOURCE_DIR)
+            install(DIRECTORY ${yaml-cpp_SOURCE_DIR}/include/
+                DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+                FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
+            )
+        endif()
+    endif()
 endmacro()
 
 macro(install_alumy_dependencies)
@@ -462,6 +495,7 @@ macro(link_alumy_dependencies target)
         log4qt 
         SndFile::sndfile
         spdlog
+        yaml-cpp::yaml-cpp
         qpcpp
         grpc++
         grpc
