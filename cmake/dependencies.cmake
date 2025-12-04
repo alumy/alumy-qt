@@ -575,27 +575,29 @@ macro(link_alumy_dependencies target)
     set(LIBCOAP_INSTALL_DIR ${CMAKE_BINARY_DIR}/libcoap-install)
 
     target_include_directories(${target} PUBLIC
-        ${SPDLOG_INSTALL_DIR}/include
-        ${QPCPP_INSTALL_DIR}/include
-        ${LOG4QT_INSTALL_DIR}/include
-        ${LIBSNDFILE_INSTALL_DIR}/include
-        ${YAMLCPP_INSTALL_DIR}/include
-        ${GRPC_INSTALL_DIR}/include
-        ${OPENSSL_INSTALL_DIR}/include
-        ${BOOST_INSTALL_DIR}/include
-        ${LIBCOAP_INSTALL_DIR}/include
+        $<BUILD_INTERFACE:${SPDLOG_INSTALL_DIR}/include>
+        $<BUILD_INTERFACE:${QPCPP_INSTALL_DIR}/include>
+        $<BUILD_INTERFACE:${LOG4QT_INSTALL_DIR}/include>
+        $<BUILD_INTERFACE:${LIBSNDFILE_INSTALL_DIR}/include>
+        $<BUILD_INTERFACE:${YAMLCPP_INSTALL_DIR}/include>
+        $<BUILD_INTERFACE:${GRPC_INSTALL_DIR}/include>
+        $<BUILD_INTERFACE:${OPENSSL_INSTALL_DIR}/include>
+        $<BUILD_INTERFACE:${BOOST_INSTALL_DIR}/include>
+        $<BUILD_INTERFACE:${LIBCOAP_INSTALL_DIR}/include>
+        $<INSTALL_INTERFACE:include>
     )
 
     target_link_directories(${target} PUBLIC
-        ${SPDLOG_INSTALL_DIR}/lib
-        ${QPCPP_INSTALL_DIR}/lib
-        ${LOG4QT_INSTALL_DIR}/lib
-        ${LIBSNDFILE_INSTALL_DIR}/lib
-        ${YAMLCPP_INSTALL_DIR}/lib
-        ${GRPC_INSTALL_DIR}/lib
-        ${OPENSSL_INSTALL_DIR}/lib
-        ${BOOST_INSTALL_DIR}/lib
-        ${LIBCOAP_INSTALL_DIR}/lib
+        $<BUILD_INTERFACE:${SPDLOG_INSTALL_DIR}/lib>
+        $<BUILD_INTERFACE:${QPCPP_INSTALL_DIR}/lib>
+        $<BUILD_INTERFACE:${LOG4QT_INSTALL_DIR}/lib>
+        $<BUILD_INTERFACE:${LIBSNDFILE_INSTALL_DIR}/lib>
+        $<BUILD_INTERFACE:${YAMLCPP_INSTALL_DIR}/lib>
+        $<BUILD_INTERFACE:${GRPC_INSTALL_DIR}/lib>
+        $<BUILD_INTERFACE:${OPENSSL_INSTALL_DIR}/lib>
+        $<BUILD_INTERFACE:${BOOST_INSTALL_DIR}/lib>
+        $<BUILD_INTERFACE:${LIBCOAP_INSTALL_DIR}/lib>
+        $<INSTALL_INTERFACE:lib>
     )
 
     target_link_libraries(${target} PUBLIC
