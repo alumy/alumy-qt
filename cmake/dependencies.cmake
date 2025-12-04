@@ -1,25 +1,49 @@
-include(FetchContent)
 include(ExternalProject)
 
 macro(configure_alumy_dependencies)
-    if(NOT TARGET spdlog AND NOT TARGET spdlog::spdlog)
-        set(SPDLOG_ENABLE_PCH ON CACHE BOOL "" FORCE)
-        set(SPDLOG_BUILD_SHARED OFF CACHE BOOL "" FORCE)
-        set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-        set(SPDLOG_BUILD_BENCH OFF CACHE BOOL "" FORCE)
-        set(SPDLOG_INSTALL ON CACHE BOOL "" FORCE)
+    # spdlog
+    set(SPDLOG_INSTALL_DIR ${CMAKE_BINARY_DIR}/spdlog-install)
 
-        set(_ALUMY_ORIGINAL_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
-        set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-
-        FetchContent_Declare(spdlog
-            GIT_REPOSITORY https://github.com/gabime/spdlog.git
-            GIT_TAG v1.15.3
-            GIT_SHALLOW ON
-        )
-        FetchContent_MakeAvailable(spdlog)
+    set(SPDLOG_CMAKE_ARGS
+        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+        -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+        -DCMAKE_INSTALL_PREFIX=${SPDLOG_INSTALL_DIR}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_CXX_STANDARD=11
+        -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DBUILD_SHARED_LIBS=OFF
+        -DSPDLOG_ENABLE_PCH=ON
+        -DSPDLOG_BUILD_SHARED=OFF
+        -DSPDLOG_BUILD_TESTS=OFF
+        -DSPDLOG_BUILD_BENCH=OFF
+        -DSPDLOG_INSTALL=ON
+    )
+    if(CCACHE_PROGRAM)
+        list(APPEND SPDLOG_CMAKE_ARGS
+            -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_PROGRAM}
+            -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_PROGRAM})
     endif()
 
+    ExternalProject_Add(spdlog-external
+        GIT_REPOSITORY https://github.com/gabime/spdlog.git
+        GIT_TAG v1.15.3
+        GIT_SHALLOW ON
+        CMAKE_ARGS ${SPDLOG_CMAKE_ARGS}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_BYPRODUCTS
+            ${SPDLOG_INSTALL_DIR}/lib/libspdlog.a
+        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+    )
+
+    list(APPEND CMAKE_PREFIX_PATH ${SPDLOG_INSTALL_DIR})
+
+    # qpcpp
     set(QPCPP_INSTALL_DIR ${CMAKE_BINARY_DIR}/qpcpp-install)
     
     set(QPCPP_CMAKE_ARGS
@@ -68,60 +92,136 @@ macro(configure_alumy_dependencies)
 
     list(APPEND CMAKE_PREFIX_PATH ${QPCPP_INSTALL_DIR})
 
-    if(NOT TARGET log4qt)
-        set(BUILD_STATIC_LOG4CXX_LIB ON CACHE BOOL "" FORCE)
-        set(BUILD_WITH_DB_LOGGING OFF CACHE BOOL "" FORCE)
-        set(BUILD_WITH_TELNET_LOGGING ON CACHE BOOL "" FORCE)
-        set(BUILD_WITH_DOCS OFF CACHE BOOL "" FORCE)
+    # log4qt
+    set(LOG4QT_INSTALL_DIR ${CMAKE_BINARY_DIR}/log4qt-install)
 
-        FetchContent_Declare(log4qt
-            GIT_REPOSITORY https://github.com/MEONMedical/Log4Qt.git
-            GIT_TAG v1.5.1
-            GIT_SHALLOW ON
-            PATCH_COMMAND sed -i "s/add_subdirectory(tests)/#add_subdirectory(tests)/" CMakeLists.txt
-                COMMAND sed -i "s/add_subdirectory(examples)/#add_subdirectory(examples)/" CMakeLists.txt
-        )
-        FetchContent_MakeAvailable(log4qt)
+    set(LOG4QT_CMAKE_ARGS
+        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+        -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+        -DCMAKE_INSTALL_PREFIX=${LOG4QT_INSTALL_DIR}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_CXX_STANDARD=11
+        -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DBUILD_SHARED_LIBS=OFF
+        -DBUILD_STATIC_LOG4CXX_LIB=ON
+        -DBUILD_WITH_DB_LOGGING=OFF
+        -DBUILD_WITH_TELNET_LOGGING=ON
+        -DBUILD_WITH_DOCS=OFF
+    )
+    if(CCACHE_PROGRAM)
+        list(APPEND LOG4QT_CMAKE_ARGS
+            -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_PROGRAM}
+            -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_PROGRAM})
     endif()
 
-    if(NOT TARGET SndFile::sndfile)
-        set(BUILD_PROGRAMS OFF CACHE BOOL "" FORCE)
-        set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-        set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
-        set(ENABLE_EXTERNAL_LIBS OFF CACHE BOOL "" FORCE)
-        set(ENABLE_MPEG OFF CACHE BOOL "" FORCE)
-        set(ENABLE_INSTALL ON CACHE BOOL "" FORCE)
+    ExternalProject_Add(log4qt-external
+        GIT_REPOSITORY https://github.com/MEONMedical/Log4Qt.git
+        GIT_TAG v1.5.1
+        GIT_SHALLOW ON
+        PATCH_COMMAND sed -i "s/add_subdirectory(tests)/#add_subdirectory(tests)/" CMakeLists.txt
+            COMMAND sed -i "s/add_subdirectory(examples)/#add_subdirectory(examples)/" CMakeLists.txt
+        CMAKE_ARGS ${LOG4QT_CMAKE_ARGS}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_BYPRODUCTS
+            ${LOG4QT_INSTALL_DIR}/lib/liblog4qt.a
+        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+    )
 
-        FetchContent_Declare(libsndfile
-            GIT_REPOSITORY https://github.com/libsndfile/libsndfile.git
-            GIT_TAG 1.2.2
-            GIT_SHALLOW ON
-        )
+    list(APPEND CMAKE_PREFIX_PATH ${LOG4QT_INSTALL_DIR})
 
-        FetchContent_MakeAvailable(libsndfile)
+    # libsndfile
+    set(LIBSNDFILE_INSTALL_DIR ${CMAKE_BINARY_DIR}/libsndfile-install)
 
-        if(TARGET sndfile)
-            target_compile_options(sndfile PRIVATE -Wno-format-truncation)
-        endif()
+    set(LIBSNDFILE_CMAKE_ARGS
+        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+        -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+        -DCMAKE_INSTALL_PREFIX=${LIBSNDFILE_INSTALL_DIR}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_C_STANDARD=11
+        -DCMAKE_C_STANDARD_REQUIRED=ON
+        -DBUILD_SHARED_LIBS=OFF
+        -DBUILD_PROGRAMS=OFF
+        -DBUILD_EXAMPLES=OFF
+        -DBUILD_TESTING=OFF
+        -DENABLE_EXTERNAL_LIBS=OFF
+        -DENABLE_MPEG=OFF
+        -DINSTALL_MANPAGES=OFF
+    )
+    if(CCACHE_PROGRAM)
+        list(APPEND LIBSNDFILE_CMAKE_ARGS
+            -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_PROGRAM}
+            -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_PROGRAM})
     endif()
 
-    if(NOT TARGET yaml-cpp AND NOT TARGET yaml-cpp::yaml-cpp)
-        set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-        set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
-        set(YAML_CPP_BUILD_CONTRIB OFF CACHE BOOL "" FORCE)
-        set(YAML_CPP_FORMAT_SOURCE OFF CACHE BOOL "" FORCE)
-        set(YAML_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-        set(YAML_CPP_INSTALL ON CACHE BOOL "" FORCE)
+    ExternalProject_Add(libsndfile-external
+        GIT_REPOSITORY https://github.com/libsndfile/libsndfile.git
+        GIT_TAG 1.2.2
+        GIT_SHALLOW ON
+        CMAKE_ARGS ${LIBSNDFILE_CMAKE_ARGS}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_BYPRODUCTS
+            ${LIBSNDFILE_INSTALL_DIR}/lib/libsndfile.a
+        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+    )
 
-        FetchContent_Declare(yaml-cpp
-            GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-            GIT_TAG 0.8.0
-            GIT_SHALLOW ON
-        )
+    list(APPEND CMAKE_PREFIX_PATH ${LIBSNDFILE_INSTALL_DIR})
 
-        FetchContent_MakeAvailable(yaml-cpp)
+    # yaml-cpp
+    set(YAMLCPP_INSTALL_DIR ${CMAKE_BINARY_DIR}/yaml-cpp-install)
+
+    set(YAMLCPP_CMAKE_ARGS
+        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+        -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+        -DCMAKE_INSTALL_PREFIX=${YAMLCPP_INSTALL_DIR}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_CXX_STANDARD=11
+        -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DBUILD_SHARED_LIBS=OFF
+        -DYAML_CPP_BUILD_TESTS=OFF
+        -DYAML_CPP_BUILD_TOOLS=OFF
+        -DYAML_CPP_BUILD_CONTRIB=OFF
+        -DYAML_CPP_FORMAT_SOURCE=OFF
+        -DYAML_BUILD_SHARED_LIBS=OFF
+        -DYAML_CPP_INSTALL=ON
+    )
+    if(CCACHE_PROGRAM)
+        list(APPEND YAMLCPP_CMAKE_ARGS
+            -DCMAKE_C_COMPILER_LAUNCHER=${CCACHE_PROGRAM}
+            -DCMAKE_CXX_COMPILER_LAUNCHER=${CCACHE_PROGRAM})
     endif()
 
+    ExternalProject_Add(yaml-cpp-external
+        GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+        GIT_TAG 0.8.0
+        GIT_SHALLOW ON
+        CMAKE_ARGS ${YAMLCPP_CMAKE_ARGS}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_BYPRODUCTS
+            ${YAMLCPP_INSTALL_DIR}/lib/libyaml-cpp.a
+        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+    )
+
+    list(APPEND CMAKE_PREFIX_PATH ${YAMLCPP_INSTALL_DIR})
+
+    # OpenSSL
     set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
     
     message(STATUS "Configuring bundled OpenSSL build")
@@ -179,6 +279,7 @@ macro(configure_alumy_dependencies)
     
     list(APPEND CMAKE_PREFIX_PATH ${OPENSSL_INSTALL_DIR})
 
+    # gRPC
     set(GRPC_INSTALL_DIR ${CMAKE_BINARY_DIR}/grpc-install)
 
     set(GRPC_CMAKE_ARGS
@@ -261,6 +362,7 @@ macro(configure_alumy_dependencies)
 
     list(APPEND CMAKE_PREFIX_PATH ${GRPC_INSTALL_DIR})
 
+    # Boost
     set(BOOST_INSTALL_DIR ${CMAKE_BINARY_DIR}/boost-install)
 
     set(BOOST_B2_OPTIONS variant=release link=static runtime-link=static threading=multi cxxstd=11)
@@ -313,6 +415,7 @@ macro(configure_alumy_dependencies)
     set(Boost_NO_SYSTEM_PATHS ON CACHE BOOL "" FORCE)
     set(Boost_USE_STATIC_LIBS ON CACHE BOOL "" FORCE)
 
+    # libcoap
     set(LIBCOAP_INSTALL_DIR ${CMAKE_BINARY_DIR}/libcoap-install)
 
     set(LIBCOAP_CMAKE_ARGS
@@ -360,17 +463,44 @@ macro(configure_alumy_dependencies)
     )
 
     list(APPEND CMAKE_PREFIX_PATH ${LIBCOAP_INSTALL_DIR})
-
-    if(DEFINED _ALUMY_ORIGINAL_BUILD_SHARED_LIBS)
-        set(BUILD_SHARED_LIBS ${_ALUMY_ORIGINAL_BUILD_SHARED_LIBS} CACHE BOOL "" FORCE)
-        unset(_ALUMY_ORIGINAL_BUILD_SHARED_LIBS)
-    endif()
 endmacro()
 
-macro(install_qpcpp)
+macro(install_alumy_spdlog)
+    set(SPDLOG_INSTALL_DIR ${CMAKE_BINARY_DIR}/spdlog-install)
+
+    install(DIRECTORY ${SPDLOG_INSTALL_DIR}/
+        DESTINATION "."
+        USE_SOURCE_PERMISSIONS)
+endmacro()
+
+macro(install_alumy_qpcpp)
     set(QPCPP_INSTALL_DIR ${CMAKE_BINARY_DIR}/qpcpp-install)
 
     install(DIRECTORY ${QPCPP_INSTALL_DIR}/
+        DESTINATION "."
+        USE_SOURCE_PERMISSIONS)
+endmacro()
+
+macro(install_alumy_log4qt)
+    set(LOG4QT_INSTALL_DIR ${CMAKE_BINARY_DIR}/log4qt-install)
+
+    install(DIRECTORY ${LOG4QT_INSTALL_DIR}/
+        DESTINATION "."
+        USE_SOURCE_PERMISSIONS)
+endmacro()
+
+macro(install_alumy_libsndfile)
+    set(LIBSNDFILE_INSTALL_DIR ${CMAKE_BINARY_DIR}/libsndfile-install)
+
+    install(DIRECTORY ${LIBSNDFILE_INSTALL_DIR}/
+        DESTINATION "."
+        USE_SOURCE_PERMISSIONS)
+endmacro()
+
+macro(install_alumy_yamlcpp)
+    set(YAMLCPP_INSTALL_DIR ${CMAKE_BINARY_DIR}/yaml-cpp-install)
+
+    install(DIRECTORY ${YAMLCPP_INSTALL_DIR}/
         DESTINATION "."
         USE_SOURCE_PERMISSIONS)
 endmacro()
@@ -407,95 +537,77 @@ macro(install_alumy_libcoap)
         USE_SOURCE_PERMISSIONS)
 endmacro()
 
-macro(install_alumy_fetchcontent_dependencies)
-    if(TARGET spdlog)
-        install(TARGETS spdlog
-            EXPORT alumy-targets
-            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-            INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        )
-        install(DIRECTORY ${spdlog_SOURCE_DIR}/include/
-            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-            FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
-        )
-    endif()
-
-    if(TARGET log4qt)
-        install(TARGETS log4qt
-            EXPORT alumy-targets
-            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-            INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        )
-        if(log4qt_SOURCE_DIR)
-            install(DIRECTORY ${log4qt_SOURCE_DIR}/src/
-                DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/log4qt
-                FILES_MATCHING PATTERN "*.h"
-            )
-        endif()
-    endif()
-
-    if(TARGET SndFile::sndfile)
-        get_target_property(sndfile_actual_target SndFile::sndfile ALIASED_TARGET)
-        if(sndfile_actual_target)
-            set(sndfile_target ${sndfile_actual_target})
-        else()
-            set(sndfile_target SndFile::sndfile)
-        endif()
-        
-        install(TARGETS ${sndfile_target}
-            EXPORT alumy-targets
-            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-            INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        )
-    endif()
-
-    if(TARGET yaml-cpp)
-        install(TARGETS yaml-cpp
-            EXPORT alumy-targets
-            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-            INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        )
-        if(yaml-cpp_SOURCE_DIR)
-            install(DIRECTORY ${yaml-cpp_SOURCE_DIR}/include/
-                DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-                FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
-            )
-        endif()
-    endif()
-endmacro()
-
 macro(install_alumy_dependencies)
-    install_qpcpp()
+    install_alumy_spdlog()
+    install_alumy_qpcpp()
+    install_alumy_log4qt()
+    install_alumy_libsndfile()
+    install_alumy_yamlcpp()
     install_alumy_grpc()
     install_alumy_openssl()
     install_alumy_boost()
     install_alumy_libcoap()
-    install_alumy_fetchcontent_dependencies()
 endmacro()
 
 macro(add_alumy_dependencies target)
-    add_dependencies(${target} qpcpp-external grpc-external openssl-external boost-external libcoap-external)
+    add_dependencies(${target} 
+        spdlog-external 
+        qpcpp-external 
+        log4qt-external 
+        libsndfile-external 
+        yaml-cpp-external 
+        grpc-external 
+        openssl-external 
+        boost-external 
+        libcoap-external
+    )
 endmacro()
 
 macro(link_alumy_dependencies target)
+    set(SPDLOG_INSTALL_DIR ${CMAKE_BINARY_DIR}/spdlog-install)
+    set(QPCPP_INSTALL_DIR ${CMAKE_BINARY_DIR}/qpcpp-install)
+    set(LOG4QT_INSTALL_DIR ${CMAKE_BINARY_DIR}/log4qt-install)
+    set(LIBSNDFILE_INSTALL_DIR ${CMAKE_BINARY_DIR}/libsndfile-install)
+    set(YAMLCPP_INSTALL_DIR ${CMAKE_BINARY_DIR}/yaml-cpp-install)
+    set(GRPC_INSTALL_DIR ${CMAKE_BINARY_DIR}/grpc-install)
+    set(OPENSSL_INSTALL_DIR ${CMAKE_BINARY_DIR}/openssl-install)
+    set(BOOST_INSTALL_DIR ${CMAKE_BINARY_DIR}/boost-install)
+    set(LIBCOAP_INSTALL_DIR ${CMAKE_BINARY_DIR}/libcoap-install)
+
+    target_include_directories(${target} PUBLIC
+        ${SPDLOG_INSTALL_DIR}/include
+        ${QPCPP_INSTALL_DIR}/include
+        ${LOG4QT_INSTALL_DIR}/include
+        ${LIBSNDFILE_INSTALL_DIR}/include
+        ${YAMLCPP_INSTALL_DIR}/include
+        ${GRPC_INSTALL_DIR}/include
+        ${OPENSSL_INSTALL_DIR}/include
+        ${BOOST_INSTALL_DIR}/include
+        ${LIBCOAP_INSTALL_DIR}/include
+    )
+
+    target_link_directories(${target} PUBLIC
+        ${SPDLOG_INSTALL_DIR}/lib
+        ${QPCPP_INSTALL_DIR}/lib
+        ${LOG4QT_INSTALL_DIR}/lib
+        ${LIBSNDFILE_INSTALL_DIR}/lib
+        ${YAMLCPP_INSTALL_DIR}/lib
+        ${GRPC_INSTALL_DIR}/lib
+        ${OPENSSL_INSTALL_DIR}/lib
+        ${BOOST_INSTALL_DIR}/lib
+        ${LIBCOAP_INSTALL_DIR}/lib
+    )
+
     target_link_libraries(${target} PUBLIC
         boost_system
         boost_filesystem
         boost_thread
         boost_chrono
         boost_date_time
-        log4qt 
-        SndFile::sndfile
+        log4qt
+        sndfile
         spdlog
-        yaml-cpp::yaml-cpp
+        yaml-cpp
         qpcpp
         grpc++
         grpc
@@ -507,5 +619,6 @@ macro(link_alumy_dependencies target)
         crypto
         pthread
         dl
-        m)
+        m
+    )
 endmacro()
