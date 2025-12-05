@@ -22,7 +22,7 @@ typedef struct al_version {
 	uint16_t av_minor;
 	uint16_t av_rev;
 	uint16_t av_build;
-	char av_git_hash[8];
+	char av_git_hash[40];
 } al_version_t;
 
 #define al_version_get_s(f) \
