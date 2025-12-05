@@ -786,7 +786,7 @@ macro(link_alumy_dependencies target)
         address_sorting
         upb
         protobuf
-        coap-3-openssl
+        coap-3
         wdog
         ite
         uev
