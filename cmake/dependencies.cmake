@@ -221,6 +221,7 @@ macro(configure_alumy_dependencies)
             --openssldir=<INSTALL_DIR>/ssl
             --libdir=lib
             shared
+            no-static
             no-tests
             -DOPENSSL_USE_NODELETE
     )
@@ -328,6 +329,8 @@ macro(configure_alumy_dependencies)
         -DCARES_SHARED=ON
         -DCARES_BUILD_TESTS=OFF
         -DCARES_BUILD_TOOLS=OFF
+        -DZLIB_BUILD_SHARED=ON
+        -DZLIB_BUILD_STATIC=OFF
         -DOPENSSL_ROOT_DIR=${EXTERNAL_INSTALL_DIR}
         -DOPENSSL_INCLUDE_DIR=${EXTERNAL_INSTALL_DIR}/include
         -DOPENSSL_CRYPTO_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libcrypto.so
