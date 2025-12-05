@@ -9,6 +9,8 @@ macro(configure_alumy_dependencies)
     set(EXTERNAL_INSTALL_DIR ${CMAKE_BINARY_DIR}/external-install)
     list(APPEND CMAKE_PREFIX_PATH ${EXTERNAL_INSTALL_DIR})
 
+    set(HOST_TOOLS_INSTALL_DIR ${CMAKE_BINARY_DIR}/host-tools-install)
+
     # spdlog
     set(SPDLOG_CMAKE_ARGS
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
@@ -244,11 +246,48 @@ macro(configure_alumy_dependencies)
         USES_TERMINAL_INSTALL ON
     )
 
-    # Find host protoc (required for cross-compilation)
-    find_program(PROTOC_EXECUTABLE protoc REQUIRED)
-    message(STATUS "Found host protoc: ${PROTOC_EXECUTABLE}")
+    # Protobuf for host (build protoc executable for code generation)
+    set(PROTOBUF_HOST_CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=${HOST_TOOLS_INSTALL_DIR}
+        -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
+        -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
+        -DCMAKE_CXX_STANDARD=11
+        -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DBUILD_SHARED_LIBS=OFF
+        -Dprotobuf_BUILD_TESTS=OFF
+        -Dprotobuf_BUILD_EXAMPLES=OFF
+        -Dprotobuf_BUILD_CONFORMANCE=OFF
+        -Dprotobuf_BUILD_LIBPROTOC=ON
+        -Dprotobuf_BUILD_PROTOC_BINARIES=ON
+        -Dprotobuf_BUILD_SHARED_LIBS=OFF
+        -Dprotobuf_WITH_ZLIB=OFF
+        -Dprotobuf_MSVC_STATIC_RUNTIME=OFF
+    )
 
-    # Protobuf (standalone build - libraries only, use host protoc)
+    ExternalProject_Add(protobuf-host
+        GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
+        GIT_TAG v3.21.12
+        GIT_SHALLOW ON
+        CMAKE_ARGS ${PROTOBUF_HOST_CMAKE_ARGS}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_BYPRODUCTS
+            ${HOST_TOOLS_INSTALL_DIR}/bin/protoc
+            ${HOST_TOOLS_INSTALL_DIR}/lib/libprotobuf.a
+            ${HOST_TOOLS_INSTALL_DIR}/lib/libprotoc.a
+        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+    )
+
+    set(PROTOC_EXECUTABLE ${HOST_TOOLS_INSTALL_DIR}/bin/protoc)
+    message(STATUS "Will use host protoc: ${PROTOC_EXECUTABLE}")
+
+    # Protobuf for target (libraries only, use host protoc)
     set(PROTOBUF_CMAKE_ARGS
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
         -DCMAKE_PREFIX_PATH=${EXTERNAL_INSTALL_DIR}
@@ -262,7 +301,7 @@ macro(configure_alumy_dependencies)
         -Dprotobuf_BUILD_TESTS=OFF
         -Dprotobuf_BUILD_EXAMPLES=OFF
         -Dprotobuf_BUILD_CONFORMANCE=OFF
-        -Dprotobuf_BUILD_LIBPROTOC=OFF
+        -Dprotobuf_BUILD_LIBPROTOC=ON
         -Dprotobuf_BUILD_PROTOC_BINARIES=OFF
         -Dprotobuf_BUILD_SHARED_LIBS=ON
         -Dprotobuf_WITH_ZLIB=OFF
@@ -278,6 +317,7 @@ macro(configure_alumy_dependencies)
         BUILD_BYPRODUCTS
             ${EXTERNAL_INSTALL_DIR}/lib/libprotobuf.so
             ${EXTERNAL_INSTALL_DIR}/lib/libprotobuf-lite.so
+            ${EXTERNAL_INSTALL_DIR}/lib/libprotoc.so
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -285,11 +325,63 @@ macro(configure_alumy_dependencies)
         LOG_INSTALL OFF
         USES_TERMINAL_BUILD ON
         USES_TERMINAL_INSTALL ON
+        DEPENDS protobuf-host
     )
 
-    # Find host grpc_cpp_plugin (required for cross-compilation)
-    find_program(GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin REQUIRED)
-    message(STATUS "Found host grpc_cpp_plugin: ${GRPC_CPP_PLUGIN_EXECUTABLE}")
+    # gRPC for host (build grpc_cpp_plugin for code generation)
+    set(GRPC_HOST_CMAKE_ARGS
+        -DCMAKE_PREFIX_PATH=${HOST_TOOLS_INSTALL_DIR}
+        -DCMAKE_INSTALL_PREFIX=${HOST_TOOLS_INSTALL_DIR}
+        -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
+        -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
+        -DCMAKE_CXX_STANDARD=17
+        -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DBUILD_SHARED_LIBS=OFF
+        -DgRPC_BUILD_TESTS=OFF
+        -DgRPC_BUILD_CSHARP_EXT=OFF
+        -DgRPC_BUILD_GRPC_CSHARP_PLUGIN=OFF
+        -DgRPC_BUILD_GRPC_NODE_PLUGIN=OFF
+        -DgRPC_BUILD_GRPC_OBJECTIVE_C_PLUGIN=OFF
+        -DgRPC_BUILD_GRPC_PHP_PLUGIN=OFF
+        -DgRPC_BUILD_GRPC_PYTHON_PLUGIN=OFF
+        -DgRPC_BUILD_GRPC_RUBY_PLUGIN=OFF
+        -DgRPC_ABSL_PROVIDER=module
+        -DgRPC_CARES_PROVIDER=module
+        -DgRPC_PROTOBUF_PROVIDER=package
+        -DgRPC_RE2_PROVIDER=module
+        -DgRPC_SSL_PROVIDER=module
+        -DgRPC_ZLIB_PROVIDER=module
+        -DgRPC_BENCHMARK_PROVIDER=none
+        -DgRPC_BUILD_GRPC_CPP_PLUGIN=ON
+        -DgRPC_BUILD_CODEGEN=ON
+        -DgRPC_INSTALL=ON
+        -DABSL_PROPAGATE_CXX_STD=ON
+        -DABSL_ENABLE_INSTALL=ON
+        -DProtobuf_DIR=${HOST_TOOLS_INSTALL_DIR}/lib/cmake/protobuf
+    )
+
+    ExternalProject_Add(grpc-host
+        GIT_REPOSITORY https://github.com/grpc/grpc.git
+        GIT_TAG v1.46.7
+        GIT_SUBMODULES_RECURSE ON
+        GIT_SHALLOW ON
+        CMAKE_ARGS ${GRPC_HOST_CMAKE_ARGS}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build . --target grpc_cpp_plugin
+        BUILD_BYPRODUCTS
+            ${HOST_TOOLS_INSTALL_DIR}/bin/grpc_cpp_plugin
+        INSTALL_COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/grpc_cpp_plugin ${HOST_TOOLS_INSTALL_DIR}/bin/grpc_cpp_plugin
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+        DEPENDS protobuf-host
+    )
+
+    set(GRPC_CPP_PLUGIN_EXECUTABLE ${HOST_TOOLS_INSTALL_DIR}/bin/grpc_cpp_plugin)
+    message(STATUS "Will use host grpc_cpp_plugin: ${GRPC_CPP_PLUGIN_EXECUTABLE}")
 
     # gRPC (using standalone protobuf, host protoc and grpc_cpp_plugin)
     set(GRPC_CMAKE_ARGS
@@ -363,7 +455,7 @@ macro(configure_alumy_dependencies)
         LOG_INSTALL OFF
         USES_TERMINAL_BUILD ON
         USES_TERMINAL_INSTALL ON
-        DEPENDS openssl-external protobuf-external
+        DEPENDS openssl-external protobuf-external grpc-host
     )
 
     # Boost
