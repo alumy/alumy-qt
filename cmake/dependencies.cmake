@@ -17,9 +17,9 @@ macro(configure_alumy_dependencies)
         -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
         -DCMAKE_CXX_STANDARD=11
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
-        -DBUILD_SHARED_LIBS=OFF
+        -DBUILD_SHARED_LIBS=ON
         -DSPDLOG_ENABLE_PCH=ON
-        -DSPDLOG_BUILD_SHARED=OFF
+        -DSPDLOG_BUILD_SHARED=ON
         -DSPDLOG_BUILD_TESTS=OFF
         -DSPDLOG_BUILD_BENCH=OFF
         -DSPDLOG_BUILD_EXAMPLE=OFF
@@ -33,7 +33,7 @@ macro(configure_alumy_dependencies)
         CMAKE_ARGS ${SPDLOG_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS
-            ${EXTERNAL_INSTALL_DIR}/lib/libspdlog.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libspdlog.so
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -53,7 +53,8 @@ macro(configure_alumy_dependencies)
         -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
         -DCMAKE_CXX_STANDARD=11
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
-        -DBUILD_SHARED_LIBS=OFF
+        -DBUILD_SHARED_LIBS=ON
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON
         -DQPCPP_CFG_KERNEL=qv
         -DQPCPP_CFG_PORT=posix
         -DQPCPP_CFG_GUI=OFF
@@ -70,10 +71,10 @@ macro(configure_alumy_dependencies)
         CMAKE_ARGS ${QPCPP_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS 
-            ${EXTERNAL_INSTALL_DIR}/lib/libqpcpp.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libqpcpp.so
         INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${EXTERNAL_INSTALL_DIR}/lib
             COMMAND ${CMAKE_COMMAND} -E make_directory ${EXTERNAL_INSTALL_DIR}/include
-            COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/libqpcpp.a ${EXTERNAL_INSTALL_DIR}/lib/
+            COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/libqpcpp.so ${EXTERNAL_INSTALL_DIR}/lib/
             COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/include ${EXTERNAL_INSTALL_DIR}/include
             COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/src ${EXTERNAL_INSTALL_DIR}/include
             COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/ports/posix-qv ${EXTERNAL_INSTALL_DIR}/include/ports/posix-qv
@@ -95,8 +96,8 @@ macro(configure_alumy_dependencies)
         -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
         -DCMAKE_CXX_STANDARD=11
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
-        -DBUILD_SHARED_LIBS=OFF
-        -DBUILD_STATIC_LOG4CXX_LIB=ON
+        -DBUILD_SHARED_LIBS=ON
+        -DBUILD_STATIC_LOG4CXX_LIB=OFF
         -DBUILD_WITH_DB_LOGGING=OFF
         -DBUILD_WITH_TELNET_LOGGING=ON
         -DBUILD_WITH_DOCS=OFF
@@ -111,7 +112,7 @@ macro(configure_alumy_dependencies)
         CMAKE_ARGS ${LOG4QT_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS
-            ${EXTERNAL_INSTALL_DIR}/lib/liblog4qt.a
+            ${EXTERNAL_INSTALL_DIR}/lib/liblog4qt.so
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -131,7 +132,7 @@ macro(configure_alumy_dependencies)
         -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
         -DCMAKE_C_STANDARD=11
         -DCMAKE_C_STANDARD_REQUIRED=ON
-        -DBUILD_SHARED_LIBS=OFF
+        -DBUILD_SHARED_LIBS=ON
         -DBUILD_PROGRAMS=OFF
         -DBUILD_EXAMPLES=OFF
         -DBUILD_TESTING=OFF
@@ -147,7 +148,7 @@ macro(configure_alumy_dependencies)
         CMAKE_ARGS ${LIBSNDFILE_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS
-            ${EXTERNAL_INSTALL_DIR}/lib/libsndfile.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libsndfile.so
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -167,12 +168,12 @@ macro(configure_alumy_dependencies)
         -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
         -DCMAKE_CXX_STANDARD=11
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
-        -DBUILD_SHARED_LIBS=OFF
+        -DBUILD_SHARED_LIBS=ON
         -DYAML_CPP_BUILD_TESTS=OFF
         -DYAML_CPP_BUILD_TOOLS=OFF
         -DYAML_CPP_BUILD_CONTRIB=OFF
         -DYAML_CPP_FORMAT_SOURCE=OFF
-        -DYAML_BUILD_SHARED_LIBS=OFF
+        -DYAML_BUILD_SHARED_LIBS=ON
         -DYAML_CPP_INSTALL=ON
     )
 
@@ -183,7 +184,7 @@ macro(configure_alumy_dependencies)
         CMAKE_ARGS ${YAMLCPP_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS
-            ${EXTERNAL_INSTALL_DIR}/lib/libyaml-cpp.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libyaml-cpp.so
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -218,7 +219,7 @@ macro(configure_alumy_dependencies)
             --prefix=<INSTALL_DIR>
             --openssldir=<INSTALL_DIR>/ssl
             --libdir=lib
-            no-shared
+            shared
             no-tests
             -DOPENSSL_USE_NODELETE
     )
@@ -231,8 +232,8 @@ macro(configure_alumy_dependencies)
         CONFIGURE_COMMAND ${OPENSSL_CONFIGURE_COMMAND}
         BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
         BUILD_BYPRODUCTS
-            ${EXTERNAL_INSTALL_DIR}/lib/libssl.a
-            ${EXTERNAL_INSTALL_DIR}/lib/libcrypto.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libssl.so
+            ${EXTERNAL_INSTALL_DIR}/lib/libcrypto.so
         INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install_sw
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -256,13 +257,13 @@ macro(configure_alumy_dependencies)
         -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
         -DCMAKE_CXX_STANDARD=11
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
-        -DBUILD_SHARED_LIBS=OFF
+        -DBUILD_SHARED_LIBS=ON
         -Dprotobuf_BUILD_TESTS=OFF
         -Dprotobuf_BUILD_EXAMPLES=OFF
         -Dprotobuf_BUILD_CONFORMANCE=OFF
         -Dprotobuf_BUILD_LIBPROTOC=OFF
         -Dprotobuf_BUILD_PROTOC_BINARIES=OFF
-        -Dprotobuf_BUILD_SHARED_LIBS=OFF
+        -Dprotobuf_BUILD_SHARED_LIBS=ON
         -Dprotobuf_WITH_ZLIB=OFF
         -Dprotobuf_MSVC_STATIC_RUNTIME=OFF
     )
@@ -274,8 +275,8 @@ macro(configure_alumy_dependencies)
         CMAKE_ARGS ${PROTOBUF_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS
-            ${EXTERNAL_INSTALL_DIR}/lib/libprotobuf.a
-            ${EXTERNAL_INSTALL_DIR}/lib/libprotobuf-lite.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libprotobuf.so
+            ${EXTERNAL_INSTALL_DIR}/lib/libprotobuf-lite.so
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -299,7 +300,7 @@ macro(configure_alumy_dependencies)
         -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
         -DCMAKE_CXX_STANDARD=17
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
-        -DBUILD_SHARED_LIBS=OFF
+        -DBUILD_SHARED_LIBS=ON
         -DgRPC_BUILD_TESTS=OFF
         -DgRPC_BUILD_CSHARP_EXT=OFF
         -DgRPC_BUILD_GRPC_CSHARP_PLUGIN=OFF
@@ -322,14 +323,14 @@ macro(configure_alumy_dependencies)
         -DABSL_PROPAGATE_CXX_STD=ON
         -DABSL_ENABLE_INSTALL=ON
         -DRE2_BUILD_TESTING=OFF
-        -DCARES_STATIC=ON
-        -DCARES_SHARED=OFF
+        -DCARES_STATIC=OFF
+        -DCARES_SHARED=ON
         -DCARES_BUILD_TESTS=OFF
         -DCARES_BUILD_TOOLS=OFF
         -DOPENSSL_ROOT_DIR=${EXTERNAL_INSTALL_DIR}
         -DOPENSSL_INCLUDE_DIR=${EXTERNAL_INSTALL_DIR}/include
-        -DOPENSSL_CRYPTO_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libcrypto.a
-        -DOPENSSL_SSL_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libssl.a
+        -DOPENSSL_CRYPTO_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libcrypto.so
+        -DOPENSSL_SSL_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libssl.so
         -DProtobuf_DIR=${EXTERNAL_INSTALL_DIR}/lib/cmake/protobuf
         -DProtobuf_PROTOC_EXECUTABLE=${PROTOC_EXECUTABLE}
         -D_gRPC_CPP_PLUGIN=${GRPC_CPP_PLUGIN_EXECUTABLE}
@@ -343,15 +344,15 @@ macro(configure_alumy_dependencies)
         CMAKE_ARGS ${GRPC_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS 
-            ${EXTERNAL_INSTALL_DIR}/lib/libgrpc++.a
-            ${EXTERNAL_INSTALL_DIR}/lib/libgrpc.a
-            ${EXTERNAL_INSTALL_DIR}/lib/libgpr.a
-            ${EXTERNAL_INSTALL_DIR}/lib/libaddress_sorting.a
-            ${EXTERNAL_INSTALL_DIR}/lib/libupb.a
-            ${EXTERNAL_INSTALL_DIR}/lib/libabsl_*.a
-            ${EXTERNAL_INSTALL_DIR}/lib/libre2.a
-            ${EXTERNAL_INSTALL_DIR}/lib/libcares.a
-            ${EXTERNAL_INSTALL_DIR}/lib/libz.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libgrpc++.so
+            ${EXTERNAL_INSTALL_DIR}/lib/libgrpc.so
+            ${EXTERNAL_INSTALL_DIR}/lib/libgpr.so
+            ${EXTERNAL_INSTALL_DIR}/lib/libaddress_sorting.so
+            ${EXTERNAL_INSTALL_DIR}/lib/libupb.so
+            ${EXTERNAL_INSTALL_DIR}/lib/libabsl_*.so
+            ${EXTERNAL_INSTALL_DIR}/lib/libre2.so
+            ${EXTERNAL_INSTALL_DIR}/lib/libcares.so
+            ${EXTERNAL_INSTALL_DIR}/lib/libz.so
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -363,7 +364,7 @@ macro(configure_alumy_dependencies)
     )
 
     # Boost
-    set(BOOST_B2_OPTIONS variant=release link=static runtime-link=static threading=multi cxxstd=11)
+    set(BOOST_B2_OPTIONS variant=release link=shared runtime-link=shared threading=multi cxxstd=11)
 
     include(ProcessorCount)
     ProcessorCount(N_CORES)
@@ -387,11 +388,11 @@ macro(configure_alumy_dependencies)
         BUILD_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./b2 -j${BOOST_PARALLEL_JOBS} ${BOOST_TOOLSET} ${BOOST_B2_OPTIONS} --user-config=${CMAKE_BINARY_DIR}/user-config.jam --prefix=<INSTALL_DIR> headers
             COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./b2 -j${BOOST_PARALLEL_JOBS} ${BOOST_TOOLSET} ${BOOST_B2_OPTIONS} --user-config=${CMAKE_BINARY_DIR}/user-config.jam --prefix=<INSTALL_DIR> --with-system --with-filesystem --with-thread --with-chrono --with-date_time install
         BUILD_BYPRODUCTS
-            ${EXTERNAL_INSTALL_DIR}/lib/libboost_system.a
-            ${EXTERNAL_INSTALL_DIR}/lib/libboost_filesystem.a
-            ${EXTERNAL_INSTALL_DIR}/lib/libboost_thread.a
-            ${EXTERNAL_INSTALL_DIR}/lib/libboost_chrono.a
-            ${EXTERNAL_INSTALL_DIR}/lib/libboost_date_time.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libboost_system.so
+            ${EXTERNAL_INSTALL_DIR}/lib/libboost_filesystem.so
+            ${EXTERNAL_INSTALL_DIR}/lib/libboost_thread.so
+            ${EXTERNAL_INSTALL_DIR}/lib/libboost_chrono.so
+            ${EXTERNAL_INSTALL_DIR}/lib/libboost_date_time.so
         INSTALL_COMMAND ""
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -405,7 +406,7 @@ macro(configure_alumy_dependencies)
     set(BOOST_INCLUDEDIR ${EXTERNAL_INSTALL_DIR}/include CACHE PATH "" FORCE)
     set(BOOST_LIBRARYDIR ${EXTERNAL_INSTALL_DIR}/lib CACHE PATH "" FORCE)
     set(Boost_NO_SYSTEM_PATHS ON CACHE BOOL "" FORCE)
-    set(Boost_USE_STATIC_LIBS ON CACHE BOOL "" FORCE)
+    set(Boost_USE_STATIC_LIBS OFF CACHE BOOL "" FORCE)
 
     # libcoap
     set(LIBCOAP_CMAKE_ARGS
@@ -417,7 +418,7 @@ macro(configure_alumy_dependencies)
         -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
         -DCMAKE_C_STANDARD=11
         -DCMAKE_C_STANDARD_REQUIRED=ON
-        -DBUILD_SHARED_LIBS=OFF
+        -DBUILD_SHARED_LIBS=ON
         -DENABLE_DTLS=ON
         -DENABLE_TCP=ON
         -DENABLE_OSCORE=ON
@@ -427,8 +428,8 @@ macro(configure_alumy_dependencies)
         -DENABLE_TESTS=OFF
         -DOPENSSL_ROOT_DIR=${EXTERNAL_INSTALL_DIR}
         -DOPENSSL_INCLUDE_DIR=${EXTERNAL_INSTALL_DIR}/include
-        -DOPENSSL_CRYPTO_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libcrypto.a
-        -DOPENSSL_SSL_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libssl.a
+        -DOPENSSL_CRYPTO_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libcrypto.so
+        -DOPENSSL_SSL_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libssl.so
     )
 
     ExternalProject_Add(libcoap-external
@@ -438,7 +439,7 @@ macro(configure_alumy_dependencies)
         CMAKE_ARGS ${LIBCOAP_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS
-            ${EXTERNAL_INSTALL_DIR}/lib/libcoap-3-openssl.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libcoap-3.so
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -447,6 +448,42 @@ macro(configure_alumy_dependencies)
         USES_TERMINAL_BUILD ON
         USES_TERMINAL_INSTALL ON
         DEPENDS openssl-external
+    )
+
+    # libcoap-notls (without DTLS support)
+    set(LIBCOAP_NOTLS_CMAKE_ARGS
+        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+        -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+        -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
+        -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
+        -DCMAKE_C_STANDARD=11
+        -DCMAKE_C_STANDARD_REQUIRED=ON
+        -DBUILD_SHARED_LIBS=ON
+        -DENABLE_DTLS=OFF
+        -DENABLE_TCP=ON
+        -DENABLE_OSCORE=OFF
+        -DENABLE_EXAMPLES=OFF
+        -DENABLE_DOCS=OFF
+        -DENABLE_TESTS=OFF
+    )
+
+    ExternalProject_Add(libcoap-notls-external
+        GIT_REPOSITORY https://github.com/obgm/libcoap.git
+        GIT_TAG v4.3.5
+        GIT_SHALLOW ON
+        CMAKE_ARGS ${LIBCOAP_NOTLS_CMAKE_ARGS}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_BYPRODUCTS
+            ${EXTERNAL_INSTALL_DIR}/lib/libcoap-3-notls.so
+        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
     )
 
     message(STATUS "Autotools build triplet: ${AUTOTOOLS_BUILD_TRIPLET}")
@@ -464,12 +501,12 @@ macro(configure_alumy_dependencies)
                     --prefix=<INSTALL_DIR>
                     --build=${AUTOTOOLS_BUILD_TRIPLET}
                     --host=${AUTOTOOLS_HOST_TRIPLET}
-                    --enable-static
-                    --disable-shared
+                    --disable-static
+                    --enable-shared
                     --without-symlink
         BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
         BUILD_BYPRODUCTS
-            ${EXTERNAL_INSTALL_DIR}/lib/libite.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libite.so
         INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -491,11 +528,11 @@ macro(configure_alumy_dependencies)
                     --prefix=<INSTALL_DIR>
                     --build=${AUTOTOOLS_BUILD_TRIPLET}
                     --host=${AUTOTOOLS_HOST_TRIPLET}
-                    --enable-static
-                    --disable-shared
+                    --disable-static
+                    --enable-shared
         BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
         BUILD_BYPRODUCTS
-            ${EXTERNAL_INSTALL_DIR}/lib/libuev.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libuev.so
         INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -517,12 +554,12 @@ macro(configure_alumy_dependencies)
                     --prefix=<INSTALL_DIR>
                     --build=${AUTOTOOLS_BUILD_TRIPLET}
                     --host=${AUTOTOOLS_HOST_TRIPLET}
-                    --enable-static
-                    --disable-shared
+                    --disable-static
+                    --enable-shared
                     --disable-examples
         BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
         BUILD_BYPRODUCTS
-            ${EXTERNAL_INSTALL_DIR}/lib/libconfuse.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libconfuse.so
         INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -551,12 +588,12 @@ macro(configure_alumy_dependencies)
                     --prefix=<INSTALL_DIR>
                     --sysconfdir=/etc
                     --localstatedir=/var
-                    --enable-static
-                    --disable-shared
+                    --disable-static
+                    --enable-shared
                     --with-systemd=no
         BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
         BUILD_BYPRODUCTS
-            ${EXTERNAL_INSTALL_DIR}/lib/libwdog.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libwdog.so
         INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -578,14 +615,14 @@ macro(configure_alumy_dependencies)
             "QMAKE_CXX=${CCACHE_CXX}"
             "QMAKE_LINK=${CMAKE_CXX_COMPILER}"
             "QMAKE_AR=${CMAKE_AR} cqs"
-            "QWT_CONFIG+=QwtStatic"
-            "QWT_CONFIG-=QwtDll"
+            "QWT_CONFIG-=QwtStatic"
+            "QWT_CONFIG+=QwtDll"
             "QWT_CONFIG-=QwtExamples"
             "QWT_CONFIG-=QwtDesigner"
             "INSTALL_DIR=<INSTALL_DIR>"
         BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
         BUILD_BYPRODUCTS
-            ${EXTERNAL_INSTALL_DIR}/lib/libqwt.a
+            ${EXTERNAL_INSTALL_DIR}/lib/libqwt.so
         INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -616,6 +653,7 @@ macro(add_alumy_dependencies target)
         openssl-external 
         boost-external 
         libcoap-external
+        libcoap-notls-external
         libite-external
         libuev-external
         libconfuse-external
