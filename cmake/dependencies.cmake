@@ -221,7 +221,6 @@ macro(configure_alumy_dependencies)
             --openssldir=<INSTALL_DIR>/ssl
             --libdir=lib
             shared
-            no-static
             no-tests
             -DOPENSSL_USE_NODELETE
     )
