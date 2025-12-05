@@ -1,9 +1,11 @@
 include(ExternalProject)
+include(ProcessorCount)
 include(${CMAKE_CURRENT_LIST_DIR}/ccache.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/qmake.cmake)
 
 macro(configure_alumy_dependencies)
-    # Unified external dependencies install directory
+    ProcessorCount(N_CORES)
+
     set(EXTERNAL_INSTALL_DIR ${CMAKE_BINARY_DIR}/external-install)
     list(APPEND CMAKE_PREFIX_PATH ${EXTERNAL_INSTALL_DIR})
 
@@ -53,8 +55,7 @@ macro(configure_alumy_dependencies)
         -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
         -DCMAKE_CXX_STANDARD=11
         -DCMAKE_CXX_STANDARD_REQUIRED=ON
-        -DBUILD_SHARED_LIBS=ON
-        -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+        -DBUILD_SHARED_LIBS=OFF
         -DQPCPP_CFG_KERNEL=qv
         -DQPCPP_CFG_PORT=posix
         -DQPCPP_CFG_GUI=OFF
@@ -71,10 +72,10 @@ macro(configure_alumy_dependencies)
         CMAKE_ARGS ${QPCPP_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS 
-            ${EXTERNAL_INSTALL_DIR}/lib/libqpcpp.so
+            ${EXTERNAL_INSTALL_DIR}/lib/libqpcpp.a
         INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${EXTERNAL_INSTALL_DIR}/lib
             COMMAND ${CMAKE_COMMAND} -E make_directory ${EXTERNAL_INSTALL_DIR}/include
-            COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/libqpcpp.so ${EXTERNAL_INSTALL_DIR}/lib/
+            COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/libqpcpp.a ${EXTERNAL_INSTALL_DIR}/lib/
             COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/include ${EXTERNAL_INSTALL_DIR}/include
             COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/src ${EXTERNAL_INSTALL_DIR}/include
             COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR>/ports/posix-qv ${EXTERNAL_INSTALL_DIR}/include/ports/posix-qv
@@ -366,8 +367,6 @@ macro(configure_alumy_dependencies)
     # Boost
     set(BOOST_B2_OPTIONS variant=release link=shared runtime-link=shared threading=multi cxxstd=11)
 
-    include(ProcessorCount)
-    ProcessorCount(N_CORES)
     if(NOT N_CORES EQUAL 0)
         set(BOOST_PARALLEL_JOBS ${N_CORES})
     else()
