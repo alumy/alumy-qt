@@ -39,8 +39,8 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/generic_check.cmake)
 #############################################################################
 # Options
 #############################################################################
-option(BUILD_SHARED_LIBS "enable shared library" OFF)
-option(BUILD_STATIC_LIBS "enable shared library" ON)
+option(BUILD_SHARED_LIBS "enable shared library" ON)
+option(BUILD_STATIC_LIBS "enable static library" OFF)
 
 if(BUILD_STATIC_LIBS)
 	set(BUILD_SHARED_LIBS OFF)
