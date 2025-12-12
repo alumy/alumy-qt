@@ -65,8 +65,8 @@ find_package(gRPC REQUIRED
 # Use standard Boost CMake find_package
 set(BOOST_ROOT "${ALUMY_PREFIX_DIR}")
 set(Boost_NO_SYSTEM_PATHS ON)
-set(Boost_USE_STATIC_LIBS ON)
-set(Boost_USE_STATIC_RUNTIME ON)
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_STATIC_RUNTIME OFF)
 
 # Find Boost using standard CMake mechanism
 find_package(Boost 1.75 REQUIRED 
