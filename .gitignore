@@ -1,4 +1,5 @@
-build/
+build-*/
+download/
 
 include/alumy/version.h
 include/alumy/git_hash.h

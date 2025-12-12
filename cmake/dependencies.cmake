@@ -11,6 +11,8 @@ macro(configure_alumy_dependencies)
 
     set(HOST_TOOLS_INSTALL_DIR ${CMAKE_BINARY_DIR}/host-tools-install)
 
+    set(EXTERNAL_DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/download)
+
     # spdlog
     set(SPDLOG_CMAKE_ARGS
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
@@ -34,6 +36,7 @@ macro(configure_alumy_dependencies)
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
         GIT_TAG v1.15.3
         GIT_SHALLOW ON
+        DOWNLOAD_DIR ${EXTERNAL_DOWNLOAD_DIR}/spdlog
         CMAKE_ARGS ${SPDLOG_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS
@@ -69,6 +72,7 @@ macro(configure_alumy_dependencies)
         GIT_REPOSITORY https://github.com/QuantumLeaps/qpcpp.git
         GIT_TAG v7.3.4
         GIT_SHALLOW ON
+        DOWNLOAD_DIR ${EXTERNAL_DOWNLOAD_DIR}/qpcpp
         PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/cmake/qpcpp_force_cxx.cmake <SOURCE_DIR>/force_cxx.cmake
             COMMAND sed -i "1i include(force_cxx.cmake)" <SOURCE_DIR>/CMakeLists.txt
         CMAKE_ARGS ${QPCPP_CMAKE_ARGS}
@@ -110,6 +114,7 @@ macro(configure_alumy_dependencies)
         GIT_REPOSITORY https://github.com/MEONMedical/Log4Qt.git
         GIT_TAG v1.5.1
         GIT_SHALLOW ON
+        DOWNLOAD_DIR ${EXTERNAL_DOWNLOAD_DIR}/log4qt
         PATCH_COMMAND sed -i "s/add_subdirectory(tests)/#add_subdirectory(tests)/" CMakeLists.txt
             COMMAND sed -i "s/add_subdirectory(examples)/#add_subdirectory(examples)/" CMakeLists.txt
         CMAKE_ARGS ${LOG4QT_CMAKE_ARGS}
@@ -148,6 +153,7 @@ macro(configure_alumy_dependencies)
         GIT_REPOSITORY https://github.com/libsndfile/libsndfile.git
         GIT_TAG 1.2.2
         GIT_SHALLOW ON
+        DOWNLOAD_DIR ${EXTERNAL_DOWNLOAD_DIR}/libsndfile
         CMAKE_ARGS ${LIBSNDFILE_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS
@@ -184,6 +190,7 @@ macro(configure_alumy_dependencies)
         GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
         GIT_TAG 0.8.0
         GIT_SHALLOW ON
+        DOWNLOAD_DIR ${EXTERNAL_DOWNLOAD_DIR}/yaml-cpp
         CMAKE_ARGS ${YAMLCPP_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS
@@ -231,6 +238,7 @@ macro(configure_alumy_dependencies)
         GIT_REPOSITORY https://github.com/openssl/openssl.git
         GIT_TAG openssl-3.0.17
         GIT_SHALLOW ON
+        DOWNLOAD_DIR ${EXTERNAL_DOWNLOAD_DIR}/openssl
         INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
         CONFIGURE_COMMAND ${OPENSSL_CONFIGURE_COMMAND}
         BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
@@ -269,6 +277,7 @@ macro(configure_alumy_dependencies)
         GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
         GIT_TAG v3.21.12
         GIT_SHALLOW ON
+        DOWNLOAD_DIR ${EXTERNAL_DOWNLOAD_DIR}/protobuf
         CMAKE_ARGS ${PROTOBUF_HOST_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS
@@ -312,6 +321,7 @@ macro(configure_alumy_dependencies)
         GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
         GIT_TAG v3.21.12
         GIT_SHALLOW ON
+        DOWNLOAD_DIR ${EXTERNAL_DOWNLOAD_DIR}/protobuf
         CMAKE_ARGS ${PROTOBUF_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS
@@ -366,6 +376,7 @@ macro(configure_alumy_dependencies)
         GIT_TAG v1.46.7
         GIT_SUBMODULES_RECURSE ON
         GIT_SHALLOW ON
+        DOWNLOAD_DIR ${EXTERNAL_DOWNLOAD_DIR}/grpc
         CMAKE_ARGS ${GRPC_HOST_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build . --target grpc_cpp_plugin
         BUILD_BYPRODUCTS
@@ -436,6 +447,7 @@ macro(configure_alumy_dependencies)
         GIT_TAG v1.46.7
         GIT_SUBMODULES_RECURSE ON
         GIT_SHALLOW ON
+        DOWNLOAD_DIR ${EXTERNAL_DOWNLOAD_DIR}/grpc
         CMAKE_ARGS ${GRPC_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS 
@@ -476,6 +488,7 @@ macro(configure_alumy_dependencies)
         GIT_TAG boost-1.75.0
         GIT_SHALLOW ON
         GIT_SUBMODULES_RECURSE ON
+        DOWNLOAD_DIR ${EXTERNAL_DOWNLOAD_DIR}/boost
         INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
         CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./bootstrap.sh --prefix=<INSTALL_DIR>
         BUILD_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./b2 -j${BOOST_PARALLEL_JOBS} ${BOOST_TOOLSET} ${BOOST_B2_OPTIONS} --user-config=${CMAKE_BINARY_DIR}/user-config.jam --prefix=<INSTALL_DIR> headers
@@ -529,6 +542,7 @@ macro(configure_alumy_dependencies)
         GIT_REPOSITORY https://github.com/obgm/libcoap.git
         GIT_TAG v4.3.5
         GIT_SHALLOW ON
+        DOWNLOAD_DIR ${EXTERNAL_DOWNLOAD_DIR}/libcoap
         CMAKE_ARGS ${LIBCOAP_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS
@@ -566,6 +580,7 @@ macro(configure_alumy_dependencies)
         GIT_REPOSITORY https://github.com/obgm/libcoap.git
         GIT_TAG v4.3.5
         GIT_SHALLOW ON
+        DOWNLOAD_DIR ${EXTERNAL_DOWNLOAD_DIR}/libcoap
         CMAKE_ARGS ${LIBCOAP_NOTLS_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS
@@ -587,6 +602,7 @@ macro(configure_alumy_dependencies)
         GIT_REPOSITORY https://github.com/troglobit/libite.git
         GIT_TAG v2.6.1
         GIT_SHALLOW ON
+        DOWNLOAD_DIR ${EXTERNAL_DOWNLOAD_DIR}/libite
         INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
         CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
             COMMAND ${CMAKE_COMMAND} -E env "CC=${CCACHE_CC}" "PKG_CONFIG_PATH=${EXTERNAL_INSTALL_DIR}/lib/pkgconfig"
@@ -614,6 +630,7 @@ macro(configure_alumy_dependencies)
         GIT_REPOSITORY https://github.com/troglobit/libuev.git
         GIT_TAG v2.4.1
         GIT_SHALLOW ON
+        DOWNLOAD_DIR ${EXTERNAL_DOWNLOAD_DIR}/libuev
         INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
         CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
             COMMAND ${CMAKE_COMMAND} -E env "CC=${CCACHE_CC}" "PKG_CONFIG_PATH=${EXTERNAL_INSTALL_DIR}/lib/pkgconfig"
@@ -640,6 +657,7 @@ macro(configure_alumy_dependencies)
         GIT_REPOSITORY https://github.com/libconfuse/libconfuse.git
         GIT_TAG v3.3
         GIT_SHALLOW ON
+        DOWNLOAD_DIR ${EXTERNAL_DOWNLOAD_DIR}/libconfuse
         INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
         CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
             COMMAND ${CMAKE_COMMAND} -E env "CC=${CCACHE_CC}" "PKG_CONFIG_PATH=${EXTERNAL_INSTALL_DIR}/lib/pkgconfig"
@@ -667,6 +685,7 @@ macro(configure_alumy_dependencies)
         GIT_REPOSITORY https://github.com/troglobit/watchdogd.git
         GIT_TAG 3.5
         GIT_SHALLOW ON
+        DOWNLOAD_DIR ${EXTERNAL_DOWNLOAD_DIR}/watchdogd
         INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
         PATCH_COMMAND patch --forward --fuzz=3 -p0 -d <SOURCE_DIR> -i ${CMAKE_SOURCE_DIR}/cmake/patches/watchdogd-confdir.patch || true
         CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
@@ -702,6 +721,7 @@ macro(configure_alumy_dependencies)
         GIT_REPOSITORY https://github.com/stephane/libmodbus.git
         GIT_TAG v3.1.11
         GIT_SHALLOW ON
+        DOWNLOAD_DIR ${EXTERNAL_DOWNLOAD_DIR}/libmodbus
         INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
         CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
             COMMAND ${CMAKE_COMMAND} -E env "CC=${CCACHE_CC}" "PKG_CONFIG_PATH=${EXTERNAL_INSTALL_DIR}/lib/pkgconfig"
@@ -729,6 +749,7 @@ macro(configure_alumy_dependencies)
         GIT_REPOSITORY https://github.com/opencor/qwt.git
         GIT_TAG v6.2.0
         GIT_SHALLOW ON
+        DOWNLOAD_DIR ${EXTERNAL_DOWNLOAD_DIR}/qwt
         INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
         PATCH_COMMAND sed -i "s|QWT_INSTALL_PREFIX = .*\\[QT_INSTALL_PREFIX\\]|QWT_INSTALL_PREFIX = <INSTALL_DIR>|" <SOURCE_DIR>/qwtconfig.pri
         CONFIGURE_COMMAND ${QMAKE} <SOURCE_DIR>/qwt.pro 
