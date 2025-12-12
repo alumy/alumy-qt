@@ -711,6 +711,7 @@ macro(configure_alumy_dependencies)
                     --host=${AUTOTOOLS_HOST_TRIPLET}
                     --disable-static
                     --enable-shared
+                    --disable-tests
                     --without-documentation
         BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
         BUILD_BYPRODUCTS
