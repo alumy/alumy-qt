@@ -121,7 +121,7 @@ fi
 echo "Using cmake: $CMAKE"
 
 # Prepare build directory
-BUILD_DIR="${SCRIPT_DIR}/build"
+BUILD_DIR="${SCRIPT_DIR}/build-$ARCH"
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
