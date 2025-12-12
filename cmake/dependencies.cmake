@@ -697,6 +697,33 @@ macro(configure_alumy_dependencies)
         DEPENDS libite-external libuev-external libconfuse-external
     )
 
+    # libmodbus
+    ExternalProject_Add(libmodbus-external
+        GIT_REPOSITORY https://github.com/stephane/libmodbus.git
+        GIT_TAG v3.1.11
+        GIT_SHALLOW ON
+        INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
+        CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
+            COMMAND ${CMAKE_COMMAND} -E env "CC=${CCACHE_CC}" "PKG_CONFIG_PATH=${EXTERNAL_INSTALL_DIR}/lib/pkgconfig"
+                <SOURCE_DIR>/configure
+                    --prefix=<INSTALL_DIR>
+                    --build=${AUTOTOOLS_BUILD_TRIPLET}
+                    --host=${AUTOTOOLS_HOST_TRIPLET}
+                    --disable-static
+                    --enable-shared
+                    --without-documentation
+        BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
+        BUILD_BYPRODUCTS
+            ${EXTERNAL_INSTALL_DIR}/lib/libmodbus.so
+        INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+    )
+
     ExternalProject_Add(qwt-external
         GIT_REPOSITORY https://github.com/opencor/qwt.git
         GIT_TAG v6.2.0
@@ -751,6 +778,7 @@ macro(add_alumy_dependencies target)
         libuev-external
         libconfuse-external
         watchdogd-external
+        libmodbus-external
         qwt-external
     )
 endmacro()
@@ -787,6 +815,7 @@ macro(link_alumy_dependencies target)
         upb
         protobuf
         coap-3
+        modbus
         wdog
         ite
         uev
