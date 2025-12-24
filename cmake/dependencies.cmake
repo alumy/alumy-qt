@@ -413,6 +413,26 @@ macro(configure_alumy_dependencies)
     set(LINUXDEPLOYQT_EXECUTABLE ${HOST_TOOLS_INSTALL_DIR}/bin/linuxdeployqt)
     message(STATUS "Will use host linuxdeployqt: ${LINUXDEPLOYQT_EXECUTABLE}")
 
+    set(APPIMAGETOOL_URL "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage")
+    
+    ExternalProject_Add(appimagetool-host
+        URL ${APPIMAGETOOL_URL}
+        DOWNLOAD_NO_EXTRACT ON
+        DOWNLOAD_NAME appimagetool
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND ""
+        BUILD_BYPRODUCTS
+            ${HOST_TOOLS_INSTALL_DIR}/bin/appimagetool
+        INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${HOST_TOOLS_INSTALL_DIR}/bin
+            COMMAND ${CMAKE_COMMAND} -E copy <DOWNLOADED_FILE> ${HOST_TOOLS_INSTALL_DIR}/bin/appimagetool
+            COMMAND chmod +x ${HOST_TOOLS_INSTALL_DIR}/bin/appimagetool
+        LOG_DOWNLOAD OFF
+        LOG_INSTALL OFF
+    )
+
+    set(APPIMAGETOOL_EXECUTABLE ${HOST_TOOLS_INSTALL_DIR}/bin/appimagetool)
+    message(STATUS "Will use host appimagetool: ${APPIMAGETOOL_EXECUTABLE}")
+
     set(GRPC_CMAKE_ARGS
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
         -DCMAKE_PREFIX_PATH=${EXTERNAL_INSTALL_DIR}
