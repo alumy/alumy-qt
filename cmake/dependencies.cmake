@@ -381,9 +381,7 @@ macro(configure_alumy_dependencies)
     )
 
     set(GRPC_CPP_PLUGIN_EXECUTABLE ${HOST_TOOLS_INSTALL_DIR}/bin/grpc_cpp_plugin)
-    message(STATUS "Will use host grpc_cpp_plugin: ${GRPC_CPP_PLUGIN_EXECUTABLE}")
 
-    # gRPC (using standalone protobuf, host protoc and grpc_cpp_plugin)
     set(GRPC_CMAKE_ARGS
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
         -DCMAKE_PREFIX_PATH=${EXTERNAL_INSTALL_DIR}
@@ -431,6 +429,18 @@ macro(configure_alumy_dependencies)
         -D_gRPC_CPP_PLUGIN=${GRPC_CPP_PLUGIN_EXECUTABLE}
     )
     
+    set(GRPC_BUILD_BYPRODUCTS
+        ${EXTERNAL_INSTALL_DIR}/lib/libgrpc++.so
+        ${EXTERNAL_INSTALL_DIR}/lib/libgrpc.so
+        ${EXTERNAL_INSTALL_DIR}/lib/libgpr.so
+        ${EXTERNAL_INSTALL_DIR}/lib/libaddress_sorting.so
+        ${EXTERNAL_INSTALL_DIR}/lib/libupb.so
+        ${EXTERNAL_INSTALL_DIR}/lib/libabsl_*.so
+        ${EXTERNAL_INSTALL_DIR}/lib/libre2.so
+        ${EXTERNAL_INSTALL_DIR}/lib/libcares.so
+        ${EXTERNAL_INSTALL_DIR}/lib/libz.so
+    )
+    
     ExternalProject_Add(grpc-external
         GIT_REPOSITORY https://github.com/grpc/grpc.git
         GIT_TAG v1.46.7
@@ -438,16 +448,7 @@ macro(configure_alumy_dependencies)
         GIT_SHALLOW ON
         CMAKE_ARGS ${GRPC_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
-        BUILD_BYPRODUCTS 
-            ${EXTERNAL_INSTALL_DIR}/lib/libgrpc++.so
-            ${EXTERNAL_INSTALL_DIR}/lib/libgrpc.so
-            ${EXTERNAL_INSTALL_DIR}/lib/libgpr.so
-            ${EXTERNAL_INSTALL_DIR}/lib/libaddress_sorting.so
-            ${EXTERNAL_INSTALL_DIR}/lib/libupb.so
-            ${EXTERNAL_INSTALL_DIR}/lib/libabsl_*.so
-            ${EXTERNAL_INSTALL_DIR}/lib/libre2.so
-            ${EXTERNAL_INSTALL_DIR}/lib/libcares.so
-            ${EXTERNAL_INSTALL_DIR}/lib/libz.so
+        BUILD_BYPRODUCTS ${GRPC_BUILD_BYPRODUCTS}
         INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
@@ -756,9 +757,14 @@ endmacro()
 
 macro(install_alumy_dependencies)
     set(EXTERNAL_INSTALL_DIR ${CMAKE_BINARY_DIR}/external-install)
+    set(HOST_TOOLS_INSTALL_DIR ${CMAKE_BINARY_DIR}/host-tools-install)
 
     install(DIRECTORY ${EXTERNAL_INSTALL_DIR}/
         DESTINATION "."
+        USE_SOURCE_PERMISSIONS)
+
+    install(DIRECTORY ${HOST_TOOLS_INSTALL_DIR}/
+        DESTINATION "../host"
         USE_SOURCE_PERMISSIONS)
 endmacro()
 
