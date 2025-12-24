@@ -382,6 +382,37 @@ macro(configure_alumy_dependencies)
 
     set(GRPC_CPP_PLUGIN_EXECUTABLE ${HOST_TOOLS_INSTALL_DIR}/bin/grpc_cpp_plugin)
 
+    # linuxdeployqt for host (creates self-contained Linux applications and AppImages)
+    set(LINUXDEPLOYQT_CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=${HOST_TOOLS_INSTALL_DIR}
+        -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
+        -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
+        -DCMAKE_CXX_STANDARD=11
+        -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DBUILD_SHARED_LIBS=OFF
+    )
+
+    ExternalProject_Add(linuxdeployqt-host
+        GIT_REPOSITORY https://github.com/probonopd/linuxdeployqt.git
+        GIT_TAG continuous
+        GIT_SHALLOW ON
+        CMAKE_ARGS ${LINUXDEPLOYQT_CMAKE_ARGS}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_BYPRODUCTS
+            ${HOST_TOOLS_INSTALL_DIR}/bin/linuxdeployqt
+        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+    )
+
+    set(LINUXDEPLOYQT_EXECUTABLE ${HOST_TOOLS_INSTALL_DIR}/bin/linuxdeployqt)
+    message(STATUS "Will use host linuxdeployqt: ${LINUXDEPLOYQT_EXECUTABLE}")
+
     set(GRPC_CMAKE_ARGS
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
         -DCMAKE_PREFIX_PATH=${EXTERNAL_INSTALL_DIR}
