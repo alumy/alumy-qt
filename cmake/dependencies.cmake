@@ -816,6 +816,70 @@ macro(configure_alumy_dependencies)
         USES_TERMINAL_BUILD ON
         USES_TERMINAL_INSTALL ON
     )
+
+    # jemalloc
+    ExternalProject_Add(jemalloc-external
+        GIT_REPOSITORY https://github.com/jemalloc/jemalloc.git
+        GIT_TAG 5.3.0
+        GIT_SHALLOW ON
+        INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
+        CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./autogen.sh
+            COMMAND ${CMAKE_COMMAND} -E env "CC=${CCACHE_CC}" "CXX=${CCACHE_CXX}"
+                <SOURCE_DIR>/configure
+                    --prefix=<INSTALL_DIR>
+                    --build=${AUTOTOOLS_BUILD_TRIPLET}
+                    --host=${AUTOTOOLS_HOST_TRIPLET}
+                    --disable-static
+                    --enable-shared
+                    --with-jemalloc-prefix=je_
+        BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
+        BUILD_BYPRODUCTS
+            ${EXTERNAL_INSTALL_DIR}/lib/libjemalloc.so
+        INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+    )
+
+    # mimalloc
+    set(MIMALLOC_CMAKE_ARGS
+        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+        -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+        -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
+        -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
+        -DCMAKE_C_STANDARD=11
+        -DCMAKE_C_STANDARD_REQUIRED=ON
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+        -DMI_BUILD_SHARED=ON
+        -DMI_BUILD_STATIC=OFF
+        -DMI_BUILD_OBJECT=OFF
+        -DMI_BUILD_TESTS=OFF
+        -DMI_SECURE=OFF
+        -DMI_OVERRIDE=OFF
+        -DMI_INSTALL_TOPLEVEL=ON
+    )
+
+    ExternalProject_Add(mimalloc-external
+        GIT_REPOSITORY https://github.com/microsoft/mimalloc.git
+        GIT_TAG v2.1.7
+        GIT_SHALLOW ON
+        CMAKE_ARGS ${MIMALLOC_CMAKE_ARGS}
+        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_BYPRODUCTS
+            ${EXTERNAL_INSTALL_DIR}/lib/libmimalloc.so
+        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+    )
 endmacro()
 
 macro(install_alumy_dependencies)
@@ -850,6 +914,8 @@ macro(add_alumy_dependencies target)
         watchdogd-external
         libmodbus-external
         qwt-external
+        jemalloc-external
+        mimalloc-external
     )
 endmacro()
 
@@ -890,6 +956,8 @@ macro(link_alumy_dependencies target)
         ite
         uev
         confuse
+        jemalloc
+        mimalloc
         ssl 
         crypto
         pthread
