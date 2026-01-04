@@ -7,6 +7,12 @@ include(${CMAKE_CURRENT_LIST_DIR}/github_mirror.cmake)
 macro(configure_alumy_dependencies)
     ProcessorCount(N_CORES)
 
+    if(N_CORES GREATER 0)
+        set(GIT_SUBMODULE_JOBS ${N_CORES})
+    else()
+        set(GIT_SUBMODULE_JOBS 4)
+    endif()
+
     set(EXTERNAL_INSTALL_DIR ${CMAKE_BINARY_DIR}/external-install)
     list(APPEND CMAKE_PREFIX_PATH ${EXTERNAL_INSTALL_DIR})
 
@@ -367,6 +373,7 @@ macro(configure_alumy_dependencies)
         GIT_TAG v1.46.7
         GIT_SUBMODULES_RECURSE ON
         GIT_SHALLOW ON
+        GIT_CONFIG submodule.fetchJobs=${GIT_SUBMODULE_JOBS}
         CMAKE_ARGS ${GRPC_HOST_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build . --target grpc_cpp_plugin
         BUILD_BYPRODUCTS
@@ -498,6 +505,7 @@ macro(configure_alumy_dependencies)
         GIT_TAG v1.46.7
         GIT_SUBMODULES_RECURSE ON
         GIT_SHALLOW ON
+        GIT_CONFIG submodule.fetchJobs=${GIT_SUBMODULE_JOBS}
         CMAKE_ARGS ${GRPC_CMAKE_ARGS}
         BUILD_COMMAND ${CMAKE_COMMAND} --build .
         BUILD_BYPRODUCTS ${GRPC_BUILD_BYPRODUCTS}
@@ -529,6 +537,7 @@ macro(configure_alumy_dependencies)
         GIT_TAG boost-1.75.0
         GIT_SHALLOW ON
         GIT_SUBMODULES_RECURSE ON
+        GIT_CONFIG submodule.fetchJobs=${GIT_SUBMODULE_JOBS}
         INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
         CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./bootstrap.sh --prefix=<INSTALL_DIR>
         BUILD_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./b2 -j${BOOST_PARALLEL_JOBS} ${BOOST_TOOLSET} ${BOOST_B2_OPTIONS} --user-config=${CMAKE_BINARY_DIR}/user-config.jam --prefix=<INSTALL_DIR> headers
