@@ -10,6 +10,7 @@ UNIT_TEST="OFF"
 INSTALL_PREFIX="${SCRIPT_DIR}/release"
 CMAKE_PREFIX_PATH=""
 CMAKE_SYSROOT=""
+GITHUB_MIRROR="${GITHUB_MIRROR:-}"
 
 # Architecture to toolchain mapping
 declare -A TOOLCHAIN_MAP=(
@@ -46,6 +47,7 @@ show_help() {
 	  --build-type=TYPE        Build type (Debug, Release, etc.) [default: MinSizeRel]
 	  --unit-test=ON|OFF       Enable/disable unit tests [default: OFF]
 	  --install-prefix=PATH    Installation prefix path [default: \$SCRIPT_DIR/release]
+	  --github-mirror=URL      GitHub mirror URL (e.g., https://github.cache.alumy.art)
 	  -h, --help               Show this help message
 	EOF
 }
@@ -74,6 +76,10 @@ while [[ $# -gt 0 ]]; do
 			;;
 		--install-prefix=*)
 			INSTALL_PREFIX="${1#*=}"
+			shift
+			;;
+		--github-mirror=*)
+			GITHUB_MIRROR="${1#*=}"
 			shift
 			;;
 		-h|--help)
@@ -143,6 +149,11 @@ CMAKE_ARGS=(
 # Add CMAKE_SYSROOT only if non-empty
 if [[ -n "$CMAKE_SYSROOT" ]]; then
 	CMAKE_ARGS+=(-DCMAKE_SYSROOT="${CMAKE_SYSROOT}")
+fi
+
+# Export GITHUB_MIRROR if set
+if [[ -n "$GITHUB_MIRROR" ]]; then
+	export GITHUB_MIRROR
 fi
 
 # Run cmake

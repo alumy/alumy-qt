@@ -2,6 +2,7 @@ include(ExternalProject)
 include(ProcessorCount)
 include(${CMAKE_CURRENT_LIST_DIR}/ccache.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/qmake.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/github_mirror.cmake)
 
 macro(configure_alumy_dependencies)
     ProcessorCount(N_CORES)
@@ -421,7 +422,7 @@ macro(configure_alumy_dependencies)
     set(LINUXDEPLOYQT_EXECUTABLE ${HOST_TOOLS_INSTALL_DIR}/bin/linuxdeployqt)
     message(STATUS "Will use host linuxdeployqt: ${LINUXDEPLOYQT_EXECUTABLE}")
 
-    set(APPIMAGETOOL_URL "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage")
+    set(APPIMAGETOOL_URL "${GITHUB_BASE_URL}/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage")
     
     ExternalProject_Add(appimagetool-host
         URL ${APPIMAGETOOL_URL}
