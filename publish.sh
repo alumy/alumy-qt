@@ -64,10 +64,11 @@ done
 
 # Create GitHub Release
 echo "----------------------------------------"
-echo "Creating GitHub Release $VERSION..."
+echo "Creating GitHub Release $VERSION on GitHub..."
 echo "----------------------------------------"
 
 gh release create "$VERSION" "${ARTIFACTS[@]}" \
+    --repo "alumy/alumy-qt" \
     --title "$VERSION" \
     --notes "Pre-compiled binaries for $VERSION" \
     --generate-notes
