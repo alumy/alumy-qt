@@ -5,12 +5,10 @@ include(${CMAKE_CURRENT_LIST_DIR}/qmake.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/github_mirror.cmake)
 
 macro(configure_alumy_dependencies)
-    ProcessorCount(N_CORES)
-
-    if(N_CORES GREATER 0)
-        set(GIT_SUBMODULE_JOBS ${N_CORES})
+    if(CMAKE_GENERATOR MATCHES "Makefiles")
+        set(MAKE_COMMAND "$(MAKE)")
     else()
-        set(GIT_SUBMODULE_JOBS 4)
+        set(MAKE_COMMAND "${CMAKE_COMMAND} --build .")
     endif()
 
     set(EXTERNAL_INSTALL_DIR ${CMAKE_BINARY_DIR}/external-install)
@@ -42,10 +40,10 @@ macro(configure_alumy_dependencies)
         GIT_TAG v1.15.3
         GIT_SHALLOW ON
         CMAKE_ARGS ${SPDLOG_CMAKE_ARGS}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_COMMAND ${MAKE_COMMAND}
         BUILD_BYPRODUCTS
             ${EXTERNAL_INSTALL_DIR}/lib/libspdlog.so
-        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        INSTALL_COMMAND ${MAKE_COMMAND} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
@@ -79,7 +77,7 @@ macro(configure_alumy_dependencies)
         PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/cmake/qpcpp_force_cxx.cmake <SOURCE_DIR>/force_cxx.cmake
             COMMAND sed -i "1i include(force_cxx.cmake)" <SOURCE_DIR>/CMakeLists.txt
         CMAKE_ARGS ${QPCPP_CMAKE_ARGS}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_COMMAND ${MAKE_COMMAND}
         BUILD_BYPRODUCTS 
             ${EXTERNAL_INSTALL_DIR}/lib/libqpcpp.a
         INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${EXTERNAL_INSTALL_DIR}/lib
@@ -120,10 +118,10 @@ macro(configure_alumy_dependencies)
         PATCH_COMMAND sed -i "s/add_subdirectory(tests)/#add_subdirectory(tests)/" CMakeLists.txt
             COMMAND sed -i "s/add_subdirectory(examples)/#add_subdirectory(examples)/" CMakeLists.txt
         CMAKE_ARGS ${LOG4QT_CMAKE_ARGS}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_COMMAND ${MAKE_COMMAND}
         BUILD_BYPRODUCTS
             ${EXTERNAL_INSTALL_DIR}/lib/liblog4qt.so
-        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        INSTALL_COMMAND ${MAKE_COMMAND} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
@@ -156,10 +154,10 @@ macro(configure_alumy_dependencies)
         GIT_TAG 1.2.2
         GIT_SHALLOW ON
         CMAKE_ARGS ${LIBSNDFILE_CMAKE_ARGS}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_COMMAND ${MAKE_COMMAND}
         BUILD_BYPRODUCTS
             ${EXTERNAL_INSTALL_DIR}/lib/libsndfile.so
-        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        INSTALL_COMMAND ${MAKE_COMMAND} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
@@ -192,10 +190,10 @@ macro(configure_alumy_dependencies)
         GIT_TAG 0.8.0
         GIT_SHALLOW ON
         CMAKE_ARGS ${YAMLCPP_CMAKE_ARGS}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_COMMAND ${MAKE_COMMAND}
         BUILD_BYPRODUCTS
             ${EXTERNAL_INSTALL_DIR}/lib/libyaml-cpp.so
-        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        INSTALL_COMMAND ${MAKE_COMMAND} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
@@ -240,11 +238,11 @@ macro(configure_alumy_dependencies)
         GIT_SHALLOW ON
         INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
         CONFIGURE_COMMAND ${OPENSSL_CONFIGURE_COMMAND}
-        BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
+        BUILD_COMMAND ${MAKE_COMMAND}
         BUILD_BYPRODUCTS
             ${EXTERNAL_INSTALL_DIR}/lib/libssl.so
             ${EXTERNAL_INSTALL_DIR}/lib/libcrypto.so
-        INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install_sw
+        INSTALL_COMMAND ${MAKE_COMMAND} install_sw
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
@@ -277,12 +275,12 @@ macro(configure_alumy_dependencies)
         GIT_TAG v3.21.12
         GIT_SHALLOW ON
         CMAKE_ARGS ${PROTOBUF_HOST_CMAKE_ARGS}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_COMMAND ${MAKE_COMMAND}
         BUILD_BYPRODUCTS
             ${HOST_TOOLS_INSTALL_DIR}/bin/protoc
             ${HOST_TOOLS_INSTALL_DIR}/lib/libprotobuf.a
             ${HOST_TOOLS_INSTALL_DIR}/lib/libprotoc.a
-        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        INSTALL_COMMAND ${MAKE_COMMAND} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
@@ -320,12 +318,12 @@ macro(configure_alumy_dependencies)
         GIT_TAG v3.21.12
         GIT_SHALLOW ON
         CMAKE_ARGS ${PROTOBUF_CMAKE_ARGS}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_COMMAND ${MAKE_COMMAND}
         BUILD_BYPRODUCTS
             ${EXTERNAL_INSTALL_DIR}/lib/libprotobuf.so
             ${EXTERNAL_INSTALL_DIR}/lib/libprotobuf-lite.so
             ${EXTERNAL_INSTALL_DIR}/lib/libprotoc.so
-        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        INSTALL_COMMAND ${MAKE_COMMAND} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
@@ -375,7 +373,7 @@ macro(configure_alumy_dependencies)
         GIT_SHALLOW ON
         GIT_CONFIG submodule.fetchJobs=${GIT_SUBMODULE_JOBS}
         CMAKE_ARGS ${GRPC_HOST_CMAKE_ARGS}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build . --target grpc_cpp_plugin
+        BUILD_COMMAND ${MAKE_COMMAND} grpc_cpp_plugin
         BUILD_BYPRODUCTS
             ${HOST_TOOLS_INSTALL_DIR}/bin/grpc_cpp_plugin
         INSTALL_COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/grpc_cpp_plugin ${HOST_TOOLS_INSTALL_DIR}/bin/grpc_cpp_plugin
@@ -406,10 +404,10 @@ macro(configure_alumy_dependencies)
         GIT_TAG continuous
         GIT_SHALLOW ON
         CMAKE_ARGS ${LINUXDEPLOYQT_CMAKE_ARGS}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_COMMAND ${MAKE_COMMAND}
         BUILD_BYPRODUCTS
             ${HOST_TOOLS_INSTALL_DIR}/bin/linuxdeployqt
-        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        INSTALL_COMMAND ${MAKE_COMMAND} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
@@ -507,9 +505,9 @@ macro(configure_alumy_dependencies)
         GIT_SHALLOW ON
         GIT_CONFIG submodule.fetchJobs=${GIT_SUBMODULE_JOBS}
         CMAKE_ARGS ${GRPC_CMAKE_ARGS}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_COMMAND ${MAKE_COMMAND}
         BUILD_BYPRODUCTS ${GRPC_BUILD_BYPRODUCTS}
-        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        INSTALL_COMMAND ${MAKE_COMMAND} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
