@@ -59,18 +59,42 @@ show_help() {
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
-	case $1 in
-		--arch=*) ARCH="${1#*=}"; shift ;;
-		--build-type=*) BUILD_TYPE="${1#*=}"; shift ;;
-		--unit-test=*) UNIT_TEST="${1#*=}"; shift ;;
-		--install-prefix=*) INSTALL_PREFIX="${1#*=}"; shift ;;
-		--github-mirror=*) GITHUB_MIRROR="${1#*=}"; shift ;;
-		--build) DO_BUILD=true; shift ;;
-		--install) DO_INSTALL=true; DO_BUILD=true; shift ;;
-		--clean) CLEAN=true; shift ;;
-		-h|--help) show_help; exit 0 ;;
-		*) echo "Error: Unknown option: $1"; exit 1 ;;
+	case "$1" in
+		--arch=*)
+			ARCH="${1#*=}"
+			;;
+		--build-type=*)
+			BUILD_TYPE="${1#*=}"
+			;;
+		--unit-test=*)
+			UNIT_TEST="${1#*=}"
+			;;
+		--install-prefix=*)
+			INSTALL_PREFIX="${1#*=}"
+			;;
+		--github-mirror=*)
+			GITHUB_MIRROR="${1#*=}"
+			;;
+		--build)
+			DO_BUILD=true
+			;;
+		--install)
+			DO_INSTALL=true
+			DO_BUILD=true
+			;;
+		--clean)
+			CLEAN=true
+			;;
+		-h|--help)
+			show_help
+			exit 0
+			;;
+		*)
+			echo "Error: Unknown option: $1" >&2
+			exit 1
+			;;
 	esac
+	shift
 done
 
 if [[ -z "$ARCH" || -z "${TOOLCHAIN_MAP[$ARCH]}" ]]; then
