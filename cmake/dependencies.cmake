@@ -1,5 +1,4 @@
 include(ExternalProject)
-include(ProcessorCount)
 include(${CMAKE_CURRENT_LIST_DIR}/ccache.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/qmake.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/github_mirror.cmake)
@@ -9,6 +8,12 @@ macro(configure_alumy_dependencies)
         set(MAKE_COMMAND "$(MAKE)")
     else()
         set(MAKE_COMMAND "${CMAKE_COMMAND} --build .")
+    endif()
+
+    if(DEFINED CMAKE_BUILD_PARALLEL_LEVEL)
+        set(NON_MAKE_PARALLEL_LEVEL ${CMAKE_BUILD_PARALLEL_LEVEL})
+    else()
+        set(NON_MAKE_PARALLEL_LEVEL 4)
     endif()
 
     set(EXTERNAL_INSTALL_DIR ${CMAKE_BINARY_DIR}/external-install)
@@ -371,7 +376,7 @@ macro(configure_alumy_dependencies)
         GIT_TAG v1.46.7
         GIT_SUBMODULES_RECURSE ON
         GIT_SHALLOW ON
-        GIT_CONFIG submodule.fetchJobs=${GIT_SUBMODULE_JOBS}
+        GIT_CONFIG submodule.fetchJobs=${NON_MAKE_PARALLEL_LEVEL}
         CMAKE_ARGS ${GRPC_HOST_CMAKE_ARGS}
         BUILD_COMMAND ${MAKE_COMMAND} grpc_cpp_plugin
         BUILD_BYPRODUCTS
@@ -503,7 +508,7 @@ macro(configure_alumy_dependencies)
         GIT_TAG v1.46.7
         GIT_SUBMODULES_RECURSE ON
         GIT_SHALLOW ON
-        GIT_CONFIG submodule.fetchJobs=${GIT_SUBMODULE_JOBS}
+        GIT_CONFIG submodule.fetchJobs=${NON_MAKE_PARALLEL_LEVEL}
         CMAKE_ARGS ${GRPC_CMAKE_ARGS}
         BUILD_COMMAND ${MAKE_COMMAND}
         BUILD_BYPRODUCTS ${GRPC_BUILD_BYPRODUCTS}
@@ -520,12 +525,6 @@ macro(configure_alumy_dependencies)
     # Boost
     set(BOOST_B2_OPTIONS variant=release link=shared runtime-link=shared threading=multi cxxstd=11)
 
-    if(NOT N_CORES EQUAL 0)
-        set(BOOST_PARALLEL_JOBS ${N_CORES})
-    else()
-        set(BOOST_PARALLEL_JOBS 4)
-    endif()
-
     file(WRITE ${CMAKE_BINARY_DIR}/user-config.jam 
         "using gcc : cross : ${CCACHE_CXX} ;\n")
     set(BOOST_TOOLSET "toolset=gcc-cross")
@@ -535,11 +534,11 @@ macro(configure_alumy_dependencies)
         GIT_TAG boost-1.75.0
         GIT_SHALLOW ON
         GIT_SUBMODULES_RECURSE ON
-        GIT_CONFIG submodule.fetchJobs=${GIT_SUBMODULE_JOBS}
+        GIT_CONFIG submodule.fetchJobs=${NON_MAKE_PARALLEL_LEVEL}
         INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
         CONFIGURE_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./bootstrap.sh --prefix=<INSTALL_DIR>
-        BUILD_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./b2 -j${BOOST_PARALLEL_JOBS} ${BOOST_TOOLSET} ${BOOST_B2_OPTIONS} --user-config=${CMAKE_BINARY_DIR}/user-config.jam --prefix=<INSTALL_DIR> headers
-            COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./b2 -j${BOOST_PARALLEL_JOBS} ${BOOST_TOOLSET} ${BOOST_B2_OPTIONS} --user-config=${CMAKE_BINARY_DIR}/user-config.jam --prefix=<INSTALL_DIR> --with-system --with-filesystem --with-thread --with-chrono --with-date_time install
+        BUILD_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./b2 -j${NON_MAKE_PARALLEL_LEVEL} ${BOOST_TOOLSET} ${BOOST_B2_OPTIONS} --user-config=${CMAKE_BINARY_DIR}/user-config.jam --prefix=<INSTALL_DIR> headers
+            COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR> ./b2 -j${NON_MAKE_PARALLEL_LEVEL} ${BOOST_TOOLSET} ${BOOST_B2_OPTIONS} --user-config=${CMAKE_BINARY_DIR}/user-config.jam --prefix=<INSTALL_DIR> --with-system --with-filesystem --with-thread --with-chrono --with-date_time install
         BUILD_BYPRODUCTS
             ${EXTERNAL_INSTALL_DIR}/lib/libboost_system.so
             ${EXTERNAL_INSTALL_DIR}/lib/libboost_filesystem.so
@@ -590,10 +589,10 @@ macro(configure_alumy_dependencies)
         GIT_TAG v4.3.5
         GIT_SHALLOW ON
         CMAKE_ARGS ${LIBCOAP_CMAKE_ARGS}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_COMMAND ${MAKE_COMMAND}
         BUILD_BYPRODUCTS
             ${EXTERNAL_INSTALL_DIR}/lib/libcoap-3.so
-        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        INSTALL_COMMAND ${MAKE_COMMAND} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
@@ -627,10 +626,10 @@ macro(configure_alumy_dependencies)
         GIT_TAG v4.3.5
         GIT_SHALLOW ON
         CMAKE_ARGS ${LIBCOAP_NOTLS_CMAKE_ARGS}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_COMMAND ${MAKE_COMMAND}
         BUILD_BYPRODUCTS
             ${EXTERNAL_INSTALL_DIR}/lib/libcoap-3-notls.so
-        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        INSTALL_COMMAND ${MAKE_COMMAND} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
@@ -657,10 +656,10 @@ macro(configure_alumy_dependencies)
                     --disable-static
                     --enable-shared
                     --without-symlink
-        BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
+        BUILD_COMMAND ${MAKE_COMMAND}
         BUILD_BYPRODUCTS
             ${EXTERNAL_INSTALL_DIR}/lib/libite.so
-        INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
+        INSTALL_COMMAND ${MAKE_COMMAND} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
@@ -683,10 +682,10 @@ macro(configure_alumy_dependencies)
                     --host=${AUTOTOOLS_HOST_TRIPLET}
                     --disable-static
                     --enable-shared
-        BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
+        BUILD_COMMAND ${MAKE_COMMAND}
         BUILD_BYPRODUCTS
             ${EXTERNAL_INSTALL_DIR}/lib/libuev.so
-        INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
+        INSTALL_COMMAND ${MAKE_COMMAND} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
@@ -710,10 +709,10 @@ macro(configure_alumy_dependencies)
                     --disable-static
                     --enable-shared
                     --disable-examples
-        BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
+        BUILD_COMMAND ${MAKE_COMMAND}
         BUILD_BYPRODUCTS
             ${EXTERNAL_INSTALL_DIR}/lib/libconfuse.so
-        INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
+        INSTALL_COMMAND ${MAKE_COMMAND} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
@@ -744,10 +743,10 @@ macro(configure_alumy_dependencies)
                     --disable-static
                     --enable-shared
                     --with-systemd=no
-        BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
+        BUILD_COMMAND ${MAKE_COMMAND}
         BUILD_BYPRODUCTS
             ${EXTERNAL_INSTALL_DIR}/lib/libwdog.so
-        INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
+        INSTALL_COMMAND ${MAKE_COMMAND} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
@@ -773,10 +772,10 @@ macro(configure_alumy_dependencies)
                     --enable-shared
                     --disable-tests
                     --without-documentation
-        BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
+        BUILD_COMMAND ${MAKE_COMMAND}
         BUILD_BYPRODUCTS
             ${EXTERNAL_INSTALL_DIR}/lib/libmodbus.so
-        INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
+        INSTALL_COMMAND ${MAKE_COMMAND} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
@@ -801,10 +800,10 @@ macro(configure_alumy_dependencies)
             "QWT_CONFIG-=QwtExamples"
             "QWT_CONFIG-=QwtDesigner"
             "INSTALL_DIR=<INSTALL_DIR>"
-        BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
+        BUILD_COMMAND ${MAKE_COMMAND}
         BUILD_BYPRODUCTS
             ${EXTERNAL_INSTALL_DIR}/lib/libqwt.so
-        INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
+        INSTALL_COMMAND ${MAKE_COMMAND} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
@@ -828,10 +827,10 @@ macro(configure_alumy_dependencies)
                     --disable-static
                     --enable-shared
                     --with-jemalloc-prefix=je_
-        BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -j${CMAKE_BUILD_PARALLEL_LEVEL}
+        BUILD_COMMAND ${MAKE_COMMAND}
         BUILD_BYPRODUCTS
             ${EXTERNAL_INSTALL_DIR}/lib/libjemalloc.so
-        INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
+        INSTALL_COMMAND ${MAKE_COMMAND} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
@@ -864,10 +863,10 @@ macro(configure_alumy_dependencies)
         GIT_TAG v2.1.7
         GIT_SHALLOW ON
         CMAKE_ARGS ${MIMALLOC_CMAKE_ARGS}
-        BUILD_COMMAND ${CMAKE_COMMAND} --build .
+        BUILD_COMMAND ${MAKE_COMMAND}
         BUILD_BYPRODUCTS
             ${EXTERNAL_INSTALL_DIR}/lib/libmimalloc.so
-        INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+        INSTALL_COMMAND ${MAKE_COMMAND} install
         LOG_DOWNLOAD OFF
         LOG_CONFIGURE OFF
         LOG_BUILD OFF
