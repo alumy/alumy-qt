@@ -15,7 +15,7 @@ jobs:
           - arch: x86_64
             qt_arch: gcc_64
           - arch: aarch64
-            qt_arch: linux_aarch64 # This is a placeholder as standard Qt installer doesn't support aarch64 cross easily
+            qt_arch: linux_aarch64
 
     steps:
       - name: Checkout code
