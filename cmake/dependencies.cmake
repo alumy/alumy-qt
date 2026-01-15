@@ -368,7 +368,6 @@ macro(configure_alumy_dependencies)
         -DgRPC_INSTALL=ON
         -DABSL_PROPAGATE_CXX_STD=ON
         -DABSL_ENABLE_INSTALL=ON
-        -DProtobuf_DIR=${HOST_TOOLS_INSTALL_DIR}/lib/cmake/protobuf
     )
 
     ExternalProject_Add(grpc-host
@@ -486,7 +485,6 @@ macro(configure_alumy_dependencies)
         -DOPENSSL_INCLUDE_DIR=${EXTERNAL_INSTALL_DIR}/include
         -DOPENSSL_CRYPTO_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libcrypto.so
         -DOPENSSL_SSL_LIBRARY=${EXTERNAL_INSTALL_DIR}/lib/libssl.so
-        -DProtobuf_DIR=${EXTERNAL_INSTALL_DIR}/lib/cmake/protobuf
         -DProtobuf_PROTOC_EXECUTABLE=${PROTOC_EXECUTABLE}
         -D_gRPC_CPP_PLUGIN=${GRPC_CPP_PLUGIN_EXECUTABLE}
     )
