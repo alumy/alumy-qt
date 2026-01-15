@@ -43,10 +43,11 @@ A feature-rich SDK for rapid Qt application development, providing commonly used
 git clone --recursive https://github.com/alumy/alumy-qt.git
 cd alumy-qt
 
-./cmake_gen.sh --arch=x86_64
-cd build-x86_64
-make -j$(nproc)
-sudo make install
+# Configure and build in parallel
+./cmake_gen.sh --arch=x86_64 --build
+
+# Or build and install directly
+./cmake_gen.sh --arch=x86_64 --install
 ```
 
 ## Usage
@@ -77,6 +78,9 @@ target_link_libraries(your_target alumy::alumy)
 | `--build-type` | MinSizeRel | Build type (Debug, Release) |
 | `--unit-test` | OFF | Enable unit tests |
 | `--install-prefix` | ./release | Installation path |
+| `--build` | - | Execute parallel build |
+| `--install` | - | Build and install |
+| `--clean` | - | Clean build directory |
 
 ## Contributing
 

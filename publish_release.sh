@@ -11,12 +11,11 @@ show_help() {
     echo "Example: $0 v0.0.1"
     echo ""
     echo "This script will:"
-    echo "1. Build the project for ${ARCHS[*]}"
-    echo "2. Create tarball packages"
-    echo "3. Create a GitHub Release and upload artifacts using 'gh' CLI"
+    echo "1. Build the project for ${ARCHS[*]} sequentially"
+    echo "2. Compile each arch using ALL available cores in parallel"
+    echo "3. Create tarball packages and upload to GitHub"
 }
 
-# Check for version argument
 if [ -z "$1" ]; then
     show_help
     exit 1
@@ -24,59 +23,46 @@ fi
 
 VERSION=$1
 
-# Check if gh CLI is installed
+# Check for GitHub CLI
 if ! command -v gh &> /dev/null; then
     echo "Error: GitHub CLI 'gh' is not installed."
-    echo "Please install it from https://cli.github.com/ and login using 'gh auth login'."
     exit 1
 fi
 
-# Clean up previous release directory
-echo "Cleaning up $RELEASE_DIR directory..."
+# Clean previous release artifacts
 rm -rf "$RELEASE_DIR"
-mkdir -p "$RELEASE_DIR"
+rm -f *.tar.gz
 
-# Build and Install for each architecture
+# Build and Install for each architecture sequentially
+ARTIFACTS=()
 for ARCH in "${ARCHS[@]}"; do
-    echo "----------------------------------------"
-    echo "Building for $ARCH..."
-    echo "----------------------------------------"
+    echo "========================================"
+    echo "  Processing Architecture: $ARCH"
+    echo "========================================"
     
-    # Run the generator script
-    ./cmake_gen.sh --arch="$ARCH" --build-type=MinSizeRel
-    
-    # Build and Install
-    BUILD_DIR="build-$ARCH"
-    if [ ! -d "$BUILD_DIR" ]; then
-        echo "Error: Build directory $BUILD_DIR not found."
-        exit 1
-    fi
-    
-    echo "Compiling and installing $ARCH..."
-    make -C "$BUILD_DIR" -j$(nproc) install
+    # Using the optimized cmake_gen.sh with --install which includes parallel build
+    ./cmake_gen.sh --arch="$ARCH" --build-type=MinSizeRel --install --clean
     
     # Create tarball
     echo "Packaging $ARCH..."
     TARBALL="${PROJECT_NAME}-${ARCH}-${VERSION}.tar.gz"
     
-    # The install path inside 'release' is categorized by architecture
-    # based on CMakeLists.txt: set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/${CMAKE_SYSTEM_PROCESSOR}")
+    # The install path is categorized by architecture inside release/
     if [ -d "$RELEASE_DIR/$ARCH" ]; then
-        tar -czvf "$TARBALL" -C "$RELEASE_DIR" "$ARCH"
+        tar -czf "$TARBALL" -C "$RELEASE_DIR" "$ARCH"
     else
-        # Fallback if the processor name differs (e.g., amd64 vs x86_64)
-        # Search for any directory inside release/
+        # Fallback for processor name mismatch
         SUBDIR=$(ls "$RELEASE_DIR" | head -n 1)
         if [ -n "$SUBDIR" ]; then
-            tar -czvf "$TARBALL" -C "$RELEASE_DIR" "$SUBDIR"
-            # Move it to a standard name if needed or just use the subdir
+            tar -czf "$TARBALL" -C "$RELEASE_DIR" "$SUBDIR"
         else
-            echo "Error: Installation directory in $RELEASE_DIR not found for $ARCH."
+            echo "Error: Install failed for $ARCH."
             exit 1
         fi
     fi
     
     ARTIFACTS+=("$TARBALL")
+    echo "[$ARCH] Done."
 done
 
 # Create GitHub Release

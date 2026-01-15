@@ -8,31 +8,33 @@ ARCH=""
 BUILD_TYPE="MinSizeRel"
 UNIT_TEST="OFF"
 INSTALL_PREFIX="${SCRIPT_DIR}/release"
-CMAKE_PREFIX_PATH=""
-CMAKE_SYSROOT=""
 GITHUB_MIRROR="${GITHUB_MIRROR:-}"
+DO_BUILD=false
+DO_INSTALL=false
+CLEAN=false
 
-# Architecture to toolchain mapping
+# Architecture mapping
 declare -A TOOLCHAIN_MAP=(
 	["aarch64"]="${SCRIPT_DIR}/cmake/toolchain/aarch64-linux-gnu.cmake"
 	["x86_64"]="${SCRIPT_DIR}/cmake/toolchain/gcc.cmake"
 	["amd64"]="${SCRIPT_DIR}/cmake/toolchain/gcc.cmake"
 )
 
-# Architecture to Qt CMAKE_PREFIX_PATH mapping
+# Qt prefix mapping
 declare -A QT_PREFIX_MAP=(
 	["aarch64"]="/opt/Qt5.12.12/5.12.12/t507_aarch64"
 	["x86_64"]="/opt/Qt5.12.12/5.12.12/gcc_64"
 	["amd64"]="/opt/Qt5.12.12/5.12.12/gcc_64"
 )
 
-# Architecture to Qt5_DIR mapping (bypass CMAKE_FIND_ROOT_PATH_MODE_PACKAGE)
+# Qt5_DIR mapping
 declare -A QT5_DIR_MAP=(
 	["aarch64"]="/opt/Qt5.12.12/5.12.12/t507_aarch64/lib/cmake/Qt5"
 	["x86_64"]="/opt/Qt5.12.12/5.12.12/gcc_64/lib/cmake/Qt5"
 	["amd64"]="/opt/Qt5.12.12/5.12.12/gcc_64/lib/cmake/Qt5"
 )
 
+# Sysroot mapping
 declare -A SYSROOT_MAP=(
 	["aarch64"]="/opt/t507-aarch64-linux-gnu/aarch64-buildroot-linux-gnu/sysroot/"
 	["x86_64"]=""
@@ -41,120 +43,87 @@ declare -A SYSROOT_MAP=(
 
 show_help() {
 	cat <<-EOF
-	Usage: $0 [options]
+	Usage: $0 --arch=ARCH [options]
 	Options:
 	  --arch=ARCH              Target architecture (${!TOOLCHAIN_MAP[*]})
-	  --build-type=TYPE        Build type (Debug, Release, etc.) [default: MinSizeRel]
-	  --unit-test=ON|OFF       Enable/disable unit tests [default: OFF]
-	  --install-prefix=PATH    Installation prefix path [default: \$SCRIPT_DIR/release]
-	  --github-mirror=URL      GitHub mirror URL (e.g., https://github.cache.alumy.art)
-	  -h, --help               Show this help message
+	  --build-type=TYPE        Build type (Debug, Release, MinSizeRel) [default: MinSizeRel]
+	  --unit-test=ON|OFF       Enable unit tests [default: OFF]
+	  --install-prefix=PATH    Custom install path [default: \$SCRIPT_DIR/release]
+	  --github-mirror=URL      GitHub mirror URL
+	  --build                  Execute build after configuration
+	  --install                Execute install after build
+	  --clean                  Remove build directory before configuring
+	  -h, --help               Show this help
 	EOF
 }
 
-find_cmake() {
-	local cmake_cmd
-	for cmd in cmake3 cmake2 cmake; do
-		cmake_cmd=$(command -v "$cmd" 2>/dev/null) && break
-	done
-	echo "$cmake_cmd"
-}
-
+# Parse arguments
 while [[ $# -gt 0 ]]; do
 	case $1 in
-		--arch=*)
-			ARCH="${1#*=}"
-			shift
-			;;
-		--build-type=*)
-			BUILD_TYPE="${1#*=}"
-			shift
-			;;
-		--unit-test=*)
-			UNIT_TEST="${1#*=}"
-			shift
-			;;
-		--install-prefix=*)
-			INSTALL_PREFIX="${1#*=}"
-			shift
-			;;
-		--github-mirror=*)
-			GITHUB_MIRROR="${1#*=}"
-			shift
-			;;
-		-h|--help)
-			show_help
-			exit 0
-			;;
-		*)
-			echo "Error: Unknown option: $1" >&2
-			echo "Use -h or --help for usage information" >&2
-			exit 1
-			;;
+		--arch=*) ARCH="${1#*=}"; shift ;;
+		--build-type=*) BUILD_TYPE="${1#*=}"; shift ;;
+		--unit-test=*) UNIT_TEST="${1#*=}"; shift ;;
+		--install-prefix=*) INSTALL_PREFIX="${1#*=}"; shift ;;
+		--github-mirror=*) GITHUB_MIRROR="${1#*=}"; shift ;;
+		--build) DO_BUILD=true; shift ;;
+		--install) DO_INSTALL=true; DO_BUILD=true; shift ;;
+		--clean) CLEAN=true; shift ;;
+		-h|--help) show_help; exit 0 ;;
+		*) echo "Error: Unknown option: $1"; exit 1 ;;
 	esac
 done
 
-# Validate required parameters
-if [[ -z "$ARCH" ]]; then
-	echo "Error: --arch is required" >&2
+if [[ -z "$ARCH" || -z "${TOOLCHAIN_MAP[$ARCH]}" ]]; then
+	echo "Error: Valid --arch is required (${!TOOLCHAIN_MAP[*]})"
 	show_help
 	exit 1
 fi
 
-# Validate architecture
-if [[ -z "${TOOLCHAIN_MAP[$ARCH]}" ]]; then
-	echo "Error: Unknown architecture: $ARCH" >&2
-	echo "Supported architectures: ${!TOOLCHAIN_MAP[*]}" >&2
-	exit 1
-fi
-
-# Set CMAKE_PREFIX_PATH based on architecture
-if [[ -n "${QT_PREFIX_MAP[$ARCH]}" ]]; then
-	CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH:+${CMAKE_PREFIX_PATH}:}${QT_PREFIX_MAP[$ARCH]}"
-fi
-
-# Set CMAKE_SYSROOT based on architecture
-if [[ -n "${SYSROOT_MAP[$ARCH]}" ]]; then
-	CMAKE_SYSROOT="${CMAKE_SYSROOT:+${CMAKE_SYSROOT}:}${SYSROOT_MAP[$ARCH]}"
-fi
-
-# Find cmake
-CMAKE=$(find_cmake)
-if [[ ! -x "$CMAKE" ]]; then
-	echo "Error: cmake not found, please install cmake first" >&2
-	exit 1
-fi
-echo "Using cmake: $CMAKE"
-
-# Prepare build directory
+# Prepare Build Directory
 BUILD_DIR="${SCRIPT_DIR}/build-$ARCH"
-rm -rf "$BUILD_DIR"
+if [[ "$CLEAN" == "true" ]]; then
+	echo ">>> Cleaning build directory: $BUILD_DIR"
+	rm -rf "$BUILD_DIR"
+fi
 mkdir -p "$BUILD_DIR"
-cd "$BUILD_DIR"
 
-# Build cmake arguments
+# Set CMake arguments
 CMAKE_ARGS=(
+	-S "$SCRIPT_DIR"
+	-B "$BUILD_DIR"
 	-G "Unix Makefiles"
 	-DCMAKE_TOOLCHAIN_FILE="${TOOLCHAIN_MAP[$ARCH]}"
-	-DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}"
-	-DCMAKE_FIND_ROOT_PATH="${CMAKE_SYSROOT};${QT_PREFIX_MAP[$ARCH]}"
+	-DCMAKE_PREFIX_PATH="${QT_PREFIX_MAP[$ARCH]}"
+	-DCMAKE_FIND_ROOT_PATH="${SYSROOT_MAP[$ARCH]};${QT_PREFIX_MAP[$ARCH]}"
 	-DQt5_DIR="${QT5_DIR_MAP[$ARCH]}"
 	-DCMAKE_BUILD_TYPE="$BUILD_TYPE"
 	-DUNIT_TEST="$UNIT_TEST"
-	-DBUILD_STATIC_LIBS=OFF
-	-DBUILD_SHARED_LIBS=ON
 	-DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX"
 )
 
-# Add CMAKE_SYSROOT only if non-empty
-if [[ -n "$CMAKE_SYSROOT" ]]; then
-	CMAKE_ARGS+=(-DCMAKE_SYSROOT="${CMAKE_SYSROOT}")
+if [[ -n "${SYSROOT_MAP[$ARCH]}" ]]; then
+	CMAKE_ARGS+=(-DCMAKE_SYSROOT="${SYSROOT_MAP[$ARCH]}")
 fi
 
-# Export GITHUB_MIRROR if set
 if [[ -n "$GITHUB_MIRROR" ]]; then
 	export GITHUB_MIRROR
 fi
 
-# Run cmake
-"$CMAKE" "${CMAKE_ARGS[@]}" "$SCRIPT_DIR"
+# Configure
+echo ">>> Configuring for $ARCH..."
+cmake "${CMAKE_ARGS[@]}"
+
+# Build
+if [[ "$DO_BUILD" == "true" ]]; then
+	NPROC=$(nproc)
+	echo ">>> Building $ARCH with $NPROC jobs..."
+	cmake --build "$BUILD_DIR" -j "$NPROC"
+fi
+
+# Install
+if [[ "$DO_INSTALL" == "true" ]]; then
+	echo ">>> Installing $ARCH to $INSTALL_PREFIX..."
+	cmake --install "$BUILD_DIR"
+fi
+
+echo ">>> Done ($ARCH)."
