@@ -97,4 +97,5 @@ jack <jackchanrs@gmail.com>
 ## Links
 
 - [Changelog](CHANGELOG.md)
+- [Releases](https://github.com/alumy/alumy-qt/releases)
 - [Issues](https://github.com/alumy/alumy-qt/issues)

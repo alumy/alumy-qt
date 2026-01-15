@@ -1,0 +1,84 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build ${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            qt_arch: gcc_64
+          - arch: aarch64
+            qt_arch: linux_aarch64 # This is a placeholder as standard Qt installer doesn't support aarch64 cross easily
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake
+          if [ "${{ matrix.arch }}" = "aarch64" ]; then
+            sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+          fi
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '5.15.2' # Or '6.x' depending on preference
+          arch: ${{ matrix.qt_arch }}
+          # For aarch64, this action might not provide prebuilt binaries easily
+          # but we'll try to use the x86_64 build as primary for now or use a container
+
+      - name: Configure and Build
+        run: |
+          # We bypass cmake_gen.sh local paths and use cmake directly for GHA compatibility
+          mkdir build
+          cd build
+          if [ "${{ matrix.arch }}" = "x86_64" ]; then
+            cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install
+          else
+            # For aarch64, we use the provided toolchain file
+            cmake .. -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/aarch64-linux-gnu.cmake \
+                     -DCMAKE_BUILD_TYPE=Release \
+                     -DCMAKE_INSTALL_PREFIX=../install
+          fi
+          make -j$(nproc)
+          make install
+
+      - name: Package
+        run: |
+          tar -czvf alumy-qt-${{ matrix.arch }}-${{ github.ref_name }}.tar.gz -C install .
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: alumy-qt-${{ matrix.arch }}
+          path: alumy-qt-${{ matrix.arch }}-${{ github.ref_name }}.tar.gz
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: alumy-qt-*.tar.gz
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
