@@ -1,5 +1,6 @@
 #include <QEventLoop>
 #include <QTimer>
+#include <QElapsedTimer>
 #include "alumy/sleep.h"
 #include "alumy/config.h"
 #include "alumy/types.h"
