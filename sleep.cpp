@@ -11,8 +11,12 @@ sleep::sleep(QObject *parent) : QObject(parent)
 
 void sleep::msleep(int_t ms)
 {
-    QEventLoop loop;
-
-    QTimer::singleShot(ms, &loop, SLOT(quit()));
-    loop.exec();
+    QElapsedTimer timer;
+    
+    timer.start();
+    
+    while (timer.elapsed() < ms) {
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
+	QThread::msleep(10);
+    }
 }
