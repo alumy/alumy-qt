@@ -9,6 +9,21 @@
 #include "alumy/singleton.h"
 #include "alumy/log.h"
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/fmt.h>
+
+template <>
+struct fmt::formatter<QString> : fmt::formatter<std::string> {
+    fmt::format_context::iterator format(const QString &s, fmt::format_context &ctx) const {
+        return fmt::formatter<std::string>::format(s.toStdString(), ctx);
+    }
+};
+
+template <>
+struct fmt::formatter<QByteArray> : fmt::formatter<std::string> {
+    fmt::format_context::iterator format(const QByteArray &s, fmt::format_context &ctx) const {
+        return fmt::formatter<std::string>::format(s.toStdString(), ctx);
+    }
+};
 
 namespace alumy {
 
@@ -51,6 +66,36 @@ public:
 	void trace(const QString &message);
 	void trace(const QJsonObject &message);
 	void trace(const QByteArray &data);
+
+	template<typename... Args>
+	void fatal(const char *fmt, Args&&... args) {
+		m_logger->critical(fmt, std::forward<Args>(args)...);
+	}
+
+	template<typename... Args>
+	void error(const char *fmt, Args&&... args) {
+		m_logger->error(fmt, std::forward<Args>(args)...);
+	}
+
+	template<typename... Args>
+	void warn(const char *fmt, Args&&... args) {
+		m_logger->warn(fmt, std::forward<Args>(args)...);
+	}
+
+	template<typename... Args>
+	void info(const char *fmt, Args&&... args) {
+		m_logger->info(fmt, std::forward<Args>(args)...);
+	}
+
+	template<typename... Args>
+	void debug(const char *fmt, Args&&... args) {
+		m_logger->debug(fmt, std::forward<Args>(args)...);
+	}
+
+	template<typename... Args>
+	void trace(const char *fmt, Args&&... args) {
+		m_logger->trace(fmt, std::forward<Args>(args)...);
+	}
 
 	void set_name(QString name);
 	void set_path(QString path);

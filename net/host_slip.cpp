@@ -9,6 +9,7 @@
 #include "alumy/ascii.h"
 #include "alumy/sleep.h"
 #include "alumy/bug.h"
+#include "alumy/spdlog.h"
 
 AL_BEGIN_NAMESPACE
 
@@ -27,9 +28,6 @@ host_slip::host_slip(QString path, int32_t baud, QSerialPort::DataBits data_bits
 {
     m_elapsed_timer = new QElapsedTimer();
     m_elapsed_timer->start();
-
-    log::instance()->info(QString("bottom uart: %1, %2, %3, %4, %5")
-                            .arg(path).arg(baud).arg(data_bits).arg(stop_bits).arg(parity));
 
     m_slip = new slip(path, baud, data_bits, stop_bits, parity, recv_size);
     connect(m_slip, &slip::received, this, &host_slip::recv_data);
@@ -70,8 +68,7 @@ bool host_slip::has_rtx(const send_item_t &item)
             rtx++;
 
             if(rtx >= RTX_MAX_COUNT) {
-                log::instance()->debug(QString("rtx, saddr = %1, daddr = %2")
-                                            .arg(__item_h->sh_saddr).arg(__item_h->sh_daddr));
+                slog::instance()->debug("rtx, saddr = {}, daddr = {}", __item_h->sh_saddr, __item_h->sh_daddr);
                 return true;
             }
         }
@@ -282,10 +279,9 @@ int_t host_slip::parse_report_init(QByteArray data)
             git_hash.sprintf("-%*.s", 7, payload->git_hash);
         }
 
-        log::instance()->info(QString("remote init, addr = %1, version = %2.%3.%4.%5%6")
-                                .arg(payload->saddr).arg(payload->major).arg(payload->minor)
-                                .arg(payload->revision).arg(payload->build)
-                                .arg(git_hash));
+        slog::instance()->info("remote init, addr = {}, version = {}.{}.{}.{}",
+                                payload->saddr, payload->major, payload->minor,
+                                payload->revision, payload->build, git_hash);
 
         emit remote_init(r->addr());
     }
@@ -367,8 +363,8 @@ int_t host_slip::parse(QByteArray data)
     UNUSED(len);
 
     if (check(data) != 0) {
-        log::instance()->warn("host slip check failed");
-        log::instance()->warn(data);
+        slog::instance()->warn("host slip check failed");
+        slog::instance()->warn(data);
         return -1;
     }
 
@@ -385,7 +381,7 @@ int_t host_slip::parse(QByteArray data)
     if (hdr->sh_cmd != CMD_ACK && hdr->sh_cmd != CMD_INIT && hdr->sh_cmd != CMD_RESET) {
         if (r && r->recv_seq() == hdr->sh_seq) {
             ack(hdr->sh_saddr, AL_ACK, hdr->sh_seq);
-            log::instance()->debug(QString("remote %1 seq %2 exists").arg(hdr->sh_saddr).arg(hdr->sh_seq));
+            slog::instance()->debug("remote {} seq {} exists", hdr->sh_saddr, hdr->sh_seq);
             return -1;
         }
     }
@@ -443,7 +439,7 @@ int_t host_slip::update_seq(QByteArray *data)
     off_t crc_off = data->length() - sizeof(crc);
 
     if(data->length() < (int)sizeof(crc)) {
-        log::instance()->debug(*data);
+        slog::instance()->debug(*data);
     }
 
     BUG_ON(data->length() < (int)sizeof(crc));
@@ -531,7 +527,7 @@ void host_slip::check_hbt()
 
                 remote->set_init(host_slip_remote::HOST_SLIP_REMOTE_INIT);
 
-                log::instance()->warn(QString("remote %1 lost").arg(remote->addr()));
+                slog::instance()->warn("remote {} lost", remote->addr());
 
                 emit disconnect(remote->addr());
             }
@@ -539,7 +535,7 @@ void host_slip::check_hbt()
             if(!remote->connected()) {
                 remote->set_connected(true);
 
-                log::instance()->info(QString("remote %1 connected").arg(remote->addr()));
+                slog::instance()->info("remote {} connected", remote->addr());
 
                 emit connected(remote->addr());
             }
@@ -640,7 +636,7 @@ void host_slip::debug(QString ident, const QByteArray &data)
     QString str = QString("%1, saddr = %2, daddr = %3, cmd = %4, seq = %5")
                     .arg(ident).arg(hdr->sh_saddr).arg(hdr->sh_daddr).arg(hdr->sh_cmd).arg(hdr->sh_seq);
 
-    log::instance()->debug(str);
+    slog::instance()->debug(str);
 }
 
 void host_slip::warn(QString ident, const QByteArray &data)
@@ -651,7 +647,7 @@ void host_slip::warn(QString ident, const QByteArray &data)
     QString str = QString("%1, saddr = %2, daddr = %3, cmd = %4, seq = %5")
                     .arg(ident).arg(hdr->sh_saddr).arg(hdr->sh_daddr).arg(hdr->sh_cmd).arg(hdr->sh_seq);
 
-    log::instance()->warn(str);
+    slog::instance()->warn(str);
 }
 
 void host_slip::run()
@@ -664,8 +660,7 @@ void host_slip::run()
         CPU_SET(m_processor, &mask);
 
         if(pthread_setaffinity_np(pthread_self(), sizeof(mask), &mask) < 0) {
-            log::instance()->error(QString("pthread_setaffinity_np failed @ %1:%2")
-                                    .arg(__func__).arg(__LINE__));
+            slog::instance()->error("pthread_setaffinity_np failed @ {}:{}", __func__, __LINE__);
         }
     }
 #endif
