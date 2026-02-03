@@ -872,6 +872,42 @@ macro(configure_alumy_dependencies)
         USES_TERMINAL_BUILD ON
         USES_TERMINAL_INSTALL ON
     )
+
+    # fcitx5-qt (Qt input method plugin for Fcitx5)
+    set(FCITX5_QT_CMAKE_ARGS
+        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+        -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+        -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
+        -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
+        -DCMAKE_CXX_STANDARD=11
+        -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DBUILD_SHARED_LIBS=ON
+        -DENABLE_QT4=OFF
+        -DENABLE_QT5=ON
+        -DENABLE_QT6=OFF
+        -DBUILD_ONLY_PLUGIN=ON
+        -DBUILD_STATIC_PLUGIN=OFF
+    )
+
+    ExternalProject_Add(fcitx5-qt-external
+        GIT_REPOSITORY https://github.com/fcitx/fcitx5-qt.git
+        GIT_TAG 5.1.7
+        GIT_SHALLOW ON
+        CMAKE_ARGS ${FCITX5_QT_CMAKE_ARGS}
+        BUILD_COMMAND ${MAKE_COMMAND}
+        BUILD_BYPRODUCTS
+            ${EXTERNAL_INSTALL_DIR}/lib/libFcitx5Qt5DBusAddons.so
+            ${EXTERNAL_INSTALL_DIR}/lib/libFcitx5Qt5WidgetsAddons.so
+        INSTALL_COMMAND ${MAKE_COMMAND} install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+    )
 endmacro()
 
 macro(install_alumy_dependencies)
@@ -908,6 +944,7 @@ macro(add_alumy_dependencies target)
         qwt-external
         jemalloc-external
         mimalloc-external
+        fcitx5-qt-external
     )
 endmacro()
 
