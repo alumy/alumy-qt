@@ -5,23 +5,33 @@ set -e
 PROJECT_NAME="alumy-qt"
 ARCHS=("x86_64" "aarch64")
 RELEASE_DIR="release"
+CMAKE_FILE="CMakeLists.txt"
 
-show_help() {
-    echo "Usage: $0 <version_tag>"
-    echo "Example: $0 v0.0.1"
-    echo ""
-    echo "This script will:"
-    echo "1. Build the project for ${ARCHS[*]} sequentially"
-    echo "2. Compile each arch using ALL available cores in parallel"
-    echo "3. Create tarball packages and upload to GitHub"
+# Parse version from CMakeLists.txt
+parse_version() {
+    local cmake_file="$1"
+    
+    if [ ! -f "$cmake_file" ]; then
+        echo "Error: $cmake_file not found." >&2
+        exit 1
+    fi
+    
+    local major minor patch
+    major=$(grep -E "^set\(PROJECT_VERSION_MAJOR\s+" "$cmake_file" | sed -E 's/.*PROJECT_VERSION_MAJOR\s+([0-9]+).*/\1/')
+    minor=$(grep -E "^set\(PROJECT_VERSION_MINOR\s+" "$cmake_file" | sed -E 's/.*PROJECT_VERSION_MINOR\s+([0-9]+).*/\1/')
+    patch=$(grep -E "^set\(PROJECT_VERSION_PATCH\s+" "$cmake_file" | sed -E 's/.*PROJECT_VERSION_PATCH\s+([0-9]+).*/\1/')
+    
+    if [ -z "$major" ] || [ -z "$minor" ] || [ -z "$patch" ]; then
+        echo "Error: Failed to parse version from $cmake_file." >&2
+        exit 1
+    fi
+    
+    echo "v${major}.${minor}.${patch}"
 }
 
-if [ -z "$1" ]; then
-    show_help
-    exit 1
-fi
-
-VERSION=$1
+# Get version from CMakeLists.txt
+VERSION=$(parse_version "$CMAKE_FILE")
+echo "Version from $CMAKE_FILE: $VERSION"
 
 # Check for GitHub CLI
 if ! command -v gh &> /dev/null; then
