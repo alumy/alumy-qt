@@ -873,41 +873,123 @@ macro(configure_alumy_dependencies)
         USES_TERMINAL_INSTALL ON
     )
 
-    # fcitx5-qt (Qt input method plugin for Fcitx5)
-    set(FCITX5_QT_CMAKE_ARGS
-        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
-        -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
-        -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
-        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-        -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
-        -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
-        -DCMAKE_CXX_STANDARD=11
-        -DCMAKE_CXX_STANDARD_REQUIRED=ON
-        -DBUILD_SHARED_LIBS=ON
-        -DENABLE_QT4=OFF
-        -DENABLE_QT5=ON
-        -DENABLE_QT6=OFF
-        -DBUILD_ONLY_PLUGIN=ON
-        -DBUILD_STATIC_PLUGIN=OFF
-    )
+    # fcitx5-qt requires Qt5DBus - check if it's available
+    find_package(Qt5DBus QUIET)
+    if(Qt5DBus_FOUND)
+        message(STATUS "Qt5DBus found - enabling fcitx5-qt build")
+        set(FCITX5_QT_ENABLED ON)
+        
+        # extra-cmake-modules (ECM) for fcitx5-qt
+        set(ECM_CMAKE_ARGS
+            -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+            -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+            -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
+            -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
+            -DBUILD_TESTING=OFF
+        )
 
-    ExternalProject_Add(fcitx5-qt-external
-        GIT_REPOSITORY https://github.com/fcitx/fcitx5-qt.git
-        GIT_TAG 5.1.7
-        GIT_SHALLOW ON
-        CMAKE_ARGS ${FCITX5_QT_CMAKE_ARGS}
-        BUILD_COMMAND ${MAKE_COMMAND}
-        BUILD_BYPRODUCTS
-            ${EXTERNAL_INSTALL_DIR}/lib/libFcitx5Qt5DBusAddons.so
-            ${EXTERNAL_INSTALL_DIR}/lib/libFcitx5Qt5WidgetsAddons.so
-        INSTALL_COMMAND ${MAKE_COMMAND} install
-        LOG_DOWNLOAD OFF
-        LOG_CONFIGURE OFF
-        LOG_BUILD OFF
-        LOG_INSTALL OFF
-        USES_TERMINAL_BUILD ON
-        USES_TERMINAL_INSTALL ON
-    )
+        ExternalProject_Add(ecm-external
+            GIT_REPOSITORY ${GITHUB_BASE_URL}/KDE/extra-cmake-modules.git
+            GIT_TAG v5.109.0
+            GIT_SHALLOW ON
+            CMAKE_ARGS ${ECM_CMAKE_ARGS}
+            BUILD_COMMAND ${MAKE_COMMAND}
+            BUILD_BYPRODUCTS
+                ${EXTERNAL_INSTALL_DIR}/share/ECM/cmake/ECMConfig.cmake
+            INSTALL_COMMAND ${MAKE_COMMAND} install
+            LOG_DOWNLOAD OFF
+            LOG_CONFIGURE OFF
+            LOG_BUILD OFF
+            LOG_INSTALL OFF
+            USES_TERMINAL_BUILD ON
+            USES_TERMINAL_INSTALL ON
+        )
+
+        # libxkbcommon (required by fcitx5-qt)
+        set(MESON_EXECUTABLE $ENV{HOME}/.local/bin/meson)
+        set(NINJA_EXECUTABLE $ENV{HOME}/.local/bin/ninja)
+        
+        # Determine library path based on architecture
+        if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+            set(XKBCOMMON_LIB_SUBDIR "lib/x86_64-linux-gnu")
+        elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+            set(XKBCOMMON_LIB_SUBDIR "lib/aarch64-linux-gnu")
+        else()
+            set(XKBCOMMON_LIB_SUBDIR "lib")
+        endif()
+        
+        ExternalProject_Add(xkbcommon-external
+            GIT_REPOSITORY ${GITHUB_BASE_URL}/xkbcommon/libxkbcommon.git
+            GIT_TAG xkbcommon-1.6.0
+            GIT_SHALLOW ON
+            INSTALL_DIR ${EXTERNAL_INSTALL_DIR}
+            CONFIGURE_COMMAND ${MESON_EXECUTABLE} setup <BINARY_DIR> <SOURCE_DIR>
+                --prefix=${EXTERNAL_INSTALL_DIR}
+                -Ddefault_library=shared
+                -Denable-tools=false
+                -Denable-x11=false
+                -Denable-docs=false
+                -Denable-wayland=false
+            BUILD_COMMAND ${NINJA_EXECUTABLE} -C <BINARY_DIR>
+            INSTALL_COMMAND ${NINJA_EXECUTABLE} -C <BINARY_DIR> install
+            BUILD_BYPRODUCTS
+                ${EXTERNAL_INSTALL_DIR}/${XKBCOMMON_LIB_SUBDIR}/libxkbcommon.so
+            LOG_DOWNLOAD OFF
+            LOG_CONFIGURE OFF
+            LOG_BUILD OFF
+            LOG_INSTALL OFF
+            USES_TERMINAL_BUILD ON
+            USES_TERMINAL_INSTALL ON
+        )
+
+        # fcitx5-qt (Qt input method plugin for Fcitx5)
+        # Note: fcitx5-qt requires C++17 (uses init-statement in if, etc.)
+        set(FCITX5_QT_CMAKE_ARGS
+            -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+            -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+            -DECM_DIR=${EXTERNAL_INSTALL_DIR}/share/ECM/cmake
+            -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
+            -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
+            -DCMAKE_CXX_STANDARD=17
+            -DCMAKE_CXX_STANDARD_REQUIRED=ON
+            -DBUILD_SHARED_LIBS=ON
+            -DENABLE_QT4=OFF
+            -DENABLE_QT5=ON
+            -DENABLE_QT6=OFF
+            -DENABLE_X11=OFF
+            -DBUILD_ONLY_PLUGIN=ON
+            -DBUILD_STATIC_PLUGIN=OFF
+            -DXKBCommon_XKBCommon_INCLUDE_DIR=${EXTERNAL_INSTALL_DIR}/include
+            -DXKBCommon_XKBCommon_LIBRARY=${EXTERNAL_INSTALL_DIR}/${XKBCOMMON_LIB_SUBDIR}/libxkbcommon.so
+            -DCMAKE_INSTALL_QT5PLUGINDIR=${EXTERNAL_INSTALL_DIR}/lib/qt5/plugins
+        )
+
+        ExternalProject_Add(fcitx5-qt-external
+            GIT_REPOSITORY ${GITHUB_BASE_URL}/fcitx/fcitx5-qt.git
+            GIT_TAG 5.1.7
+            GIT_SHALLOW ON
+            CMAKE_ARGS ${FCITX5_QT_CMAKE_ARGS}
+            BUILD_COMMAND ${MAKE_COMMAND}
+            BUILD_BYPRODUCTS
+                ${EXTERNAL_INSTALL_DIR}/lib/libFcitx5Qt5DBusAddons.so
+                ${EXTERNAL_INSTALL_DIR}/lib/libFcitx5Qt5WidgetsAddons.so
+            INSTALL_COMMAND ${MAKE_COMMAND} install
+            LOG_DOWNLOAD OFF
+            LOG_CONFIGURE OFF
+            LOG_BUILD OFF
+            LOG_INSTALL OFF
+            USES_TERMINAL_BUILD ON
+            USES_TERMINAL_INSTALL ON
+            DEPENDS ecm-external xkbcommon-external
+        )
+    else()
+        message(STATUS "Qt5DBus not found - skipping fcitx5-qt build")
+        set(FCITX5_QT_ENABLED OFF)
+    endif()
 endmacro()
 
 macro(install_alumy_dependencies)
@@ -924,7 +1006,7 @@ macro(install_alumy_dependencies)
 endmacro()
 
 macro(add_alumy_dependencies target)
-    add_dependencies(${target} 
+    set(_ALUMY_DEPS
         spdlog-external 
         qpcpp-external 
         log4qt-external 
@@ -944,8 +1026,18 @@ macro(add_alumy_dependencies target)
         qwt-external
         jemalloc-external
         mimalloc-external
-        fcitx5-qt-external
     )
+    
+    # Add fcitx5-qt dependencies only if Qt5DBus is available
+    if(FCITX5_QT_ENABLED)
+        list(APPEND _ALUMY_DEPS
+            ecm-external
+            xkbcommon-external
+            fcitx5-qt-external
+        )
+    endif()
+    
+    add_dependencies(${target} ${_ALUMY_DEPS})
 endmacro()
 
 macro(link_alumy_dependencies target)
