@@ -873,6 +873,41 @@ macro(configure_alumy_dependencies)
         USES_TERMINAL_INSTALL ON
     )
 
+    # libxlsxwriter (Excel XLSX file creation library)
+    set(XLSXWRITER_CMAKE_ARGS
+        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+        -DCMAKE_PREFIX_PATH=${EXTERNAL_INSTALL_DIR}
+        -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
+        -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
+        -DCMAKE_C_STANDARD=11
+        -DCMAKE_C_STANDARD_REQUIRED=ON
+        -DBUILD_SHARED_LIBS=ON
+        -DBUILD_TESTS=OFF
+        -DBUILD_EXAMPLES=OFF
+        -DUSE_STANDARD_TMPFILE=ON
+        -DZLIB_ROOT=${EXTERNAL_INSTALL_DIR}
+    )
+
+    ExternalProject_Add(xlsxwriter-external
+        GIT_REPOSITORY https://github.com/jmcnamara/libxlsxwriter.git
+        GIT_TAG v1.1.9
+        GIT_SHALLOW ON
+        CMAKE_ARGS ${XLSXWRITER_CMAKE_ARGS}
+        BUILD_COMMAND ${MAKE_COMMAND}
+        BUILD_BYPRODUCTS
+            ${EXTERNAL_INSTALL_DIR}/lib/libxlsxwriter.so
+        INSTALL_COMMAND ${MAKE_COMMAND} install
+        LOG_DOWNLOAD OFF
+        LOG_CONFIGURE OFF
+        LOG_BUILD OFF
+        LOG_INSTALL OFF
+        USES_TERMINAL_BUILD ON
+        USES_TERMINAL_INSTALL ON
+        DEPENDS grpc-external
+    )
+
     # fcitx5-qt requires Qt5DBus - check if it's available
     find_package(Qt5DBus QUIET)
     if(Qt5DBus_FOUND)
@@ -1026,6 +1061,7 @@ macro(add_alumy_dependencies target)
         qwt-external
         jemalloc-external
         mimalloc-external
+        xlsxwriter-external
     )
     
     # Add fcitx5-qt dependencies only if Qt5DBus is available
@@ -1079,6 +1115,7 @@ macro(link_alumy_dependencies target)
         confuse
         jemalloc
         mimalloc
+        xlsxwriter
         ssl 
         crypto
         pthread
